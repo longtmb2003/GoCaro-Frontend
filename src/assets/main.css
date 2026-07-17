@@ -1,0 +1,112 @@
+@import 'tailwindcss';
+
+/* Theme is class-driven rather than media-driven so the app can own the choice.
+   Dark is the default experience; light is applied by replacing the root class. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans:
+    'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  --color-primary-50: oklch(0.97 0.014 265);
+  --color-primary-100: oklch(0.94 0.03 265);
+  --color-primary-200: oklch(0.89 0.06 265);
+  --color-primary-300: oklch(0.81 0.1 265);
+  --color-primary-400: oklch(0.71 0.15 265);
+  --color-primary-500: oklch(0.62 0.19 265);
+  --color-primary-600: oklch(0.55 0.21 265);
+  --color-primary-700: oklch(0.48 0.19 265);
+  --color-primary-800: oklch(0.4 0.15 265);
+  --color-primary-900: oklch(0.34 0.11 265);
+
+  --color-success-400: oklch(0.76 0.16 152);
+  --color-success-500: oklch(0.68 0.17 152);
+  --color-success-600: oklch(0.59 0.16 152);
+
+  --color-warning-400: oklch(0.82 0.15 77);
+  --color-warning-500: oklch(0.75 0.16 70);
+  --color-warning-600: oklch(0.66 0.16 62);
+
+  --color-danger-400: oklch(0.71 0.18 25);
+  --color-danger-500: oklch(0.63 0.21 25);
+  --color-danger-600: oklch(0.55 0.21 25);
+
+  --color-neutral-50: oklch(0.98 0.003 265);
+  --color-neutral-100: oklch(0.96 0.005 265);
+  --color-neutral-200: oklch(0.92 0.007 265);
+  --color-neutral-300: oklch(0.85 0.009 265);
+  --color-neutral-400: oklch(0.7 0.012 265);
+  --color-neutral-500: oklch(0.56 0.014 265);
+  --color-neutral-600: oklch(0.45 0.014 265);
+  --color-neutral-700: oklch(0.36 0.013 265);
+  --color-neutral-800: oklch(0.27 0.012 265);
+  --color-neutral-900: oklch(0.2 0.011 265);
+  --color-neutral-950: oklch(0.14 0.009 265);
+
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.875rem;
+
+  --shadow-sm: 0 1px 2px 0 oklch(0 0 0 / 0.06);
+  --shadow-md: 0 4px 12px -2px oklch(0 0 0 / 0.1);
+  --shadow-lg: 0 12px 32px -6px oklch(0 0 0 / 0.16);
+  --shadow-overlay: 0 24px 64px -12px oklch(0 0 0 / 0.28);
+
+  --transition-duration-fast: 120ms;
+  --transition-duration-normal: 200ms;
+  --transition-duration-slow: 320ms;
+}
+
+/* Semantic tokens. Components consume these rather than raw palette steps,
+   so a theme change never requires touching component markup. */
+@theme inline {
+  --color-background: var(--surface-background);
+  --color-surface: var(--surface-default);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-border-subtle: var(--surface-border);
+  --color-foreground: var(--text-foreground);
+  --color-foreground-muted: var(--text-muted);
+
+  --z-index-dropdown: 1000;
+  --z-index-sticky: 1100;
+  --z-index-overlay: 1200;
+  --z-index-modal: 1300;
+  --z-index-toast: 1400;
+  --z-index-tooltip: 1500;
+}
+
+:root {
+  --surface-background: var(--color-neutral-50);
+  --surface-default: oklch(1 0 0);
+  --surface-elevated: oklch(1 0 0);
+  --surface-border: var(--color-neutral-200);
+  --text-foreground: var(--color-neutral-900);
+  --text-muted: var(--color-neutral-500);
+}
+
+.dark {
+  --surface-background: var(--color-neutral-950);
+  --surface-default: var(--color-neutral-900);
+  --surface-elevated: var(--color-neutral-800);
+  --surface-border: var(--color-neutral-800);
+  --text-foreground: var(--color-neutral-100);
+  --text-muted: var(--color-neutral-400);
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  :focus-visible {
+    @apply outline-primary-400 outline-2 outline-offset-2;
+  }
+}
