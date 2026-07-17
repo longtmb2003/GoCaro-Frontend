@@ -11,4 +11,15 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  server: {
+    // The backend serves no CORS headers, so in development requests are made
+    // same-origin and proxied to it. Production points VITE_API_BASE_URL at the
+    // real backend origin instead.
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+      },
+    },
+  },
 })
