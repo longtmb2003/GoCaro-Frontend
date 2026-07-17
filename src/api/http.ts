@@ -65,3 +65,16 @@ http.interceptors.response.use(
   (response) => response,
   (error: unknown) => Promise.reject(toApiError(error)),
 )
+
+/**
+ * Sets or clears the bearer token sent on every subsequent request. The Auth
+ * store owns the token and calls this when it changes, so the API layer never
+ * needs to depend on the store.
+ */
+export function setAuthToken(token: string | null): void {
+  if (token === null) {
+    delete http.defaults.headers.common['Authorization']
+    return
+  }
+  http.defaults.headers.common['Authorization'] = `Bearer ${token}`
+}
