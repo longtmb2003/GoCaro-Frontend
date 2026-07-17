@@ -1,3 +1,9 @@
+# Internal AI workflow documentation (see CLAUDE.md > Repository Rules)
+CLAUDE.md
+PLAN.md
+CONTRIBUTING.md
+docs/
+
 # Logs
 logs
 *.log
