@@ -1,10 +1,6 @@
+import type { Envelope } from './envelope'
 import { http } from './http'
 import type { AuthUser, Credentials, LoginResult } from '@/types/auth'
-
-interface Envelope<T> {
-  success: boolean
-  data: T
-}
 
 export async function register(credentials: Credentials): Promise<AuthUser> {
   const { data } = await http.post<Envelope<AuthUser>>('/api/register', credentials)

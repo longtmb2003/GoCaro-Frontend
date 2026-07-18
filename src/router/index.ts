@@ -14,8 +14,8 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      name: 'home',
-      component: () => import('@/pages/HomePage.vue'),
+      name: 'lobby',
+      component: () => import('@/pages/LobbyPage.vue'),
       meta: { requiresAuth: true },
     },
     {
@@ -41,7 +41,7 @@ router.beforeEach((to) => {
   }
 
   if (to.meta.guestOnly && auth.isAuthenticated) {
-    return { name: 'home' }
+    return { name: 'lobby' }
   }
 
   return true
