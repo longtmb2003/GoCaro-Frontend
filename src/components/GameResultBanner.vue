@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 
 import BaseButton from '@/components/BaseButton.vue'
 
@@ -10,6 +10,13 @@ const props = defineProps<{
 }>()
 
 defineEmits<{ playAgain: []; exit: [] }>()
+
+const dialog = ref<HTMLElement | null>(null)
+
+onMounted(() => {
+  // Move focus into the dialog so keyboard users land on the result actions.
+  dialog.value?.querySelector('button')?.focus()
+})
 
 const headingClass = computed(() =>
   props.tone === 'win'
@@ -22,6 +29,7 @@ const headingClass = computed(() =>
 
 <template>
   <div
+    ref="dialog"
     class="fixed inset-0 z-1300 flex items-center justify-center bg-black/60 p-4"
     role="dialog"
     aria-modal="true"

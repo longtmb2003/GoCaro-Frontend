@@ -110,3 +110,22 @@
     @apply outline-primary-400 outline-2 outline-offset-2;
   }
 }
+
+/* Fast route fade. Kept short so navigation never feels delayed, and disabled
+   entirely for users who prefer reduced motion. */
+.page-enter-active,
+.page-leave-active {
+  transition: opacity 120ms ease;
+}
+
+.page-enter-from,
+.page-leave-to {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-enter-active,
+  .page-leave-active {
+    transition: none;
+  }
+}
