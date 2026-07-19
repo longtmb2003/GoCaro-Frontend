@@ -17,7 +17,6 @@ const emit = defineEmits<{
   setSpeed: [interval: number]
 }>()
 
-// Interval between auto-play steps, in milliseconds.
 const SPEEDS: { label: string; interval: number }[] = [
   { label: '0.5×', interval: 1400 },
   { label: '1×', interval: 700 },

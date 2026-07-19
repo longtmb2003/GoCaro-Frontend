@@ -27,8 +27,6 @@ export const useGameStore = defineStore('game', () => {
   const board = ref<CellValue[][]>(createEmptyBoard())
   const lastMove = ref<{ x: number; y: number } | null>(null)
   const result = ref<GameResult | null>(null)
-  // A rejected move (e.g. the cell filled first): shown briefly, cleared on the
-  // next accepted move.
   const moveError = ref<string | null>(null)
 
   const isInMatch = computed(() => roomId.value !== null)

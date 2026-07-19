@@ -28,8 +28,6 @@ export const useSocketStore = defineStore('socket', () => {
   const auth = useAuthStore()
   const game = useGameStore()
 
-  // The manager lives on the store so the connection outlives the components
-  // that start it and survives navigation into the game (ADR-008).
   const manager = new SocketManager()
 
   function startMatchmaking(): void {
@@ -47,9 +45,6 @@ export const useSocketStore = defineStore('socket', () => {
     })
   }
 
-  // Cancelling a search is a plain disconnect: the backend drops a client from
-  // the queue when its socket closes. Status is cleared first so the resulting
-  // close is not misread as a lost connection.
   function cancelMatchmaking(): void {
     teardown()
   }
@@ -98,8 +93,6 @@ export const useSocketStore = defineStore('socket', () => {
     }
   }
 
-  // An error frame during a game is a rejected move, shown in the board's own
-  // status line. Before a game it is a matchmaking failure, shown in the modal.
   function handleErrorFrame(payload: unknown): void {
     if (game.isInMatch) {
       if (isErrorPayload(payload)) {
@@ -115,19 +108,13 @@ export const useSocketStore = defineStore('socket', () => {
 
   function handleClose(): void {
     if (status.value === 'connecting' || status.value === 'searching') {
-      // Dropped before a match: surface it in the matchmaking modal.
       status.value = 'error'
       errorMessage.value = 'Connection lost. Please try again.'
     } else if (game.phase === 'playing') {
-      // Dropped mid-game with no game_over: the game screen shows the loss of
-      // connection. A game_over always moves the phase off 'playing' first, so
-      // a normal finish never reaches here.
       game.markConnectionLost()
     }
   }
 
-  // Closes the connection and clears all match state. Status is set before the
-  // close so the resulting onClose is not misread as an unexpected drop.
   function teardown(): void {
     status.value = 'idle'
     errorMessage.value = null
@@ -135,8 +122,6 @@ export const useSocketStore = defineStore('socket', () => {
     game.reset()
   }
 
-  // Any end of session tears the connection down, from any screen, so a logout
-  // never leaves a socket open or stale match context behind.
   watch(
     () => auth.isAuthenticated,
     (authenticated) => {
@@ -146,7 +131,15 @@ export const useSocketStore = defineStore('socket', () => {
     },
   )
 
-  return { status, errorMessage, startMatchmaking, cancelMatchmaking, sendMove, sendResign, leaveGame }
+  return {
+    status,
+    errorMessage,
+    startMatchmaking,
+    cancelMatchmaking,
+    sendMove,
+    sendResign,
+    leaveGame,
+  }
 })
 
 function isPlayerSymbol(value: unknown): value is PlayerSymbol {

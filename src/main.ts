@@ -12,8 +12,6 @@ const app = createApp(App)
 app.use(createPinia())
 app.use(router)
 
-// Restore any persisted session before the first navigation so the route guard
-// sees the real authentication state and does not flash the login page.
 await useAuthStore().initialize()
 await router.isReady()
 

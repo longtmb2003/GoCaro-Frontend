@@ -13,14 +13,16 @@ const emit = defineEmits<{ cancel: []; retry: [] }>()
 
 const isError = computed(() => props.status === 'error')
 const heading = computed(() =>
-  props.status === 'connecting' ? 'Connecting…' : isError.value ? 'Matchmaking failed' : 'Finding an opponent',
+  props.status === 'connecting'
+    ? 'Connecting…'
+    : isError.value
+      ? 'Matchmaking failed'
+      : 'Finding an opponent',
 )
 
 const dialog = ref<HTMLElement | null>(null)
 
 onMounted(() => {
-  // Move focus into the dialog for keyboard users; the first button is the
-  // primary action (Cancel while searching, Try again on error).
   dialog.value?.querySelector('button')?.focus()
 })
 
@@ -42,7 +44,9 @@ function onKeydown(event: KeyboardEvent): void {
   >
     <div class="bg-surface-elevated w-full max-w-sm rounded-lg p-6 text-center shadow-lg">
       <div v-if="!isError" class="mb-4 flex justify-center" aria-hidden="true">
-        <span class="border-primary-500 size-10 animate-spin rounded-full border-3 border-t-transparent" />
+        <span
+          class="border-primary-500 size-10 animate-spin rounded-full border-3 border-t-transparent"
+        />
       </div>
 
       <h2 id="matchmaking-heading" class="text-foreground text-lg font-semibold">{{ heading }}</h2>

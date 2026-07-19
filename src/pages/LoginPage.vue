@@ -23,8 +23,6 @@ async function handleSubmit(credentials: Credentials): Promise<void> {
     const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/'
     await router.push(redirect)
   } catch (error) {
-    // Only authentication failures belong in the form. Anything else is an
-    // unexpected fault that should surface rather than read as a bad password.
     if (!(error instanceof ApiError)) {
       throw error
     }

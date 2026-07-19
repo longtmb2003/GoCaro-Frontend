@@ -25,8 +25,6 @@ const router = createRouter({
       name: 'game',
       component: () => import('@/pages/GamePage.vue'),
       meta: { requiresAuth: true, title: 'Match' },
-      // The game screen is only reachable through a live match. A direct visit
-      // or reload (in-memory match state is gone) returns to the lobby.
       beforeEnter: () => (useGameStore().isInMatch ? true : { name: 'lobby' }),
     },
     {
@@ -82,7 +80,6 @@ router.beforeEach((to) => {
   return true
 })
 
-// Reflect the current page in the browser tab.
 router.afterEach((to) => {
   document.title = to.meta.title ? `${to.meta.title} · GoCaro` : 'GoCaro'
 })

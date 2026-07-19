@@ -19,8 +19,6 @@ interface Cell {
   value: CellValue
 }
 
-// Flattened in row-major order (y outer, x inner) so the CSS grid lays cells
-// out left-to-right, top-to-bottom while coordinates stay board[x][y].
 const cells = computed<Cell[]>(() => {
   const list: Cell[] = []
   for (let y = 0; y < BOARD_SIZE; y++) {

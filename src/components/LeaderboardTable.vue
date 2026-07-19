@@ -22,7 +22,9 @@ defineProps<{
         :key="entry.username"
         class="border-border-subtle border-t"
         :class="
-          entry.username === currentUsername ? 'bg-primary-600/10 text-foreground' : 'text-foreground'
+          entry.username === currentUsername
+            ? 'bg-primary-600/10 text-foreground'
+            : 'text-foreground'
         "
       >
         <td class="text-foreground-muted py-2.5 pr-2 tabular-nums">{{ index + 1 }}</td>

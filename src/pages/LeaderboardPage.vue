@@ -8,8 +8,6 @@ import AppLayout from '@/layouts/AppLayout.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useLeaderboardStore } from '@/stores/leaderboard'
 
-// The backend caps the leaderboard at 100; request the full board here, unlike
-// the lobby's shorter preview.
 const FULL_LEADERBOARD_LIMIT = 100
 
 const auth = useAuthStore()
@@ -43,7 +41,11 @@ onMounted(() => {
 
       <div v-else-if="leaderboard.error" class="py-8 text-center">
         <p class="text-danger-400 text-sm">{{ leaderboard.error }}</p>
-        <BaseButton variant="secondary" class="mt-4" @click="leaderboard.load(FULL_LEADERBOARD_LIMIT)">
+        <BaseButton
+          variant="secondary"
+          class="mt-4"
+          @click="leaderboard.load(FULL_LEADERBOARD_LIMIT)"
+        >
           Try again
         </BaseButton>
       </div>

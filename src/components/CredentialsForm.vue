@@ -26,8 +26,6 @@ const password = ref('')
 const usernameError = ref('')
 const passwordError = ref('')
 
-// Mirrors the backend binding rules for immediate feedback; the backend
-// remains the authority and rejects anything that slips through.
 const USERNAME_PATTERN = /^[a-zA-Z0-9]+$/
 const USERNAME_MIN = 3
 const USERNAME_MAX = 20

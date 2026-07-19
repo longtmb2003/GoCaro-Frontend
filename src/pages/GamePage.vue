@@ -78,9 +78,6 @@ async function leave(): Promise<void> {
   await router.push('/')
 }
 
-// Navigate back to the lobby before re-queuing so the lobby's status watch is
-// registered before matchmaking starts — otherwise a match found in the gap
-// would not trigger the transition into the next game.
 async function playAgain(): Promise<void> {
   socket.leaveGame()
   await router.push('/')
@@ -139,7 +136,9 @@ async function playAgain(): Promise<void> {
           <div v-else class="space-y-2">
             <p class="text-foreground text-center text-sm">Resign this match?</p>
             <div class="flex gap-2">
-              <BaseButton variant="danger" class="flex-1" @click="confirmResign">Confirm</BaseButton>
+              <BaseButton variant="danger" class="flex-1" @click="confirmResign"
+                >Confirm</BaseButton
+              >
               <BaseButton variant="secondary" class="flex-1" @click="confirmingResign = false">
                 Keep playing
               </BaseButton>
