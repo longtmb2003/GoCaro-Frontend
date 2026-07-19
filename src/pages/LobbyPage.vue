@@ -1,21 +1,39 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
 import BaseButton from '@/components/BaseButton.vue'
 import LeaderboardTable from '@/components/LeaderboardTable.vue'
+import MatchmakingModal from '@/components/MatchmakingModal.vue'
 import ProfileCard from '@/components/ProfileCard.vue'
 import AppLayout from '@/layouts/AppLayout.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useLeaderboardStore } from '@/stores/leaderboard'
+import { useSocketStore } from '@/stores/socket'
 
 const auth = useAuthStore()
 const leaderboard = useLeaderboardStore()
+const socket = useSocketStore()
 const router = useRouter()
 
 onMounted(() => {
   void leaderboard.load()
 })
+
+const isMatchmaking = computed(
+  () => socket.status === 'connecting' || socket.status === 'searching' || socket.status === 'error',
+)
+
+// The socket is owned by the store and outlives this page, so navigation on a
+// match is driven by watching its status rather than by the message handler.
+watch(
+  () => socket.status,
+  (status) => {
+    if (status === 'matched') {
+      void router.push('/game')
+    }
+  },
+)
 
 async function handleLogout(): Promise<void> {
   auth.logout()
@@ -42,9 +60,9 @@ async function handleLogout(): Promise<void> {
         >
           <h2 class="text-foreground text-lg font-semibold">Ready to play?</h2>
           <p class="text-foreground-muted mt-1 text-sm">
-            Matchmaking arrives in the next phase.
+            Find an opponent and start a ranked match.
           </p>
-          <BaseButton class="mt-4 w-full" disabled>Play</BaseButton>
+          <BaseButton class="mt-4 w-full" @click="socket.startMatchmaking()">Play</BaseButton>
         </section>
       </div>
 
@@ -74,5 +92,13 @@ async function handleLogout(): Promise<void> {
         />
       </section>
     </div>
+
+    <MatchmakingModal
+      v-if="isMatchmaking"
+      :status="socket.status"
+      :error-message="socket.errorMessage"
+      @cancel="socket.cancelMatchmaking()"
+      @retry="socket.startMatchmaking()"
+    />
   </AppLayout>
 </template>

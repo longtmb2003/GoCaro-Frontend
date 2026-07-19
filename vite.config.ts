@@ -20,6 +20,13 @@ export default defineConfig({
         target: 'http://localhost:8080',
         changeOrigin: true,
       },
+      // The matchmaking WebSocket is same-origin in development and proxied to
+      // the backend, so the browser never needs CORS or a cross-origin socket.
+      '/ws': {
+        target: 'ws://localhost:8080',
+        ws: true,
+        changeOrigin: true,
+      },
     },
   },
 })

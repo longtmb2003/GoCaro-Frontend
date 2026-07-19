@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 import { useAuthStore } from '@/stores/auth'
+import { useGameStore } from '@/stores/game'
 
 declare module 'vue-router' {
   interface RouteMeta {
@@ -17,6 +18,15 @@ const router = createRouter({
       name: 'lobby',
       component: () => import('@/pages/LobbyPage.vue'),
       meta: { requiresAuth: true },
+    },
+    {
+      path: '/game',
+      name: 'game',
+      component: () => import('@/pages/GamePage.vue'),
+      meta: { requiresAuth: true },
+      // The game screen is only reachable through a live match. A direct visit
+      // or reload (in-memory match state is gone) returns to the lobby.
+      beforeEnter: () => (useGameStore().isInMatch ? true : { name: 'lobby' }),
     },
     {
       path: '/login',
