@@ -77,6 +77,15 @@ async function leave(): Promise<void> {
   socket.leaveGame()
   await router.push('/')
 }
+
+// Navigate back to the lobby before re-queuing so the lobby's status watch is
+// registered before matchmaking starts — otherwise a match found in the gap
+// would not trigger the transition into the next game.
+async function playAgain(): Promise<void> {
+  socket.leaveGame()
+  await router.push('/')
+  socket.startMatchmaking()
+}
 </script>
 
 <template>
@@ -145,6 +154,7 @@ async function leave(): Promise<void> {
       :heading="banner.heading"
       :message="banner.message"
       :tone="banner.tone"
+      @play-again="playAgain"
       @exit="leave"
     />
   </AppLayout>

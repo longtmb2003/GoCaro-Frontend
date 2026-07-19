@@ -9,7 +9,7 @@ const props = defineProps<{
   tone: 'win' | 'loss' | 'draw'
 }>()
 
-defineEmits<{ exit: [] }>()
+defineEmits<{ playAgain: []; exit: [] }>()
 
 const headingClass = computed(() =>
   props.tone === 'win'
@@ -27,10 +27,38 @@ const headingClass = computed(() =>
     aria-modal="true"
     aria-labelledby="result-heading"
   >
-    <div class="bg-surface-elevated w-full max-w-sm rounded-lg p-6 text-center shadow-lg">
+    <div class="result-card bg-surface-elevated w-full max-w-sm rounded-lg p-6 text-center shadow-lg">
       <h2 id="result-heading" class="text-2xl font-bold" :class="headingClass">{{ heading }}</h2>
       <p class="text-foreground-muted mt-2 text-sm">{{ message }}</p>
-      <BaseButton class="mt-6 w-full" @click="$emit('exit')">Back to lobby</BaseButton>
+      <div class="mt-6 space-y-2">
+        <BaseButton class="w-full" @click="$emit('playAgain')">Play again</BaseButton>
+        <BaseButton variant="secondary" class="w-full" @click="$emit('exit')">
+          Back to lobby
+        </BaseButton>
+      </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+@keyframes result-in {
+  from {
+    transform: scale(0.94);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.result-card {
+  animation: result-in 180ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .result-card {
+    animation: none;
+  }
+}
+</style>
