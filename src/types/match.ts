@@ -24,3 +24,18 @@ export interface MatchListPage {
   limit: number
   total: number
 }
+
+/** A single recorded move (see BACKEND_CONTRACT.md), ordered by `move_no`. */
+export interface MatchMove {
+  move_no: number
+  player_id: string
+  x: number
+  y: number
+  played_at: string
+}
+
+/** A match with its full ordered move list, from GET /api/matches/:id. */
+export interface MatchDetail {
+  match: MatchSummary
+  moves: MatchMove[]
+}
