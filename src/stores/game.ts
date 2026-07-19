@@ -1,13 +1,8 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 
-import {
-  BOARD_SIZE,
-  type CellValue,
-  type GameResult,
-  type MatchFoundPayload,
-  type PlayerSymbol,
-} from '@/types/game'
+import type { CellValue, GameResult, MatchFoundPayload, PlayerSymbol } from '@/types/game'
+import { createEmptyBoard } from '@/utils/board'
 
 /**
  * A match's lifecycle on the client:
@@ -16,10 +11,6 @@ import {
  * - `connection-lost`: the socket dropped mid-game with no `game_over`.
  */
 type GamePhase = 'playing' | 'over' | 'connection-lost'
-
-function emptyBoard(): CellValue[][] {
-  return Array.from({ length: BOARD_SIZE }, () => Array.from({ length: BOARD_SIZE }, () => null))
-}
 
 /**
  * Owns the current match: the board and turn as the server reports them, and
@@ -33,7 +24,7 @@ export const useGameStore = defineStore('game', () => {
   const yourTurn = ref(false)
   const phase = ref<GamePhase>('playing')
 
-  const board = ref<CellValue[][]>(emptyBoard())
+  const board = ref<CellValue[][]>(createEmptyBoard())
   const lastMove = ref<{ x: number; y: number } | null>(null)
   const result = ref<GameResult | null>(null)
   // A rejected move (e.g. the cell filled first): shown briefly, cleared on the
@@ -49,7 +40,7 @@ export const useGameStore = defineStore('game', () => {
     yourSymbol.value = payload.your_symbol
     yourTurn.value = payload.your_turn
     phase.value = 'playing'
-    board.value = emptyBoard()
+    board.value = createEmptyBoard()
     lastMove.value = null
     result.value = null
     moveError.value = null
@@ -87,7 +78,7 @@ export const useGameStore = defineStore('game', () => {
     yourSymbol.value = null
     yourTurn.value = false
     phase.value = 'playing'
-    board.value = emptyBoard()
+    board.value = createEmptyBoard()
     lastMove.value = null
     result.value = null
     moveError.value = null

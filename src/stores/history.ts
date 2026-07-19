@@ -2,14 +2,22 @@ import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 
 import { ApiError } from '@/api/ApiError'
-import { fetchMatches } from '@/api/match'
-import type { MatchSummary } from '@/types/match'
+import { fetchMatch, fetchMatches } from '@/api/match'
+import type { CellValue, PlayerSymbol } from '@/types/game'
+import type { MatchMove, MatchSummary } from '@/types/match'
+import { createEmptyBoard } from '@/utils/board'
 
 // Matches the backend's default page size, so the first request needs no
 // special-casing and page counts line up with the server's.
 const PAGE_SIZE = 20
 
+/**
+ * Owns the match list (with pagination) and replay. Replay rebuilds the board
+ * from the recorded moves — no game logic runs locally; the board is a pure
+ * function of the move index.
+ */
 export const useHistoryStore = defineStore('history', () => {
+  // --- Match list ---
   const matches = ref<MatchSummary[]>([])
   const page = ref(1)
   const total = ref(0)
@@ -47,6 +55,80 @@ export const useHistoryStore = defineStore('history', () => {
     }
   }
 
+  // --- Replay ---
+  const replayMatch = ref<MatchSummary | null>(null)
+  const moves = ref<MatchMove[]>([])
+  // Number of moves currently shown: 0 is the empty board, moves.length is final.
+  const moveIndex = ref(0)
+  const replayLoading = ref(false)
+  const replayError = ref<string | null>(null)
+
+  const totalMoves = computed(() => moves.value.length)
+  const atStart = computed(() => moveIndex.value === 0)
+  const atEnd = computed(() => moveIndex.value >= moves.value.length)
+
+  // player1 is black (symbol 1) and moves first; player2 is white (symbol 2).
+  function symbolFor(move: MatchMove): PlayerSymbol {
+    return replayMatch.value !== null && move.player_id === replayMatch.value.player1_id ? 1 : 2
+  }
+
+  const replayBoard = computed<CellValue[][]>(() => {
+    const board = createEmptyBoard()
+    for (let i = 0; i < moveIndex.value; i++) {
+      const move = moves.value[i]
+      if (move === undefined) {
+        continue
+      }
+      const column = board[move.x]
+      if (column !== undefined && move.y >= 0 && move.y < column.length) {
+        column[move.y] = symbolFor(move)
+      }
+    }
+    return board
+  })
+
+  const replayLastMove = computed<{ x: number; y: number } | null>(() => {
+    const move = moves.value[moveIndex.value - 1]
+    return move === undefined ? null : { x: move.x, y: move.y }
+  })
+
+  async function loadReplay(id: string): Promise<void> {
+    replayLoading.value = true
+    replayError.value = null
+    replayMatch.value = null
+    moves.value = []
+    moveIndex.value = 0
+    try {
+      const detail = await fetchMatch(id)
+      replayMatch.value = detail.match
+      moves.value = detail.moves
+    } catch (err) {
+      replayError.value = err instanceof ApiError ? err.message : 'Unable to load the replay.'
+    } finally {
+      replayLoading.value = false
+    }
+  }
+
+  function first(): void {
+    moveIndex.value = 0
+  }
+
+  function last(): void {
+    moveIndex.value = moves.value.length
+  }
+
+  function stepNext(): void {
+    if (!atEnd.value) {
+      moveIndex.value += 1
+    }
+  }
+
+  function stepPrev(): void {
+    if (!atStart.value) {
+      moveIndex.value -= 1
+    }
+  }
+
   return {
     matches,
     page,
@@ -59,5 +141,19 @@ export const useHistoryStore = defineStore('history', () => {
     load,
     nextPage,
     prevPage,
+    replayMatch,
+    moveIndex,
+    replayLoading,
+    replayError,
+    totalMoves,
+    atStart,
+    atEnd,
+    replayBoard,
+    replayLastMove,
+    loadReplay,
+    first,
+    last,
+    stepNext,
+    stepPrev,
   }
 })

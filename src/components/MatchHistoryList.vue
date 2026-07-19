@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { RouterLink } from 'vue-router'
 
 import type { MatchSummary } from '@/types/match'
 import { formatDate, shortId } from '@/utils/format'
@@ -63,19 +64,22 @@ const toneClass: Record<Tone, string> = {
 
 <template>
   <ul v-if="rows.length > 0" class="divide-border-subtle divide-y">
-    <li
-      v-for="row in rows"
-      :key="row.id"
-      class="flex items-center justify-between gap-4 py-3"
-      :class="row.mine ? 'bg-primary-600/10 -mx-2 rounded-md px-2' : ''"
-    >
-      <div class="min-w-0">
-        <p class="text-foreground truncate font-medium">
-          <span class="font-mono text-sm">{{ row.players }}</span>
-        </p>
-        <p class="text-foreground-muted mt-0.5 text-xs">{{ row.date }} · {{ row.moves }} moves</p>
-      </div>
-      <span class="shrink-0 text-sm font-semibold" :class="toneClass[row.tone]">{{ row.outcome }}</span>
+    <li v-for="row in rows" :key="row.id">
+      <RouterLink
+        :to="`/replay/${row.id}`"
+        class="hover:bg-surface-elevated -mx-2 flex items-center justify-between gap-4 rounded-md px-2 py-3 transition-colors"
+        :class="row.mine ? 'bg-primary-600/10' : ''"
+      >
+        <div class="min-w-0">
+          <p class="text-foreground truncate font-medium">
+            <span class="font-mono text-sm">{{ row.players }}</span>
+          </p>
+          <p class="text-foreground-muted mt-0.5 text-xs">{{ row.date }} · {{ row.moves }} moves</p>
+        </div>
+        <span class="shrink-0 text-sm font-semibold" :class="toneClass[row.tone]">
+          {{ row.outcome }}
+        </span>
+      </RouterLink>
     </li>
   </ul>
 
