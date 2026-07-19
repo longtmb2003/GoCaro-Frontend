@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 
 import BaseButton from '@/components/BaseButton.vue'
 import LeaderboardTable from '@/components/LeaderboardTable.vue'
@@ -72,6 +72,12 @@ async function handleLogout(): Promise<void> {
       >
         <div class="mb-4 flex items-center justify-between">
           <h2 class="text-foreground text-lg font-semibold">Leaderboard</h2>
+          <RouterLink
+            to="/leaderboard"
+            class="text-primary-400 hover:text-primary-300 text-sm font-medium transition-colors"
+          >
+            View all
+          </RouterLink>
         </div>
 
         <div v-if="leaderboard.loading" class="text-foreground-muted py-8 text-center text-sm">

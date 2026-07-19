@@ -10,11 +10,13 @@ export const useLeaderboardStore = defineStore('leaderboard', () => {
   const loading = ref(false)
   const error = ref<string | null>(null)
 
-  async function load(): Promise<void> {
+  // The lobby loads a short preview (backend default); the leaderboard page
+  // loads the full board by passing a larger limit.
+  async function load(limit?: number): Promise<void> {
     loading.value = true
     error.value = null
     try {
-      entries.value = await fetchLeaderboard()
+      entries.value = await fetchLeaderboard(limit)
     } catch (err) {
       // The panel renders an error state with a retry for any failure. Backend
       // messages are already user-safe (see http.ts); other faults fall back to

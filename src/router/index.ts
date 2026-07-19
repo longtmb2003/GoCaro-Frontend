@@ -29,6 +29,12 @@ const router = createRouter({
       beforeEnter: () => (useGameStore().isInMatch ? true : { name: 'lobby' }),
     },
     {
+      path: '/leaderboard',
+      name: 'leaderboard',
+      component: () => import('@/pages/LeaderboardPage.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/login',
       name: 'login',
       component: () => import('@/pages/LoginPage.vue'),
