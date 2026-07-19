@@ -61,6 +61,14 @@ export class SocketManager {
     }
   }
 
+  /** Serializes and sends a frame. A no-op when the socket is not open. */
+  send(message: SocketMessage): void {
+    if (this.socket === null || this.socket.readyState !== WebSocket.OPEN) {
+      return
+    }
+    this.socket.send(JSON.stringify(message))
+  }
+
   close(): void {
     if (this.socket === null) {
       return
