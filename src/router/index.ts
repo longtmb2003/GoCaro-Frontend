@@ -35,6 +35,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/history',
+      name: 'history',
+      component: () => import('@/pages/HistoryPage.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/login',
       name: 'login',
       component: () => import('@/pages/LoginPage.vue'),

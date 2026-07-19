@@ -64,6 +64,13 @@ async function handleLogout(): Promise<void> {
           </p>
           <BaseButton class="mt-4 w-full" @click="socket.startMatchmaking()">Play</BaseButton>
         </section>
+
+        <RouterLink
+          to="/history"
+          class="border-border-subtle bg-surface hover:bg-surface-elevated block rounded-lg border p-4 text-sm font-medium transition-colors"
+        >
+          Match history
+        </RouterLink>
       </div>
 
       <section
