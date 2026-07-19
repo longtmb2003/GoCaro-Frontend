@@ -51,8 +51,6 @@ export class SocketManager {
       }
     }
 
-    // onerror is always followed by onclose, so a single close callback covers
-    // both failed handshakes and dropped connections.
     socket.onclose = () => {
       if (this.socket === socket) {
         this.socket = null
@@ -73,7 +71,6 @@ export class SocketManager {
     if (this.socket === null) {
       return
     }
-    // Detach handlers so the deliberate close does not re-enter onClose.
     this.socket.onmessage = null
     this.socket.onclose = null
     this.socket.close()

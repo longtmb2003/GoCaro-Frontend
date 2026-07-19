@@ -14,7 +14,6 @@ defineEmits<{ playAgain: []; exit: [] }>()
 const dialog = ref<HTMLElement | null>(null)
 
 onMounted(() => {
-  // Move focus into the dialog so keyboard users land on the result actions.
   dialog.value?.querySelector('button')?.focus()
 })
 
@@ -35,7 +34,9 @@ const headingClass = computed(() =>
     aria-modal="true"
     aria-labelledby="result-heading"
   >
-    <div class="result-card bg-surface-elevated w-full max-w-sm rounded-lg p-6 text-center shadow-lg">
+    <div
+      class="result-card bg-surface-elevated w-full max-w-sm rounded-lg p-6 text-center shadow-lg"
+    >
       <h2 id="result-heading" class="text-2xl font-bold" :class="headingClass">{{ heading }}</h2>
       <p class="text-foreground-muted mt-2 text-sm">{{ message }}</p>
       <div class="mt-6 space-y-2">

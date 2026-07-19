@@ -14,8 +14,6 @@ const router = useRouter()
 const loading = ref(false)
 const serverError = ref('')
 
-// Registration does not return a token, so a successful sign-up is followed
-// immediately by a login to establish the session.
 async function handleSubmit(credentials: Credentials): Promise<void> {
   loading.value = true
   serverError.value = ''
@@ -24,8 +22,6 @@ async function handleSubmit(credentials: Credentials): Promise<void> {
     await auth.login(credentials)
     await router.push('/')
   } catch (error) {
-    // Only registration/login failures belong in the form. Anything else is an
-    // unexpected fault that should surface rather than read as a rejected sign-up.
     if (!(error instanceof ApiError)) {
       throw error
     }

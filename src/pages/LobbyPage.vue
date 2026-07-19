@@ -21,11 +21,10 @@ onMounted(() => {
 })
 
 const isMatchmaking = computed(
-  () => socket.status === 'connecting' || socket.status === 'searching' || socket.status === 'error',
+  () =>
+    socket.status === 'connecting' || socket.status === 'searching' || socket.status === 'error',
 )
 
-// The socket is owned by the store and outlives this page, so navigation on a
-// match is driven by watching its status rather than by the message handler.
 watch(
   () => socket.status,
   (status) => {

@@ -32,7 +32,15 @@ function toRow(match: MatchSummary): HistoryRow {
 
   const { outcome, tone } = describeOutcome(match, mine)
 
-  return { id: match.id, mine, players, outcome, tone, moves: match.total_moves, date: formatDate(match.created_at) }
+  return {
+    id: match.id,
+    mine,
+    players,
+    outcome,
+    tone,
+    moves: match.total_moves,
+    date: formatDate(match.created_at),
+  }
 }
 
 function describeOutcome(match: MatchSummary, mine: boolean): { outcome: string; tone: Tone } {

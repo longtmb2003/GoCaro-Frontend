@@ -7,8 +7,6 @@ import type { CellValue, PlayerSymbol } from '@/types/game'
 import type { MatchMove, MatchSummary } from '@/types/match'
 import { createEmptyBoard } from '@/utils/board'
 
-// Matches the backend's default page size, so the first request needs no
-// special-casing and page counts line up with the server's.
 const PAGE_SIZE = 20
 
 /**
@@ -17,7 +15,6 @@ const PAGE_SIZE = 20
  * function of the move index.
  */
 export const useHistoryStore = defineStore('history', () => {
-  // --- Match list ---
   const matches = ref<MatchSummary[]>([])
   const page = ref(1)
   const total = ref(0)
@@ -55,10 +52,8 @@ export const useHistoryStore = defineStore('history', () => {
     }
   }
 
-  // --- Replay ---
   const replayMatch = ref<MatchSummary | null>(null)
   const moves = ref<MatchMove[]>([])
-  // Number of moves currently shown: 0 is the empty board, moves.length is final.
   const moveIndex = ref(0)
   const replayLoading = ref(false)
   const replayError = ref<string | null>(null)
@@ -67,7 +62,6 @@ export const useHistoryStore = defineStore('history', () => {
   const atStart = computed(() => moveIndex.value === 0)
   const atEnd = computed(() => moveIndex.value >= moves.value.length)
 
-  // player1 is black (symbol 1) and moves first; player2 is white (symbol 2).
   function symbolFor(move: MatchMove): PlayerSymbol {
     return replayMatch.value !== null && move.player_id === replayMatch.value.player1_id ? 1 : 2
   }

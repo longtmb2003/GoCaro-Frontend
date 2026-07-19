@@ -20,8 +20,6 @@ const playing = ref(false)
 const speed = ref(700)
 let timer: ReturnType<typeof setInterval> | null = null
 
-// Reloading on the id (not just on mount) keeps the replay correct if the route
-// param changes while this component is reused.
 watch(
   matchId,
   (id) => {
@@ -57,7 +55,6 @@ function play(): void {
   if (history.totalMoves === 0) {
     return
   }
-  // Restart from the beginning when replaying a finished game.
   if (history.atEnd) {
     history.first()
   }
@@ -85,7 +82,6 @@ function setSpeed(interval: number): void {
   }
 }
 
-// Stepping by hand stops auto-play so the two don't fight over the index.
 function onFirst(): void {
   pause()
   history.first()
@@ -160,7 +156,11 @@ const summary = computed(() => {
       </div>
 
       <div class="flex justify-center">
-        <GameBoard :board="history.replayBoard" :interactive="false" :last-move="history.replayLastMove" />
+        <GameBoard
+          :board="history.replayBoard"
+          :interactive="false"
+          :last-move="history.replayLastMove"
+        />
       </div>
 
       <ReplayControls

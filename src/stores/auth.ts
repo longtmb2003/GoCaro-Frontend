@@ -2,11 +2,7 @@ import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 
 import { ApiError } from '@/api/ApiError'
-import {
-  fetchProfile,
-  login as loginRequest,
-  register as registerRequest,
-} from '@/api/auth'
+import { fetchProfile, login as loginRequest, register as registerRequest } from '@/api/auth'
 import { setAuthToken } from '@/api/http'
 import type { AuthUser, Credentials } from '@/types/auth'
 
@@ -63,8 +59,6 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = result.user
   }
 
-  // Register does not return a token by contract, so the caller logs in
-  // separately after a successful registration.
   async function register(credentials: Credentials): Promise<void> {
     await registerRequest(credentials)
   }
