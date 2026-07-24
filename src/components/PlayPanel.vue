@@ -18,11 +18,13 @@ const emit = defineEmits<{ play: [mode: MatchmakingMode]; upgrade: [] }>()
     </p>
 
     <div class="mt-4 space-y-3">
+      <!-- Reachable by keyboard even for a guest: a disabled button leaves the
+           tab order, so the reason it is locked would never be announced. A
+           guest activating it opens the upgrade dialog instead of queueing. -->
       <BaseButton
         class="w-full"
-        :disabled="isGuest"
         :aria-describedby="isGuest ? 'ranked-locked' : undefined"
-        @click="emit('play', 'ranked')"
+        @click="isGuest ? emit('upgrade') : emit('play', 'ranked')"
       >
         Play ranked
       </BaseButton>
