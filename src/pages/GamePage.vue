@@ -23,22 +23,29 @@ const opponentColor = computed(() => (game.yourSymbol === 1 ? 'White' : 'Black')
 
 const turnLabel = computed(() => (game.yourTurn ? 'Your turn' : `${game.opponent}'s turn`))
 
-const banner = computed<{ heading: string; message: string; tone: GameResult['outcome'] } | null>(
-  () => {
-    if (game.phase === 'connection-lost') {
-      return {
-        heading: 'Connection lost',
-        message: 'You were disconnected from the match.',
-        tone: 'draw',
-      }
+interface Banner {
+  heading: string
+  message: string
+  tone: GameResult['outcome']
+  ratingDelta: number | null
+}
+
+const banner = computed<Banner | null>(() => {
+  if (game.phase === 'connection-lost') {
+    // The match may still be running on the server, so no rating is claimed here.
+    return {
+      heading: 'Connection lost',
+      message: 'You were disconnected from the match.',
+      tone: 'draw',
+      ratingDelta: null,
     }
-    if (game.phase === 'over' && game.result !== null) {
-      const { heading, message } = resultText(game.result)
-      return { heading, message, tone: game.result.outcome }
-    }
-    return null
-  },
-)
+  }
+  if (game.phase === 'over' && game.result !== null) {
+    const { heading, message } = resultText(game.result)
+    return { heading, message, tone: game.result.outcome, ratingDelta: game.result.ratingDelta }
+  }
+  return null
+})
 
 function resultText(result: GameResult): { heading: string; message: string } {
   if (result.outcome === 'draw') {
@@ -169,6 +176,7 @@ async function playAgain(): Promise<void> {
       :heading="banner.heading"
       :message="banner.message"
       :tone="banner.tone"
+      :rating-delta="banner.ratingDelta"
       @play-again="playAgain"
       @exit="leave"
     />

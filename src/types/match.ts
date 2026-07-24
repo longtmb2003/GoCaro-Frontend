@@ -12,6 +12,8 @@ export interface MatchSummary {
   player2_id: string
   winner_id: string | null
   status: MatchStatus
+  /** Whether this result moved both players' ratings. */
+  is_ranked: boolean
   total_moves: number
   created_at: string
   finished_at: string | null

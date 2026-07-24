@@ -23,6 +23,17 @@ import type {
  */
 export type MatchmakingStatus = 'idle' | 'connecting' | 'searching' | 'matched' | 'error'
 
+/**
+ * Wording for the queue refusals a player can actually cause, which the backend
+ * states in its own terms. Both mean the account is busy somewhere else — most
+ * often a forgotten second tab — so the message says where to look. Any other
+ * code falls back to the server's message.
+ */
+const QUEUE_ERROR_MESSAGES: Record<string, string> = {
+  ALREADY_IN_MATCH: 'You are already in a match, probably in another tab. Finish it before starting another.',
+  ALREADY_QUEUED: 'You are already searching for a match, probably in another tab.',
+}
+
 export const useSocketStore = defineStore('socket', () => {
   const status = ref<MatchmakingStatus>('idle')
   const errorMessage = ref<string | null>(null)
@@ -105,7 +116,11 @@ export const useSocketStore = defineStore('socket', () => {
         if (isGameOverPayload(message.payload)) {
           const { winner, reason } = message.payload
           const outcome = winner === null ? 'draw' : winner === auth.user?.id ? 'win' : 'loss'
-          game.finish({ outcome, reason })
+          game.finish({
+            outcome,
+            reason,
+            ratingDelta: ratingDeltaFor(message.payload, game.yourSymbol),
+          })
         }
         break
       case 'error':
@@ -122,9 +137,11 @@ export const useSocketStore = defineStore('socket', () => {
       return
     }
     status.value = 'error'
-    errorMessage.value = isErrorPayload(payload)
-      ? payload.message
-      : 'Matchmaking failed. Please try again.'
+    if (!isErrorPayload(payload)) {
+      errorMessage.value = 'Matchmaking failed. Please try again.'
+      return
+    }
+    errorMessage.value = QUEUE_ERROR_MESSAGES[payload.code] ?? payload.message
   }
 
   function handleClose(): void {
@@ -181,6 +198,26 @@ function isMatchFoundPayload(payload: unknown): payload is MatchFoundPayload {
     isPlayerSymbol(record.your_symbol) &&
     typeof record.your_turn === 'boolean'
   )
+}
+
+/**
+ * Picks this player's side of a ranked result: black is symbol 1, white is 2.
+ *
+ * Returns null whenever no rating was at stake, so the UI can stay silent rather
+ * than show a misleading zero. It reads the raw frame instead of the narrowed
+ * payload on purpose: a `game_over` that arrives without rating fields must
+ * still end the match, since the result matters far more than the number.
+ */
+function ratingDeltaFor(payload: unknown, symbol: PlayerSymbol | null): number | null {
+  if (typeof payload !== 'object' || payload === null || symbol === null) {
+    return null
+  }
+  const record = payload as Record<string, unknown>
+  if (record.is_ranked !== true) {
+    return null
+  }
+  const delta = symbol === 1 ? record.delta_black : record.delta_white
+  return typeof delta === 'number' ? delta : null
 }
 
 function isQueueSearchingPayload(payload: unknown): payload is QueueSearchingPayload {

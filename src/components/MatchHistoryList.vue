@@ -18,6 +18,7 @@ interface HistoryRow {
   players: string
   outcome: string
   tone: Tone
+  ranked: boolean
   moves: number
   date: string
 }
@@ -38,6 +39,7 @@ function toRow(match: MatchSummary): HistoryRow {
     players,
     outcome,
     tone,
+    ranked: match.is_ranked,
     moves: match.total_moves,
     date: formatDate(match.created_at),
   }
@@ -82,7 +84,19 @@ const toneClass: Record<Tone, string> = {
           <p class="text-foreground truncate font-medium">
             <span class="font-mono text-sm">{{ row.players }}</span>
           </p>
-          <p class="text-foreground-muted mt-0.5 text-xs">{{ row.date }} · {{ row.moves }} moves</p>
+          <p class="text-foreground-muted mt-1 flex items-center gap-2 text-xs">
+            <span
+              class="rounded-sm px-1.5 py-0.5 text-[0.65rem] font-semibold tracking-wide uppercase"
+              :class="
+                row.ranked
+                  ? 'bg-primary-600/15 text-primary-400'
+                  : 'bg-foreground/5 text-foreground-muted'
+              "
+            >
+              {{ row.ranked ? 'Ranked' : 'Casual' }}
+            </span>
+            <span>{{ row.date }} · {{ row.moves }} moves</span>
+          </p>
         </div>
         <span class="shrink-0 text-sm font-semibold" :class="toneClass[row.tone]">
           {{ row.outcome }}
