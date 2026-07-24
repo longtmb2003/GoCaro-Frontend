@@ -8,7 +8,9 @@ import type {
   BoardUpdatePayload,
   GameOverPayload,
   MatchFoundPayload,
+  MatchmakingMode,
   PlayerSymbol,
+  QueueSearchingPayload,
 } from '@/types/game'
 
 /**
@@ -24,22 +26,36 @@ export type MatchmakingStatus = 'idle' | 'connecting' | 'searching' | 'matched' 
 export const useSocketStore = defineStore('socket', () => {
   const status = ref<MatchmakingStatus>('idle')
   const errorMessage = ref<string | null>(null)
+  /** Which queue the current (or last) search ran on. */
+  const mode = ref<MatchmakingMode>('casual')
+  /** Latest ranked search progress, reset whenever a new search starts. */
+  const searchProgress = ref<QueueSearchingPayload | null>(null)
 
   const auth = useAuthStore()
   const game = useGameStore()
 
   const manager = new SocketManager()
 
-  function startMatchmaking(): void {
+  function startMatchmaking(searchMode: MatchmakingMode = 'casual'): void {
     if (auth.token === null) {
       status.value = 'error'
       errorMessage.value = 'You are not signed in.'
       return
     }
+    // The backend refuses a guest with a 403 before the WebSocket upgrade, but a
+    // browser reports a rejected handshake as a bare connection failure. Deciding
+    // here is what lets the player be told why (see BACKEND_CONTRACT.md).
+    if (searchMode === 'ranked' && auth.isGuest) {
+      status.value = 'error'
+      errorMessage.value = 'Ranked play requires a saved account.'
+      return
+    }
 
+    mode.value = searchMode
+    searchProgress.value = null
     status.value = 'connecting'
     errorMessage.value = null
-    manager.connect(matchmakeUrl(auth.token), {
+    manager.connect(matchmakeUrl(auth.token, searchMode), {
       onMessage: handleMessage,
       onClose: handleClose,
     })
@@ -67,6 +83,11 @@ export const useSocketStore = defineStore('socket', () => {
     switch (message.type) {
       case 'queued':
         status.value = 'searching'
+        break
+      case 'queue_searching':
+        if (isQueueSearchingPayload(message.payload)) {
+          searchProgress.value = message.payload
+        }
         break
       case 'match_found':
         if (isMatchFoundPayload(message.payload)) {
@@ -118,6 +139,7 @@ export const useSocketStore = defineStore('socket', () => {
   function teardown(): void {
     status.value = 'idle'
     errorMessage.value = null
+    searchProgress.value = null
     manager.close()
     game.reset()
   }
@@ -134,6 +156,8 @@ export const useSocketStore = defineStore('socket', () => {
   return {
     status,
     errorMessage,
+    mode,
+    searchProgress,
     startMatchmaking,
     cancelMatchmaking,
     sendMove,
@@ -157,6 +181,14 @@ function isMatchFoundPayload(payload: unknown): payload is MatchFoundPayload {
     isPlayerSymbol(record.your_symbol) &&
     typeof record.your_turn === 'boolean'
   )
+}
+
+function isQueueSearchingPayload(payload: unknown): payload is QueueSearchingPayload {
+  if (typeof payload !== 'object' || payload === null) {
+    return false
+  }
+  const record = payload as Record<string, unknown>
+  return typeof record.elapsed_seconds === 'number' && typeof record.search_range === 'number'
 }
 
 function isBoardUpdatePayload(payload: unknown): payload is BoardUpdatePayload {

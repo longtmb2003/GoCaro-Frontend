@@ -8,6 +8,22 @@ export type CellValue = PlayerSymbol | null
 export const BOARD_SIZE = 15
 
 /**
+ * Which queue a search runs on. Casual pairs FIFO and is open to guests; ranked
+ * pairs by rating, moves elo, and requires a registered account.
+ */
+export type MatchmakingMode = 'casual' | 'ranked'
+
+/**
+ * Payload of a `queue_searching` frame: how long this player has waited and how
+ * wide their rating search has grown. Ranked only, and sent only when the band
+ * actually widens (see BACKEND_CONTRACT.md).
+ */
+export interface QueueSearchingPayload {
+  elapsed_seconds: number
+  search_range: number
+}
+
+/**
  * Payload of the `match_found` WebSocket frame (see BACKEND_CONTRACT.md). Field
  * names mirror the wire format exactly; the contract is the source of truth.
  */

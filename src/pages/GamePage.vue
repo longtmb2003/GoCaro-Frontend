@@ -73,15 +73,31 @@ function confirmResign(): void {
   confirmingResign.value = false
 }
 
+/**
+ * A ranked result moves both ratings, but the backend applies elo asynchronously
+ * after `game_over` and never sends the new number over the socket. Reloading the
+ * profile on the way out is what makes the lobby show the updated rating; it is
+ * deliberately not awaited, since the rating is informational and the player
+ * should not wait on it to leave.
+ */
+function refreshRatingIfRanked(): void {
+  if (socket.mode === 'ranked') {
+    void auth.refreshProfile()
+  }
+}
+
 async function leave(): Promise<void> {
+  refreshRatingIfRanked()
   socket.leaveGame()
   await router.push('/')
 }
 
 async function playAgain(): Promise<void> {
+  const mode = socket.mode
+  refreshRatingIfRanked()
   socket.leaveGame()
   await router.push('/')
-  socket.startMatchmaking()
+  socket.startMatchmaking(mode)
 }
 </script>
 
@@ -108,7 +124,7 @@ async function playAgain(): Promise<void> {
         <div class="grid grid-cols-2 gap-3">
           <div class="border-border-subtle bg-surface rounded-lg border p-3 text-center">
             <p class="text-foreground-muted text-xs font-medium tracking-wide uppercase">You</p>
-            <p class="text-foreground mt-1 truncate font-semibold">{{ auth.user?.username }}</p>
+            <p class="text-foreground mt-1 truncate font-semibold">{{ auth.displayName }}</p>
             <p class="text-foreground-muted mt-0.5 text-sm">{{ yourColor }}</p>
           </div>
           <div class="border-border-subtle bg-surface rounded-lg border p-3 text-center">

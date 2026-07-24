@@ -1,3 +1,5 @@
+import type { MatchmakingMode } from '@/types/game'
+
 /**
  * The one WebSocket frame envelope, in both directions (see BACKEND_CONTRACT.md).
  * `payload` is left as `unknown`; each store narrows it for the frame types it
@@ -15,18 +17,20 @@ export interface SocketCallbacks {
 }
 
 /**
- * Builds the matchmaking WebSocket URL. The backend authenticates the socket by
- * a `token` query parameter because browsers cannot set headers on a WebSocket
- * handshake. In development `VITE_API_BASE_URL` is empty and the request is
- * same-origin so the Vite dev server proxies `/ws` to the backend; in production
- * it points at the backend origin, from which the ws(s) scheme is derived.
+ * Builds the matchmaking WebSocket URL for a queue. The backend authenticates
+ * the socket by a `token` query parameter because browsers cannot set headers on
+ * a WebSocket handshake. In development `VITE_API_BASE_URL` is empty and the
+ * request is same-origin so the Vite dev server proxies `/ws` to the backend; in
+ * production it points at the backend origin, from which the ws(s) scheme is
+ * derived.
  */
-export function matchmakeUrl(token: string): string {
+export function matchmakeUrl(token: string, mode: MatchmakingMode): string {
   const base = import.meta.env.VITE_API_BASE_URL
   const origin = base
     ? base.replace(/^http/, 'ws')
     : `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}`
-  return `${origin}/ws/matchmake?token=${encodeURIComponent(token)}`
+  const path = mode === 'ranked' ? '/ws/matchmake/ranked' : '/ws/matchmake'
+  return `${origin}${path}?token=${encodeURIComponent(token)}`
 }
 
 /**

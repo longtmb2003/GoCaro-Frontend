@@ -3,11 +3,20 @@ import { computed, onMounted, ref } from 'vue'
 
 import BaseButton from '@/components/BaseButton.vue'
 import type { MatchmakingStatus } from '@/stores/socket'
+import type { MatchmakingMode, QueueSearchingPayload } from '@/types/game'
 
-const props = defineProps<{
-  status: MatchmakingStatus
-  errorMessage: string | null
-}>()
+const props = withDefaults(
+  defineProps<{
+    status: MatchmakingStatus
+    errorMessage: string | null
+    mode?: MatchmakingMode
+    searchProgress?: QueueSearchingPayload | null
+  }>(),
+  {
+    mode: 'casual',
+    searchProgress: null,
+  },
+)
 
 const emit = defineEmits<{ cancel: []; retry: [] }>()
 
@@ -17,8 +26,25 @@ const heading = computed(() =>
     ? 'Connecting…'
     : isError.value
       ? 'Matchmaking failed'
-      : 'Finding an opponent',
+      : props.mode === 'ranked'
+        ? 'Finding a ranked opponent'
+        : 'Finding an opponent',
 )
+
+/**
+ * Ranked widens the rating it accepts the longer a player waits, and the server
+ * reports each widening. Showing it turns a silent wait into visible progress.
+ */
+const progressLabel = computed(() => {
+  const progress = props.searchProgress
+  if (props.mode !== 'ranked' || progress === null) {
+    return null
+  }
+  return (
+    `Waited ${progress.elapsed_seconds.toString()}s · ` +
+    `searching within ±${progress.search_range.toString()} rating`
+  )
+})
 
 const dialog = ref<HTMLElement | null>(null)
 
@@ -55,7 +81,9 @@ function onKeydown(event: KeyboardEvent): void {
         {{ errorMessage ?? 'Something went wrong.' }}
       </p>
       <p v-else class="text-foreground-muted mt-2 text-sm" aria-live="polite">
-        <template v-if="status === 'searching'">Searching for a worthy opponent…</template>
+        <template v-if="status === 'searching'">
+          {{ progressLabel ?? 'Searching for a worthy opponent…' }}
+        </template>
         <template v-else>Opening a connection…</template>
       </p>
 
