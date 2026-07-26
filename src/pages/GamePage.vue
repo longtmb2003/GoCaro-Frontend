@@ -116,6 +116,37 @@ async function playAgain(): Promise<void> {
   await router.push('/')
   socket.startMatchmaking(mode)
 }
+
+async function shareAchievement(): Promise<void> {
+  const onSuccess = () => {
+    alert('Link shared! Thanks for sharing!')
+  }
+
+  // `navigator.share` is typed as always present but is absent in many browsers.
+  // Cast to a possibly-undefined function so the feature check is real and the
+  // fallback branch keeps full access to `navigator`.
+  const nativeShare = (navigator.share as ((data: ShareData) => Promise<void>) | undefined)?.bind(
+    navigator,
+  )
+  if (nativeShare) {
+    try {
+      await nativeShare({
+        title: 'GoCaro - Play Gomoku Online',
+        text: 'I just won a match of Gomoku on GoCaro!',
+        url: window.location.origin,
+      })
+      const granted = await auth.shareAchievement()
+      if (granted) alert('You earned 50 Coins for sharing!')
+    } catch {
+      // The user dismissed the share sheet, or sharing failed; nothing to recover.
+    }
+  } else {
+    void navigator.clipboard.writeText(window.location.origin)
+    const granted = await auth.shareAchievement()
+    if (granted) alert('You earned 50 Coins for sharing!')
+    onSuccess()
+  }
+}
 </script>
 
 <template>
@@ -216,6 +247,7 @@ async function playAgain(): Promise<void> {
       :rating-delta="banner.ratingDelta"
       @play-again="playAgain"
       @exit="leave"
+      @share="shareAchievement"
     />
 
     <!-- Draw Offer Dialog -->

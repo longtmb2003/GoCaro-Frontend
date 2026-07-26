@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import BaseButton from '@/components/BaseButton.vue'
 import type { MatchmakingMode } from '@/types/game'
 
 withDefaults(defineProps<{ isGuest?: boolean }>(), { isGuest: false })
@@ -8,41 +7,43 @@ const emit = defineEmits<{ play: [mode: MatchmakingMode]; upgrade: [] }>()
 </script>
 
 <template>
-  <section
-    class="border-border-subtle bg-surface rounded-lg border p-6 shadow-sm"
-    aria-label="Play"
-  >
-    <h2 class="text-foreground text-lg font-semibold">Ready to play?</h2>
-    <p class="text-foreground-muted mt-1 text-sm">
-      Ranked matches move your rating. Casual matches leave it alone.
-    </p>
-
-    <div class="mt-4 space-y-3">
-      <!-- Reachable by keyboard even for a guest: a disabled button leaves the
-           tab order, so the reason it is locked would never be announced. A
-           guest activating it opens the upgrade dialog instead of queueing. -->
-      <BaseButton
-        class="w-full"
+  <section aria-label="Play">
+    <div class="mb-4 flex items-center gap-2">
+      <h2 class="text-foreground text-lg font-bold flex items-center gap-2">
+        <span class="text-2xl animate-pulse">⚔️</span> Ready for Battle?
+      </h2>
+      <div class="h-px flex-1 bg-gradient-to-r from-border-subtle to-transparent ml-2"></div>
+    </div>
+    
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <!-- Ranked Card -->
+      <button
+        class="cursor-pointer relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary-600 via-primary-500 to-secondary-500 p-5 text-left shadow-lg ring-1 ring-white/20 transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-primary-500/30 group"
         :aria-describedby="isGuest ? 'ranked-locked' : undefined"
         @click="isGuest ? emit('upgrade') : emit('play', 'ranked')"
       >
-        Play ranked
-      </BaseButton>
+        <div class="absolute -right-4 -top-4 text-6xl opacity-20 transition-transform group-hover:scale-110 group-hover:rotate-12">🏆</div>
+        <h3 class="text-xl font-bold text-white drop-shadow-sm">Ranked</h3>
+        <p class="mt-1 text-xs font-medium text-white/90">Play for ELO rating</p>
+        
+        <div v-if="isGuest" id="ranked-locked" class="mt-3 inline-flex items-center gap-1 rounded-full bg-black/30 px-2.5 py-1 text-[10px] font-bold text-white backdrop-blur-sm">
+          <span>🔒 Sign in required</span>
+        </div>
+      </button>
 
-      <p v-if="isGuest" id="ranked-locked" class="text-foreground-muted text-sm">
-        Ranked needs a saved account.
-        <button
-          type="button"
-          class="text-primary-400 hover:text-primary-300 font-medium underline-offset-2 hover:underline"
-          @click="emit('upgrade')"
-        >
-          Save progress
-        </button>
-      </p>
-
-      <BaseButton variant="secondary" class="w-full" @click="emit('play', 'casual')">
-        Play casual
-      </BaseButton>
+      <!-- Casual Card -->
+      <button
+        class="cursor-pointer relative overflow-hidden rounded-2xl bg-surface-elevated p-5 text-left shadow-lg ring-1 ring-border-subtle transition-all hover:-translate-y-1 hover:shadow-xl hover:bg-surface/80 group"
+        @click="emit('play', 'casual')"
+      >
+        <div class="absolute -right-4 -top-4 text-6xl opacity-10 transition-transform group-hover:scale-110 group-hover:-rotate-12">😊</div>
+        <h3 class="text-xl font-bold text-foreground drop-shadow-sm">Casual</h3>
+        <p class="mt-1 text-xs font-medium text-foreground-muted">Just for fun, no pressure</p>
+        
+        <div class="mt-3 inline-flex items-center gap-1 rounded-full bg-primary-500/10 px-2.5 py-1 text-[10px] font-bold text-primary-500">
+          <span>🎮 Practice mode</span>
+        </div>
+      </button>
     </div>
   </section>
 </template>

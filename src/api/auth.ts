@@ -31,3 +31,8 @@ export async function fetchProfile(): Promise<AuthUser> {
   const { data } = await http.get<Envelope<AuthUser>>('/api/profile')
   return data.data
 }
+
+export async function shareAchievement(): Promise<boolean> {
+  const { data } = await http.post<Envelope<{ granted: boolean }>>('/api/users/share')
+  return data.data.granted
+}

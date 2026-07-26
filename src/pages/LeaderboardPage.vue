@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, computed } from 'vue'
 import { RouterLink } from 'vue-router'
 
 import BaseButton from '@/components/BaseButton.vue'
@@ -9,18 +9,32 @@ import { useAuthStore } from '@/stores/auth'
 import { useLeaderboardStore } from '@/stores/leaderboard'
 
 const FULL_LEADERBOARD_LIMIT = 100
+const PAGE_SIZE = 20
 
 const auth = useAuthStore()
 const leaderboard = useLeaderboardStore()
 
 const searchQuery = ref('')
-let searchTimeout: ReturnType<typeof setTimeout> | null = null
+const currentPage = ref(1)
 
 function handleSearch() {
-  if (searchTimeout) clearTimeout(searchTimeout)
-  searchTimeout = setTimeout(() => {
-    void leaderboard.load(FULL_LEADERBOARD_LIMIT, searchQuery.value)
-  }, 300)
+  currentPage.value = 1
+  void leaderboard.load(FULL_LEADERBOARD_LIMIT, searchQuery.value)
+}
+
+const paginatedEntries = computed(() => {
+  const start = (currentPage.value - 1) * PAGE_SIZE
+  return leaderboard.entries.slice(start, start + PAGE_SIZE)
+})
+
+const totalPages = computed(() => Math.ceil(leaderboard.entries.length / PAGE_SIZE) || 1)
+
+function nextPage() {
+  if (currentPage.value < totalPages.value) currentPage.value++
+}
+
+function prevPage() {
+  if (currentPage.value > 1) currentPage.value--
 }
 
 onMounted(() => {
@@ -45,14 +59,15 @@ onMounted(() => {
     >
       <div class="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <h2 class="text-foreground text-lg font-semibold">Top players</h2>
-        <div class="relative w-full sm:w-64">
+        <div class="relative w-full sm:w-auto flex gap-2">
           <input
             v-model="searchQuery"
             type="text"
             placeholder="Search by username..."
-            class="border-border-subtle bg-background text-foreground focus:border-primary-500 focus:ring-primary-500/20 w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 transition-all"
-            @input="handleSearch"
+            class="border-border-subtle bg-background text-foreground focus:border-primary-500 focus:ring-primary-500/20 w-full sm:w-64 rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 transition-all"
+            @keyup.enter="handleSearch"
           />
+          <BaseButton @click="handleSearch">Search</BaseButton>
         </div>
       </div>
 
@@ -71,11 +86,27 @@ onMounted(() => {
         </BaseButton>
       </div>
 
-      <LeaderboardTable
-        v-else
-        :entries="leaderboard.entries"
-        :current-username="auth.user?.username ?? ''"
-      />
+      <template v-else>
+        <LeaderboardTable
+          :entries="paginatedEntries"
+          :current-username="auth.user?.username ?? ''"
+        />
+
+        <div
+          v-if="leaderboard.entries.length > 0"
+          class="border-border-subtle mt-4 flex items-center justify-between border-t pt-4"
+        >
+          <BaseButton variant="secondary" :disabled="currentPage <= 1" @click="prevPage">
+            Previous
+          </BaseButton>
+          <span class="text-foreground-muted text-sm tabular-nums">
+            Page {{ currentPage }} of {{ totalPages }}
+          </span>
+          <BaseButton variant="secondary" :disabled="currentPage >= totalPages" @click="nextPage">
+            Next
+          </BaseButton>
+        </div>
+      </template>
     </section>
   </AppLayout>
 </template>

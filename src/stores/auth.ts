@@ -7,6 +7,7 @@ import {
   fetchProfile,
   login as loginRequest,
   register as registerRequest,
+  shareAchievement as shareAchievementRequest,
   upgradeAccount as upgradeRequest,
 } from '@/api/auth'
 import { setAuthToken } from '@/api/http'
@@ -131,6 +132,15 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = result.user
   }
 
+  async function shareAchievement(): Promise<boolean> {
+    const granted = await shareAchievementRequest()
+    if (granted && user.value) {
+      user.value.stats.coins += 50
+      user.value.stats.last_share_date = new Date().toISOString()
+    }
+    return granted
+  }
+
   return {
     token,
     user,
@@ -144,5 +154,6 @@ export const useAuthStore = defineStore('auth', () => {
     anonymousLogin,
     upgrade,
     logout,
+    shareAchievement,
   }
 })

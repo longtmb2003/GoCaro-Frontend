@@ -52,6 +52,31 @@
   --transition-duration-fast: 120ms;
   --transition-duration-normal: 200ms;
   --transition-duration-slow: 320ms;
+  
+  --animate-glow: glow 2s ease-in-out infinite alternate;
+  --animate-float: float 3s ease-in-out infinite;
+  --animate-light-sweep: light-sweep 3s linear infinite;
+  --animate-fade-in: fade-in 0.5s ease-out forwards;
+}
+
+@keyframes glow {
+  from { box-shadow: 0 0 10px -2px var(--color-primary-500); }
+  to { box-shadow: 0 0 20px 2px var(--color-primary-400); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes light-sweep {
+  0% { transform: translateX(-100%) skewX(-15deg); }
+  100% { transform: translateX(200%) skewX(-15deg); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @theme inline {

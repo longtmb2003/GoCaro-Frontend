@@ -9,7 +9,7 @@ const { loading, error, playAsGuest } = useGuestLogin()
 
 <template>
   <div>
-    <BaseButton class="w-full" :loading="loading" :disabled="disabled" @click="playAsGuest">
+    <BaseButton class="w-full h-12 text-base" variant="secondary" :loading="loading" :disabled="disabled" @click="playAsGuest">
       Play as guest
     </BaseButton>
     <p class="text-foreground-muted mt-2 text-center text-xs">

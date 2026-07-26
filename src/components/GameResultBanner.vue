@@ -14,7 +14,7 @@ const props = withDefaults(
   { ratingDelta: null },
 )
 
-defineEmits<{ playAgain: []; exit: [] }>()
+defineEmits<{ playAgain: []; exit: []; share: [] }>()
 
 const dialog = ref<HTMLElement | null>(null)
 
@@ -83,6 +83,9 @@ const ratingClass = computed(() => {
       </p>
 
       <div class="mt-6 space-y-2">
+        <BaseButton v-if="tone === 'win'" class="w-full bg-gradient-to-r from-success-500 to-emerald-600 border-0 text-white shadow-lg shadow-success-500/20" @click="$emit('share')">
+          🔗 Share Achievement (+50 Coins)
+        </BaseButton>
         <BaseButton class="w-full" @click="$emit('playAgain')">Play again</BaseButton>
         <BaseButton variant="secondary" class="w-full" @click="$emit('exit')">
           Back to lobby

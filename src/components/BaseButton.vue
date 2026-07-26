@@ -21,9 +21,9 @@ const props = withDefaults(
 const isDisabled = computed(() => props.disabled || props.loading)
 
 const variantClasses: Record<Variant, string> = {
-  primary: 'bg-primary-600 text-white hover:bg-primary-500',
-  secondary: 'bg-surface-elevated text-foreground border border-border-subtle hover:bg-surface',
-  danger: 'bg-danger-600 text-white hover:bg-danger-500',
+  primary: 'bg-gradient-to-r from-primary-600 to-primary-500 text-white shadow-lg shadow-primary-500/20 hover:shadow-primary-500/40 hover:from-primary-500 hover:to-primary-400 border border-primary-400/20',
+  secondary: 'bg-surface-elevated text-foreground border border-border-subtle hover:bg-surface hover:border-primary-500/30 hover:shadow-[0_0_10px_rgba(59,130,246,0.1)] transition-all',
+  danger: 'bg-gradient-to-r from-danger-600 to-danger-500 text-white shadow-lg shadow-danger-500/20 hover:shadow-danger-500/40 hover:from-danger-500 hover:to-danger-400 border border-danger-400/20',
 }
 </script>
 
@@ -31,7 +31,7 @@ const variantClasses: Record<Variant, string> = {
   <button
     :type="type"
     :disabled="isDisabled"
-    class="inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+    class="inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
     :class="variantClasses[variant]"
   >
     <svg
