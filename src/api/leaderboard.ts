@@ -6,9 +6,13 @@ interface LeaderboardData {
   leaderboard: LeaderboardEntry[]
 }
 
-export async function fetchLeaderboard(limit?: number): Promise<LeaderboardEntry[]> {
+export async function fetchLeaderboard(limit = 20, search = ''): Promise<LeaderboardEntry[]> {
+  const params: Record<string, string> = {}
+  if (limit) params.limit = limit.toString()
+  if (search) params.search = search
+
   const { data } = await http.get<Envelope<LeaderboardData>>('/api/leaderboard', {
-    params: limit === undefined ? undefined : { limit },
+    params,
   })
   return data.data.leaderboard
 }

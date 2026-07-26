@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 
 import BaseButton from '@/components/BaseButton.vue'
@@ -13,8 +13,18 @@ const FULL_LEADERBOARD_LIMIT = 100
 const auth = useAuthStore()
 const leaderboard = useLeaderboardStore()
 
+const searchQuery = ref('')
+let searchTimeout: ReturnType<typeof setTimeout> | null = null
+
+function handleSearch() {
+  if (searchTimeout) clearTimeout(searchTimeout)
+  searchTimeout = setTimeout(() => {
+    void leaderboard.load(FULL_LEADERBOARD_LIMIT, searchQuery.value)
+  }, 300)
+}
+
 onMounted(() => {
-  void leaderboard.load(FULL_LEADERBOARD_LIMIT)
+  void leaderboard.load(FULL_LEADERBOARD_LIMIT, '')
 })
 </script>
 
@@ -33,7 +43,18 @@ onMounted(() => {
       class="border-border-subtle bg-surface mx-auto max-w-2xl rounded-lg border p-6 shadow-sm"
       aria-label="Leaderboard"
     >
-      <h2 class="text-foreground mb-4 text-lg font-semibold">Top players</h2>
+      <div class="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <h2 class="text-foreground text-lg font-semibold">Top players</h2>
+        <div class="relative w-full sm:w-64">
+          <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="Search by username..."
+            class="border-border-subtle bg-background text-foreground focus:border-primary-500 focus:ring-primary-500/20 w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 transition-all"
+            @input="handleSearch"
+          />
+        </div>
+      </div>
 
       <div v-if="leaderboard.loading" class="text-foreground-muted py-8 text-center text-sm">
         Loading leaderboard…
