@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>GoCaro</title>
+    <link rel="icon" type="image/png" href="/gocaro_logo.png" />
     <!-- Open Graph / Social Media Thumbnail -->
     <meta property="og:title" content="GoCaro - Multiplayer Gomoku" />
     <meta property="og:description" content="Play Caro (Gomoku) online with your friends in real-time." />
@@ -13,6 +14,17 @@
   </head>
   <body>
     <div id="app"></div>
+    <div id="error-display" style="position: fixed; top: 0; left: 0; z-index: 9999; background: red; color: white; padding: 20px; display: none; width: 100%; white-space: pre-wrap; font-family: monospace;"></div>
+    <script>
+      window.addEventListener('error', function(e) {
+        document.getElementById('error-display').style.display = 'block';
+        document.getElementById('error-display').innerText += e.message + '\n' + (e.error && e.error.stack ? e.error.stack : '') + '\n\n';
+      });
+      window.addEventListener('unhandledrejection', function(e) {
+        document.getElementById('error-display').style.display = 'block';
+        document.getElementById('error-display').innerText += 'Unhandled Promise Rejection: ' + e.reason + '\n\n';
+      });
+    </script>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
