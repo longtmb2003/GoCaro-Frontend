@@ -4,6 +4,7 @@ import { RouterLink, useRouter } from 'vue-router'
 
 import { ApiError } from '@/api/ApiError'
 import CredentialsForm from '@/components/CredentialsForm.vue'
+import PlayAsGuestButton from '@/components/PlayAsGuestButton.vue'
 import AuthLayout from '@/layouts/AuthLayout.vue'
 import { useAuthStore } from '@/stores/auth'
 import type { Credentials } from '@/types/auth'
@@ -34,6 +35,14 @@ async function handleSubmit(credentials: Credentials): Promise<void> {
 
 <template>
   <AuthLayout title="Create account" subtitle="Join GoCaro and start playing">
+    <PlayAsGuestButton :disabled="loading" />
+
+    <div class="my-6 flex items-center gap-3">
+      <span class="bg-border-subtle h-px flex-1" aria-hidden="true" />
+      <span class="text-foreground-muted text-xs font-medium uppercase">or</span>
+      <span class="bg-border-subtle h-px flex-1" aria-hidden="true" />
+    </div>
+
     <CredentialsForm
       submit-label="Create account"
       password-autocomplete="new-password"

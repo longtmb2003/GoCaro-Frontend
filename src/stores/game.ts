@@ -1,7 +1,13 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 
-import type { CellValue, GameResult, MatchFoundPayload, PlayerSymbol } from '@/types/game'
+import type {
+  CellValue,
+  GameResult,
+  MatchFoundPayload,
+  PlayerSymbol,
+  SyncMove,
+} from '@/types/game'
 import { createEmptyBoard } from '@/utils/board'
 
 /**
@@ -66,6 +72,32 @@ export const useGameStore = defineStore('game', () => {
     yourTurn.value = false
   }
 
+  /**
+   * Rebuilds the match from a `sync_state` frame after a reconnect. The board is
+   * replaced, not appended to: while disconnected the opponent may have moved,
+   * so the frame's move list — not the stale local board — is the truth. Each
+   * move already carries its symbol, so no id-to-colour lookup is needed.
+   *
+   * roomId and opponent are left untouched: this is the same match resuming, and
+   * they were never cleared while the socket was down.
+   */
+  function syncFromState(moves: SyncMove[], symbol: PlayerSymbol, myTurn: boolean): void {
+    const rebuilt = createEmptyBoard()
+    for (const move of moves) {
+      const column = rebuilt[move.x]
+      if (column !== undefined && move.y >= 0 && move.y < column.length) {
+        column[move.y] = move.symbol
+      }
+    }
+    board.value = rebuilt
+    const last = moves[moves.length - 1]
+    lastMove.value = last === undefined ? null : { x: last.x, y: last.y }
+    yourSymbol.value = symbol
+    yourTurn.value = myTurn
+    phase.value = 'playing'
+    moveError.value = null
+  }
+
   function setMoveError(message: string): void {
     moveError.value = message
   }
@@ -98,6 +130,7 @@ export const useGameStore = defineStore('game', () => {
     applyMove,
     finish,
     markConnectionLost,
+    syncFromState,
     setMoveError,
     reset,
   }

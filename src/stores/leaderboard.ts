@@ -10,11 +10,11 @@ export const useLeaderboardStore = defineStore('leaderboard', () => {
   const loading = ref(false)
   const error = ref<string | null>(null)
 
-  async function load(limit?: number): Promise<void> {
+  async function load(limit: number = 50, search: string = ''): Promise<void> {
     loading.value = true
     error.value = null
     try {
-      entries.value = await fetchLeaderboard(limit)
+      entries.value = await fetchLeaderboard(limit, search)
     } catch (err) {
       error.value = err instanceof ApiError ? err.message : 'Unable to load the leaderboard.'
     } finally {

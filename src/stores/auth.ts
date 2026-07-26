@@ -2,17 +2,45 @@ import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 
 import { ApiError } from '@/api/ApiError'
-import { fetchProfile, login as loginRequest, register as registerRequest } from '@/api/auth'
+import {
+  anonymousLogin as anonymousLoginRequest,
+  fetchProfile,
+  login as loginRequest,
+  register as registerRequest,
+  upgradeAccount as upgradeRequest,
+} from '@/api/auth'
 import { setAuthToken } from '@/api/http'
 import type { AuthUser, Credentials } from '@/types/auth'
 
 const TOKEN_STORAGE_KEY = 'gocaro.token'
+
+/** Length of the id prefix the backend derives a guest's display name from. */
+const GUEST_NAME_ID_LENGTH = 8
 
 export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(null)
   const user = ref<AuthUser | null>(null)
 
   const isAuthenticated = computed(() => token.value !== null && user.value !== null)
+
+  const isGuest = computed(() => user.value?.account_type === 'anonymous')
+
+  /**
+   * The name to show anywhere a player is named. The backend derives a guest's
+   * name from their id rather than storing one, so this repeats that derivation
+   * as a fallback: should any endpoint answer with an empty username, the guest
+   * keeps a stable name instead of rendering blank.
+   */
+  const displayName = computed(() => {
+    const current = user.value
+    if (current === null) {
+      return ''
+    }
+    if (current.username !== '') {
+      return current.username
+    }
+    return `Guest-${current.id.slice(0, GUEST_NAME_ID_LENGTH)}`
+  })
 
   function persistToken(value: string | null): void {
     token.value = value
@@ -53,6 +81,27 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  /**
+   * Reloads the profile so a rating changed by a finished ranked match is shown.
+   *
+   * Failures are deliberately quiet: the rating is informational here, and the
+   * backend applies elo asynchronously after `game_over`, so a refresh can
+   * legitimately arrive early. A 401 is different — the token is genuinely gone,
+   * and the session must not survive it.
+   */
+  async function refreshProfile(): Promise<void> {
+    if (token.value === null) {
+      return
+    }
+    try {
+      user.value = await fetchProfile()
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        logout()
+      }
+    }
+  }
+
   async function login(credentials: Credentials): Promise<void> {
     const result = await loginRequest(credentials)
     persistToken(result.token)
@@ -63,5 +112,37 @@ export const useAuthStore = defineStore('auth', () => {
     await registerRequest(credentials)
   }
 
-  return { token, user, isAuthenticated, initialize, login, register, logout }
+  /** Starts a play-now session. The guest token is persisted like any other. */
+  async function anonymousLogin(): Promise<void> {
+    const result = await anonymousLoginRequest()
+    persistToken(result.token)
+    user.value = result.user
+  }
+
+  /**
+   * Saves the current guest as a registered account. The backend answers with a
+   * fresh token naming the player, so the guest token is replaced rather than
+   * kept: the old one still carries the `Guest-…` name in its claims, which is
+   * what an opponent would see over the WebSocket.
+   */
+  async function upgrade(credentials: Credentials): Promise<void> {
+    const result = await upgradeRequest(credentials)
+    persistToken(result.token)
+    user.value = result.user
+  }
+
+  return {
+    token,
+    user,
+    isAuthenticated,
+    isGuest,
+    displayName,
+    initialize,
+    refreshProfile,
+    login,
+    register,
+    anonymousLogin,
+    upgrade,
+    logout,
+  }
 })
