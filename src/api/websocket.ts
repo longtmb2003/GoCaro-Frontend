@@ -25,12 +25,32 @@ export interface SocketCallbacks {
  * derived.
  */
 export function matchmakeUrl(token: string, mode: MatchmakingMode): string {
+  const path = mode === 'ranked' ? '/ws/matchmake/ranked' : '/ws/matchmake'
+  return `${socketOrigin()}${path}?token=${encodeURIComponent(token)}`
+}
+
+/**
+ * Builds the reconnect WebSocket URL. The backend finds the live match from the
+ * token alone — a player is in at most one — so no room id is needed. On a
+ * successful upgrade the server answers with a `sync_state` frame; if no live
+ * match remains, the handshake is rejected and the browser reports only a failed
+ * connection.
+ */
+export function reconnectUrl(token: string): string {
+  return `${socketOrigin()}/ws/reconnect?token=${encodeURIComponent(token)}`
+}
+
+/**
+ * Derives the ws(s) origin the same way for every socket: same-origin in
+ * development so Vite proxies `/ws`, or the configured backend origin in
+ * production with its scheme mapped from http(s) to ws(s). Exported so other
+ * socket clients (e.g. the lobby) build their URLs the same way.
+ */
+export function socketOrigin(): string {
   const base = import.meta.env.VITE_API_BASE_URL
-  const origin = base
+  return base
     ? base.replace(/^http/, 'ws')
     : `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}`
-  const path = mode === 'ranked' ? '/ws/matchmake/ranked' : '/ws/matchmake'
-  return `${origin}${path}?token=${encodeURIComponent(token)}`
 }
 
 /**
@@ -82,7 +102,8 @@ export class SocketManager {
   }
 }
 
-function parseMessage(data: string): SocketMessage | null {
+/** Parses a raw frame into a SocketMessage, or null if it is not a valid one. */
+export function parseMessage(data: string): SocketMessage | null {
   let parsed: unknown
   try {
     parsed = JSON.parse(data)

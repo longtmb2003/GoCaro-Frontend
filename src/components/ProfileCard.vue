@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import BaseButton from '@/components/BaseButton.vue'
 import type { AccountType } from '@/types/auth'
 
 const props = defineProps<{
@@ -9,8 +8,6 @@ const props = defineProps<{
   elo: number
   accountType: AccountType
 }>()
-
-const emit = defineEmits<{ upgrade: [] }>()
 
 const initial = computed(() => props.username.charAt(0).toUpperCase())
 const isGuest = computed(() => props.accountType === 'anonymous')
@@ -51,11 +48,5 @@ const isGuest = computed(() => props.accountType === 'anonymous')
       </div>
     </dl>
 
-    <div v-if="isGuest" class="border-border-subtle mt-4 border-t pt-4">
-      <p class="text-foreground-muted text-sm">
-        This account lives only on this device. Save it to keep your rating and match history.
-      </p>
-      <BaseButton class="mt-3 w-full" @click="emit('upgrade')">Save progress</BaseButton>
-    </div>
   </section>
 </template>

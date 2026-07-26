@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 
 import { ApiError } from '@/api/ApiError'
@@ -13,12 +13,14 @@ import UpgradeAccountModal from '@/components/UpgradeAccountModal.vue'
 import AppLayout from '@/layouts/AppLayout.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useLeaderboardStore } from '@/stores/leaderboard'
+import { useLobbyStore } from '@/stores/lobby'
 import { useSocketStore } from '@/stores/socket'
 import type { Credentials } from '@/types/auth'
 
 const auth = useAuthStore()
 const leaderboard = useLeaderboardStore()
 const socket = useSocketStore()
+const lobby = useLobbyStore()
 const router = useRouter()
 
 const upgradeOpen = ref(false)
@@ -28,6 +30,11 @@ const guestLogoutOpen = ref(false)
 
 onMounted(() => {
   void leaderboard.load()
+  lobby.connect()
+})
+
+onUnmounted(() => {
+  lobby.disconnect()
 })
 
 const isMatchmaking = computed(
@@ -97,6 +104,15 @@ async function logout(): Promise<void> {
       <BaseButton variant="secondary" @click="handleLogout">Log out</BaseButton>
     </template>
 
+    <div class="mb-8 rounded-xl overflow-hidden shadow-lg border border-border-subtle relative h-48 sm:h-64">
+      <img src="/gocaro_hero.png" alt="GoCaro Hero" class="absolute inset-0 w-full h-full object-cover" />
+      <div class="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent"></div>
+      <div class="absolute bottom-0 left-0 p-6">
+        <h1 class="text-3xl font-bold text-white drop-shadow-md">Welcome to GoCaro</h1>
+        <p class="text-white/80 mt-1 drop-shadow-md">Play the classic Gomoku game with a modern twist.</p>
+      </div>
+    </div>
+
     <div class="grid gap-6 lg:grid-cols-[20rem_1fr]">
       <div class="space-y-6">
         <ProfileCard
@@ -104,7 +120,6 @@ async function logout(): Promise<void> {
           :username="auth.displayName"
           :elo="auth.user.elo"
           :account-type="auth.user.account_type"
-          @upgrade="openUpgrade"
         />
 
         <PlayPanel
@@ -121,10 +136,11 @@ async function logout(): Promise<void> {
         </RouterLink>
       </div>
 
-      <section
-        class="border-border-subtle bg-surface rounded-lg border p-6 shadow-sm"
-        aria-label="Leaderboard"
-      >
+      <div class="space-y-6">
+        <section
+          class="border-border-subtle bg-surface rounded-lg border p-6 shadow-sm"
+          aria-label="Leaderboard"
+        >
         <div class="mb-4 flex items-center justify-between">
           <h2 class="text-foreground text-lg font-semibold">Leaderboard</h2>
           <RouterLink
@@ -148,10 +164,37 @@ async function logout(): Promise<void> {
 
         <LeaderboardTable
           v-else
-          :entries="leaderboard.entries"
+          :entries="leaderboard.entries.slice(0, 5)"
           :current-username="auth.user?.username ?? ''"
         />
       </section>
+
+      <!-- Online Users Section -->
+      <section
+        v-if="auth.isAuthenticated"
+        class="border-border-subtle bg-surface rounded-lg border p-6 shadow-sm mt-6"
+        aria-label="Online Users"
+      >
+        <div class="mb-4 flex items-center justify-between">
+          <h2 class="text-foreground text-lg font-semibold flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-success-500 animate-pulse"></span>
+            Online Now ({{ lobby.onlineUsers.length }})
+          </h2>
+        </div>
+        
+        <div v-if="lobby.onlineUsers.length === 0" class="text-foreground-muted py-8 text-center text-sm">
+          No other users online right now.
+        </div>
+        <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          <div v-for="user in lobby.onlineUsers" :key="user.id" class="border border-border-subtle rounded-md p-2 flex items-center gap-2 bg-background/50">
+            <div class="w-6 h-6 rounded-full bg-primary-100 flex items-center justify-center text-xs font-bold text-primary-700">
+              {{ user.username.charAt(0).toUpperCase() }}
+            </div>
+            <span class="text-sm font-medium truncate">{{ user.username }}</span>
+          </div>
+        </div>
+      </section>
+      </div>
     </div>
 
     <MatchmakingModal

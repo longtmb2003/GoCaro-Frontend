@@ -62,8 +62,14 @@ const ratingClass = computed(() => {
   >
     <div
       class="result-card bg-surface-elevated w-full max-w-sm rounded-lg p-6 text-center shadow-lg"
+      :class="{ 'ring-2 ring-success-500 shadow-success-500/20 win-pulse': tone === 'win' }"
     >
-      <h2 id="result-heading" class="text-2xl font-bold" :class="headingClass">{{ heading }}</h2>
+      <h2 id="result-heading" class="text-2xl font-bold flex items-center justify-center gap-2" :class="headingClass">
+        <span v-if="tone === 'win'" class="text-3xl">🏆</span>
+        <span v-if="tone === 'loss'" class="text-3xl">💔</span>
+        <span v-if="tone === 'draw'" class="text-3xl">🤝</span>
+        {{ heading }}
+      </h2>
       <p class="text-foreground-muted mt-2 text-sm">{{ message }}</p>
 
       <p v-if="ratingDelta !== null" class="mt-4">
@@ -99,11 +105,21 @@ const ratingClass = computed(() => {
 }
 
 .result-card {
-  animation: result-in 180ms ease-out;
+  animation: result-in 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes win-glow {
+  0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
+  70% { box-shadow: 0 0 0 15px rgba(34, 197, 94, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+}
+
+.win-pulse {
+  animation: result-in 300ms cubic-bezier(0.16, 1, 0.3, 1), win-glow 2s infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .result-card {
+  .result-card, .win-pulse {
     animation: none;
   }
 }

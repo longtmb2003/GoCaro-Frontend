@@ -32,6 +32,11 @@ export interface MatchFoundPayload {
   opponent: string
   your_symbol: PlayerSymbol
   your_turn: boolean
+  /**
+   * Per-turn time budget in seconds, fixed for the whole match. Sent only here;
+   * the client keeps it and resets its turn clock to it on every `board_update`.
+   */
+  turn_seconds: number
 }
 
 /** Payload of a `board_update` frame: one accepted move, and whose turn is next. */
@@ -66,4 +71,47 @@ export interface GameResult {
   reason: string
   /** This player's rating change, or null when no rating was at stake. */
   ratingDelta: number | null
+}
+
+/**
+ * One move in a `sync_state` frame. Unlike a stored `MatchMove`, the symbol is
+ * already resolved from seating, so the board can be rebuilt without knowing
+ * which id owns which colour.
+ */
+export interface SyncMove {
+  x: number
+  y: number
+  symbol: PlayerSymbol
+}
+
+/**
+ * Payload of `sync_state`, the first frame a reconnecting player receives. It is
+ * the whole match: every move so far, whose turn it is, which side they play,
+ * the current turn's remaining seconds, and the status. The board is rebuilt
+ * from `moves` alone — no game logic runs on the client.
+ */
+export interface SyncStatePayload {
+  moves: SyncMove[]
+  turn: string
+  your_symbol: PlayerSymbol
+  remaining_turn_seconds: number
+  status: string
+}
+
+export interface LobbyUser {
+  id: string
+  username: string
+}
+
+export interface LobbyStatePayload {
+  online_users: LobbyUser[]
+}
+
+/**
+ * Payload of `opponent_reconnecting`: how many seconds the dropped opponent has
+ * to return before forfeiting. `opponent_reconnected` clears it and carries no
+ * payload.
+ */
+export interface OpponentReconnectingPayload {
+  remaining_seconds: number
 }
