@@ -23,7 +23,6 @@ const emit = defineEmits<{ submit: [credentials: Credentials] }>()
 
 const username = ref('')
 const password = ref('')
-const rememberMe = ref(false)
 const usernameError = ref('')
 const passwordError = ref('')
 
@@ -82,14 +81,6 @@ function handleSubmit(): void {
       :disabled="loading"
       required
     />
-    <div class="flex items-center justify-between">
-      <label class="flex items-center gap-2 cursor-pointer">
-        <input v-model="rememberMe" type="checkbox" class="w-4 h-4 rounded border-border-subtle text-primary-500 focus:ring-primary-500 bg-background" />
-        <span class="text-sm text-foreground-muted select-none">Remember me</span>
-      </label>
-      <a href="#" class="text-sm font-medium text-primary-400 hover:text-primary-300 transition-colors">Forgot password?</a>
-    </div>
-    
     <p v-if="serverError" class="text-danger-400 text-sm" role="alert">{{ serverError }}</p>
     <BaseButton type="submit" variant="primary" size="lg" class="w-full" :loading="loading">
       {{ loading && submitLabel === 'Sign in' ? 'Signing in...' : submitLabel }}

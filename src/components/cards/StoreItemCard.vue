@@ -20,7 +20,7 @@ withDefaults(
 
 <template>
   <div
-    class="bg-glass-light border-border rounded-card p-4 gap-3 duration-normal flex flex-col border transition ease-out hover:-translate-y-0.5 hover:border-border-strong hover:shadow-floating motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+    class="bg-glass-light border-border rounded-card p-4 gap-3 flex flex-col border"
   >
     <div
       class="rounded-card ring-border-strong overflow-hidden ring-2"
@@ -46,7 +46,9 @@ withDefaults(
           {{ collection }}
         </p>
       </div>
-      <BaseButton size="sm" class="mt-3 w-full">
+      <!-- The shop is not built yet: the price is roadmap information, not an
+           offer, so the control must not behave like one. -->
+      <BaseButton size="sm" disabled class="mt-3 w-full">
         <span aria-hidden="true">💰</span> {{ price }}
       </BaseButton>
     </div>

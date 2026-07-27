@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 
 import BaseBadge from '@/components/ui/BaseBadge.vue'
 import BaseProgress from '@/components/ui/BaseProgress.vue'
@@ -39,8 +39,6 @@ const streak = computed(() => props.stats?.current_streak || 0)
 const currentLevelBase = computed(() => Math.floor(props.elo / 100) * 100)
 const nextLevelMax = computed(() => currentLevelBase.value + 100)
 const progressPercent = computed(() => ((props.elo - currentLevelBase.value) / 100) * 100)
-
-const badgesExpanded = ref(false)
 
 const displayCoins = useCountUp(() => props.stats?.coins || 0)
 </script>
@@ -137,7 +135,7 @@ const displayCoins = useCountUp(() => props.stats?.coins || 0)
           <span class="text-caption uppercase tracking-widest text-foreground-muted font-bold">
             Title
           </span>
-          <span class="text-foreground text-small font-medium mt-1 truncate">Novice</span>
+          <span class="text-foreground-muted text-small font-medium mt-1 truncate">Coming soon</span>
         </GlassCard>
         <GlassCard
           as="div"
@@ -147,24 +145,18 @@ const displayCoins = useCountUp(() => props.stats?.coins || 0)
           <span class="text-caption uppercase tracking-widest text-foreground-muted font-bold">
             Background
           </span>
-          <span class="text-foreground text-small font-medium mt-1 truncate">Default</span>
+          <span class="text-foreground-muted text-small font-medium mt-1 truncate">Coming soon</span>
         </GlassCard>
       </div>
 
-      <!-- Achievements / Badges (Mock) -->
+      <!-- Achievements. The badge system is not built, so this states that
+           rather than inventing a count and a set of unlocked badges. -->
       <div class="border-border-subtle mt-3 sm:mt-4 pt-3 sm:pt-4 border-t">
-        <button
-          class="w-full flex items-center justify-between text-caption text-foreground-muted font-semibold uppercase tracking-widest hover:text-foreground transition-colors cursor-pointer"
-          @click="badgesExpanded = !badgesExpanded"
+        <div
+          class="text-caption text-foreground-muted font-semibold uppercase tracking-widest flex items-center justify-between"
         >
-          <span class="flex items-center gap-2">🏆 4 Badges Unlocked</span>
-          <span class="transform transition-transform duration-200" :class="badgesExpanded ? 'rotate-90' : ''">›</span>
-        </button>
-        <div v-show="badgesExpanded" class="flex gap-2 mt-3 [animation:fade-in_0.2s_ease-out_forwards]">
-          <div class="size-8 rounded-pill bg-surface-sunken flex items-center justify-center text-small opacity-60 hover:opacity-100 hover:scale-110 transition-all cursor-help" title="First Victory">🏆</div>
-          <div class="size-8 rounded-pill bg-surface-sunken flex items-center justify-center text-small opacity-60 hover:opacity-100 hover:scale-110 transition-all cursor-help" title="5 Win Streak">🔥</div>
-          <div class="size-8 rounded-pill bg-surface-sunken flex items-center justify-center text-small opacity-60 hover:opacity-100 hover:scale-110 transition-all cursor-help" title="Veteran Player">⭐</div>
-          <div class="size-8 rounded-pill bg-surface-sunken flex items-center justify-center text-small opacity-60 hover:opacity-100 hover:scale-110 transition-all cursor-help" title="Top 100 Rank">👑</div>
+          <span class="flex items-center gap-2">🏆 Badges</span>
+          <span>Coming soon</span>
         </div>
       </div>
 

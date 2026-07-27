@@ -57,7 +57,7 @@ const classes = computed(() => [VARIANTS[props.variant], SIZES[props.size]])
     :type="type"
     :disabled="isDisabled"
     :aria-busy="loading"
-    class="gap-2 rounded-button duration-fast inline-flex cursor-pointer items-center justify-center font-semibold transition ease-out active:scale-98 disabled:cursor-not-allowed disabled:opacity-60 motion-reduce:transition-none motion-reduce:active:scale-100"
+    class="gap-2 rounded-button duration-fast inline-flex cursor-pointer items-center justify-center font-semibold transition ease-out active:scale-98 disabled:pointer-events-none disabled:opacity-60 motion-reduce:transition-none motion-reduce:active:scale-100"
     :class="classes"
   >
     <BaseSpinner v-if="loading" size="sm" tone="current" />

@@ -43,11 +43,13 @@ withDefaults(defineProps<{ title: string; subtitle?: string }>(), { subtitle: ''
         >
           <span class="font-medium tracking-wider">v1.0.0</span>
           <div class="flex items-center gap-3">
-            <a href="#" class="hover:text-primary-400 transition-colors">GitHub</a>
-            <span>•</span>
-            <a href="#" class="hover:text-primary-400 transition-colors">Terms</a>
-            <span>•</span>
-            <a href="#" class="hover:text-primary-400 transition-colors">Privacy</a>
+            <a
+              href="https://github.com/longtmb2003/GoCaro-Frontend"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="hover:text-primary-400 transition-colors"
+              >GitHub</a
+            >
           </div>
         </div>
       </div>
