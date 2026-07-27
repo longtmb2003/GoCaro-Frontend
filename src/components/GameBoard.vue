@@ -34,7 +34,7 @@ function isPlayable(cell: Cell): boolean {
 }
 
 function isLastMove(cell: Cell): boolean {
-  return props.lastMove?.x === cell.x && props.lastMove.y === cell.y
+  return props.lastMove?.x === cell.x && props.lastMove?.y === cell.y
 }
 
 function label(cell: Cell): string {
@@ -50,12 +50,12 @@ function onCellClick(cell: Cell): void {
 </script>
 
 <template>
-  <div class="relative bg-black/40 backdrop-blur-2xl rounded-xl p-3 border border-indigo-500/20 shadow-[0_8px_32px_0_rgba(0,0,0,0.5)]">
+  <div class="relative bg-black/40 backdrop-blur-2xl rounded-xl p-2 sm:p-3 border border-indigo-500/20 shadow-[0_8px_32px_0_rgba(0,0,0,0.5)] w-full max-w-xl aspect-square flex flex-col">
     <!-- Outer Glow -->
     <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 rounded-xl pointer-events-none mix-blend-screen"></div>
     
     <div
-      class="grid aspect-square w-full max-w-xl gap-[1px] rounded-lg bg-indigo-900/30 overflow-hidden ring-1 ring-indigo-500/30"
+      class="grid w-full h-full flex-1 gap-[1px] rounded-lg bg-indigo-900/30 overflow-hidden ring-1 ring-indigo-500/30"
       :style="gridStyle"
       role="grid"
       aria-label="Game board"
