@@ -9,17 +9,17 @@ const emit = defineEmits<{ (e: 'close'): void }>()
 
 <template>
   <BaseModal title="Rank System" size="md" @close="emit('close')">
-    <div class="space-y-lg">
+    <div class="space-y-4">
       <p class="text-foreground-muted text-body">
         Your rank is determined by your Elo rating. Win ranked matches to gain Elo, but be
         careful—losing will drop your rating!
       </p>
 
-      <ul class="space-y-md">
+      <ul class="space-y-3">
         <li
           v-for="tier in RANK_TIERS.slice().reverse()"
           :key="tier.name"
-          class="gap-lg bg-glass-light border-border-subtle rounded-sm p-md flex items-center border"
+          class="gap-4 bg-glass-light border-border-subtle rounded-sm p-3 flex items-center border"
         >
           <RankFrame :elo="tier.minElo" initial="R" />
           <div>

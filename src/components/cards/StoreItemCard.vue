@@ -20,7 +20,7 @@ withDefaults(
 
 <template>
   <div
-    class="bg-glass-light border-border rounded-card p-lg gap-md duration-normal flex flex-col border transition ease-out hover:-translate-y-0.5 hover:border-border-strong hover:shadow-floating motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+    class="bg-glass-light border-border rounded-card p-4 gap-3 duration-normal flex flex-col border transition ease-out hover:-translate-y-0.5 hover:border-border-strong hover:shadow-floating motion-reduce:transition-none motion-reduce:hover:translate-y-0"
   >
     <div
       class="rounded-card ring-border-strong overflow-hidden ring-2"
@@ -38,15 +38,15 @@ withDefaults(
 
     <div class="flex flex-1 flex-col justify-between">
       <div>
-        <h4 class="text-body gap-sm text-foreground flex items-center font-bold">
+        <h4 class="text-body gap-2 text-foreground flex items-center font-bold">
           {{ name }}
           <BaseBadge v-if="rarity" variant="warning" shape="tag">{{ rarity }}</BaseBadge>
         </h4>
-        <p class="text-caption text-foreground-muted mt-xs tracking-wider uppercase">
+        <p class="text-caption text-foreground-muted mt-1 tracking-wider uppercase">
           {{ collection }}
         </p>
       </div>
-      <BaseButton size="sm" class="mt-md w-full">
+      <BaseButton size="sm" class="mt-3 w-full">
         <span aria-hidden="true">💰</span> {{ price }}
       </BaseButton>
     </div>

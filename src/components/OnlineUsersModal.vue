@@ -31,13 +31,13 @@ function prevOnlinePage() {
 
 <template>
   <BaseModal title="Online Users" size="md" @close="emit('close')">
-    <div class="space-y-lg">
-      <div class="gap-md flex flex-wrap items-center justify-between">
+    <div class="space-y-4">
+      <div class="gap-3 flex flex-wrap items-center justify-between">
         <h3 class="text-body text-foreground font-semibold">
           Players Online: <span class="text-success">{{ lobby.onlineUsers.length }}</span>
         </h3>
 
-        <div v-if="totalOnlinePages > 1" class="gap-sm flex items-center">
+        <div v-if="totalOnlinePages > 1" class="gap-2 flex items-center">
           <BaseButton
             variant="secondary"
             size="sm"
@@ -89,11 +89,11 @@ function prevOnlinePage() {
         title="No one else is online"
         description="Start a match and other players will show up here."
       />
-      <ul v-else class="gap-md grid grid-cols-2 sm:grid-cols-3">
+      <ul v-else class="gap-3 grid grid-cols-2 sm:grid-cols-3">
         <li
           v-for="user in paginatedOnlineUsers"
           :key="user.id"
-          class="border-border-subtle bg-glass-light gap-md p-sm rounded-sm flex items-center border"
+          class="border-border-subtle bg-glass-light gap-3 p-2 rounded-sm flex items-center border"
         >
           <BaseAvatar :name="user.username" size="sm" online />
           <span class="text-body text-foreground truncate font-medium">{{ user.username }}</span>

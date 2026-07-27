@@ -47,7 +47,7 @@ onMounted(() => {
 
 <template>
   <BaseModal title="Leaderboard" size="lg" @close="$emit('close')">
-    <div class="mb-lg gap-sm flex items-end">
+    <div class="mb-4 gap-2 flex items-end">
       <BaseInput
         v-model="searchQuery"
         name="leaderboard-modal-search"
@@ -60,7 +60,7 @@ onMounted(() => {
       <BaseButton @click="handleSearch">Search</BaseButton>
     </div>
 
-    <p v-if="leaderboard.loading" class="text-foreground-muted py-xl text-body text-center">
+    <p v-if="leaderboard.loading" class="text-foreground-muted py-6 text-body text-center">
       Loading leaderboard…
     </p>
 
@@ -77,7 +77,7 @@ onMounted(() => {
 
       <div
         v-if="leaderboard.entries.length > 0"
-        class="border-border-subtle mt-lg pt-lg flex items-center justify-between border-t"
+        class="border-border-subtle mt-4 pt-4 flex items-center justify-between border-t"
       >
         <BaseButton variant="secondary" :disabled="currentPage <= 1" @click="prevPage">
           Previous

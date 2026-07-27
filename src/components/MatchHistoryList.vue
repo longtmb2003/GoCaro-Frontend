@@ -85,7 +85,7 @@ const toneClass: Record<Tone, string> = {
           <p class="text-white truncate font-bold drop-shadow-sm">
             <span class="font-mono text-sm">{{ row.players }}</span>
           </p>
-          <p class="text-foreground-muted text-small gap-sm mt-1 flex items-center">
+          <p class="text-foreground-muted text-small gap-2 mt-1 flex items-center">
             <BaseBadge :variant="row.ranked ? 'primary' : 'neutral'" shape="tag">
               {{ row.ranked ? 'Ranked' : 'Casual' }}
             </BaseBadge>

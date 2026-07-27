@@ -6,7 +6,7 @@ defineProps<{ secondsLeft: number }>()
 
 <template>
   <div
-    class="border-warning/40 bg-warning/10 gap-md px-lg rounded-card flex items-center border py-3"
+    class="border-warning/40 bg-warning/10 gap-3 px-4 rounded-card flex items-center border py-3"
     role="status"
     aria-live="polite"
   >

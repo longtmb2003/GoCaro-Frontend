@@ -12,7 +12,7 @@ const emit = defineEmits<{ leave: [] }>()
   <!-- Not dismissible: the match is still live, so leaving must be deliberate. -->
   <BaseModal :dismissible="false" aria-labelledby="reconnecting-heading">
     <div class="text-center">
-      <div class="mb-lg flex justify-center">
+      <div class="mb-4 flex justify-center">
         <BaseSpinner size="md" />
       </div>
 

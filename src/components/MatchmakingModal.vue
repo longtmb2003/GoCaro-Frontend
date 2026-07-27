@@ -47,7 +47,7 @@ const elapsedLabel = computed(() => {
 <template>
   <BaseModal aria-labelledby="matchmaking-heading" @close="emit('cancel')">
     <div class="text-center">
-      <div v-if="!isError" class="mb-xl flex justify-center">
+      <div v-if="!isError" class="mb-6 flex justify-center">
         <BaseSpinner size="lg" />
       </div>
 
@@ -69,7 +69,7 @@ const elapsedLabel = computed(() => {
     </div>
 
     <template #footer>
-      <div class="gap-md flex justify-center">
+      <div class="gap-3 flex justify-center">
         <BaseButton v-if="isError" class="flex-1" @click="emit('retry')">Try again</BaseButton>
         <BaseButton variant="secondary" class="flex-1" @click="emit('cancel')">
           {{ isError ? 'Close' : 'Cancel' }}

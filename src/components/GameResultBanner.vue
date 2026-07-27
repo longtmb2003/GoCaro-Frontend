@@ -49,7 +49,7 @@ const ratingClass = computed(() => {
     :class="tone === 'win' ? 'ring-success win-pulse ring-2' : ''"
   >
     <div class="text-center">
-      <h2 id="result-heading" class="text-section gap-sm flex items-center justify-center" :class="headingClass">
+      <h2 id="result-heading" class="text-section gap-2 flex items-center justify-center" :class="headingClass">
         <span v-if="tone === 'win'" aria-hidden="true">🏆</span>
         <span v-if="tone === 'loss'" aria-hidden="true">💔</span>
         <span v-if="tone === 'draw'" aria-hidden="true">🤝</span>
@@ -57,8 +57,8 @@ const ratingClass = computed(() => {
       </h2>
       <p class="text-foreground-muted text-body mt-2">{{ message }}</p>
 
-      <p v-if="ratingDelta !== null" class="mt-lg">
-        <span class="gap-xs px-md py-xs rounded-sm inline-flex items-baseline" :class="ratingClass">
+      <p v-if="ratingDelta !== null" class="mt-4">
+        <span class="gap-1 px-3 py-1 rounded-sm inline-flex items-baseline" :class="ratingClass">
           <span class="text-card tabular-nums">{{ ratingLabel }}</span>
           <span class="text-body font-medium opacity-80">rating</span>
         </span>

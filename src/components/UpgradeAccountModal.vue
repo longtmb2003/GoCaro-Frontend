@@ -37,7 +37,7 @@ function requestClose(): void {
     aria-describedby="upgrade-description"
     @close="requestClose"
   >
-    <p id="upgrade-description" class="text-foreground-muted text-body mb-lg">
+    <p id="upgrade-description" class="text-foreground-muted text-body mb-4">
       Pick a username and password. Your rating and match history stay exactly as they are.
     </p>
 
