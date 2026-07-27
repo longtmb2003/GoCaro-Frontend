@@ -20,7 +20,8 @@ const showRankRules = ref(false)
     <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-primary-600/30 blur-[120px] animate-pulse pointer-events-none z-0" style="animation-duration: 8s;"></div>
     <div class="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-secondary-600/20 blur-[150px] animate-pulse pointer-events-none z-0" style="animation-duration: 10s; animation-delay: 2s;"></div>
     
-    <header class="bg-black/60 backdrop-blur-3xl border-b border-white/10 sticky top-0 z-50 shadow-card">
+    <!-- Separation comes from the bottom border; the header carries no elevation. -->
+    <header class="bg-black/60 backdrop-blur-3xl border-b border-white/10 sticky top-0 z-50">
       <div class="mx-auto flex w-full max-w-7xl items-center justify-between px-4 h-16 sm:px-6">
         <div class="flex items-center gap-6">
           <RouterLink to="/" class="flex items-center gap-2 group">
