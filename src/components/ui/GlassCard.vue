@@ -36,7 +36,7 @@ const headingId = useId()
 <template>
   <component
     :is="as"
-    class="rounded-card backdrop-blur-glass relative overflow-hidden border p-xl"
+    class="rounded-card backdrop-blur-glass relative overflow-hidden border p-6"
     :class="VARIANTS[variant]"
     :aria-labelledby="title === '' ? undefined : headingId"
   >
@@ -47,12 +47,12 @@ const headingId = useId()
     />
 
     <template v-if="title !== '' || $slots.header || $slots.actions">
-      <div class="gap-md mb-lg relative z-10 flex flex-wrap items-center justify-between">
+      <div class="gap-3 mb-4 relative z-10 flex flex-wrap items-center justify-between">
         <slot name="header">
           <component
             :is="headingTag"
             :id="headingId"
-            class="text-card gap-sm text-foreground flex items-center"
+            class="text-card gap-2 text-foreground flex items-center"
           >
             <slot name="icon" />
             {{ title }}
@@ -60,14 +60,14 @@ const headingId = useId()
         </slot>
         <slot name="actions" />
       </div>
-      <BaseDivider class="mb-lg relative z-10" />
+      <BaseDivider class="mb-4 relative z-10" />
     </template>
 
     <div class="relative z-10">
       <slot />
     </div>
 
-    <div v-if="$slots.footer" class="mt-lg relative z-10">
+    <div v-if="$slots.footer" class="mt-4 relative z-10">
       <slot name="footer" />
     </div>
   </component>

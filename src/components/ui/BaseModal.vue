@@ -78,7 +78,7 @@ function onKeydown(event: KeyboardEvent): void {
 <template>
   <Teleport to="body">
     <div
-      class="p-lg z-modal fixed inset-0 flex items-center justify-center"
+      class="p-4 z-modal fixed inset-0 flex items-center justify-center"
       @keydown="onKeydown"
     >
       <div
@@ -96,7 +96,7 @@ function onKeydown(event: KeyboardEvent): void {
         -->
         <div
           ref="panel"
-          class="bg-surface-3 border-border-strong rounded-modal shadow-modal backdrop-blur-glass p-xl modal-panel custom-scrollbar relative w-full overflow-y-auto border"
+          class="bg-surface-3 border-border-strong rounded-modal shadow-modal backdrop-blur-glass p-6 modal-panel custom-scrollbar relative w-full overflow-y-auto border"
           :class="SIZES[size]"
           role="dialog"
           aria-modal="true"
@@ -105,7 +105,7 @@ function onKeydown(event: KeyboardEvent): void {
           v-bind="$attrs"
         >
           <template v-if="title !== ''">
-            <div class="gap-md mb-lg flex items-center justify-between">
+            <div class="gap-3 mb-4 flex items-center justify-between">
               <h2 :id="headingId" class="text-card text-foreground">{{ title }}</h2>
               <button
                 v-if="dismissible"
@@ -127,12 +127,12 @@ function onKeydown(event: KeyboardEvent): void {
                 </svg>
               </button>
             </div>
-            <BaseDivider class="mb-lg" />
+            <BaseDivider class="mb-4" />
           </template>
 
           <slot />
 
-          <div v-if="$slots.footer" class="mt-xl">
+          <div v-if="$slots.footer" class="mt-6">
             <slot name="footer" />
           </div>
         </div>

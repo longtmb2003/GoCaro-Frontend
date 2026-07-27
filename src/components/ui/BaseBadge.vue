@@ -28,7 +28,7 @@ const classes = computed(() => [
 
 <template>
   <span
-    class="text-caption gap-xs px-sm inline-flex items-center border py-1 font-semibold tracking-wider uppercase"
+    class="text-caption gap-1 px-2 inline-flex items-center border py-1 font-semibold tracking-wider uppercase"
     :class="classes"
   >
     <slot />

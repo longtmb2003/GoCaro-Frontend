@@ -51,7 +51,7 @@ function handleInput(event: Event): void {
     Flex + gap rather than space-y: an sr-only label is absolutely positioned,
     so it drops out of flow instead of leaving a phantom gap above the field.
   -->
-  <div class="gap-xs flex flex-col">
+  <div class="gap-1 flex flex-col">
     <label
       :for="inputId"
       class="text-foreground text-small block font-medium"
@@ -70,7 +70,7 @@ function handleInput(event: Event): void {
         :placeholder="placeholder"
         :aria-invalid="hasError"
         :aria-describedby="hasError ? errorId : undefined"
-        class="border-border bg-glass-light text-foreground placeholder:text-foreground-disabled focus-visible:border-accent px-lg text-body duration-fast h-12 w-full rounded-button border shadow-inner backdrop-blur-md transition disabled:cursor-not-allowed disabled:opacity-60"
+        class="border-border bg-glass-light text-foreground placeholder:text-foreground-disabled focus-visible:border-accent px-4 text-body duration-fast h-12 w-full rounded-button border shadow-inner backdrop-blur-md transition disabled:cursor-not-allowed disabled:opacity-60"
         :class="[hasError ? 'border-error' : '', type === 'password' ? 'pr-10' : '']"
         @input="handleInput"
       />
