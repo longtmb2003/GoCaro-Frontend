@@ -185,7 +185,7 @@ const summary = computed(() => {
           <template #icon><span aria-hidden="true">📜</span></template>
 
           <p
-            class="text-foreground bg-glass-light border-border-subtle rounded-sm text-body p-md flex items-center justify-between border font-mono font-bold"
+            class="text-foreground bg-glass-light border-border-subtle rounded-sm text-body p-3 flex items-center justify-between border font-mono font-bold"
           >
             <span class="text-accent flex flex-col items-center font-black">
               <span class="text-caption text-foreground-muted mb-1 tracking-widest uppercase">
@@ -204,7 +204,7 @@ const summary = computed(() => {
             </span>
           </p>
 
-          <div class="border-border-subtle mt-lg pt-lg border-t text-center">
+          <div class="border-border-subtle mt-4 pt-4 border-t text-center">
             <p class="text-foreground text-card">{{ summary.outcome }}</p>
             <p class="text-foreground-muted text-small mt-1 font-semibold">{{ summary.date }}</p>
           </div>

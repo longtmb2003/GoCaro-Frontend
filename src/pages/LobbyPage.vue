@@ -256,13 +256,13 @@ const recentMatch = computed(() => {
 
           <div class="space-y-3">
             <div
-              class="bg-glass-light border-border-subtle rounded-sm p-md gap-sm flex flex-col border"
+              class="bg-glass-light border-border-subtle rounded-sm p-3 gap-2 flex flex-col border"
             >
               <div class="flex items-center justify-between">
                 <span class="text-small text-foreground font-semibold">Play 2 Matches</span>
                 <BaseBadge variant="warning">+50 Coins</BaseBadge>
               </div>
-              <div class="gap-md flex items-center">
+              <div class="gap-3 flex items-center">
                 <BaseProgress
                   class="flex-1"
                   tone="warning"
@@ -286,13 +286,13 @@ const recentMatch = computed(() => {
             </div>
 
             <div
-              class="bg-glass-light border-border-subtle rounded-sm p-md gap-sm flex flex-col border"
+              class="bg-glass-light border-border-subtle rounded-sm p-3 gap-2 flex flex-col border"
             >
               <div class="flex items-center justify-between">
                 <span class="text-small text-foreground font-semibold">Share with friends</span>
                 <BaseBadge variant="warning">+50 Coins</BaseBadge>
               </div>
-              <div class="gap-md flex items-center">
+              <div class="gap-3 flex items-center">
                 <BaseProgress
                   class="flex-1"
                   tone="warning"
@@ -325,7 +325,7 @@ const recentMatch = computed(() => {
             <BaseBadge variant="neutral">Coming Soon</BaseBadge>
           </template>
 
-          <div class="gap-lg grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1">
+          <div class="gap-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1">
             <StoreItemCard
               v-for="item in storeItems"
               :key="item.name"
@@ -361,9 +361,9 @@ const recentMatch = computed(() => {
           ></div>
 
           <div
-            class="from-background/80 p-xl absolute bottom-0 left-0 w-full bg-gradient-to-t to-transparent"
+            class="from-background/80 p-6 absolute bottom-0 left-0 w-full bg-gradient-to-t to-transparent"
           >
-            <h2 class="text-page sm:text-hero text-foreground gap-md flex items-center tracking-tight">
+            <h2 class="text-page sm:text-hero text-foreground gap-3 flex items-center tracking-tight">
               GoCaro
               <span aria-hidden="true">👋</span>
             </h2>
@@ -384,7 +384,7 @@ const recentMatch = computed(() => {
           <div class="grid grid-cols-2 gap-4">
             <RouterLink to="/history" class="block h-full">
               <GlassCard as="div" variant="interactive" class="h-full">
-                <div class="gap-md flex h-full items-center justify-center">
+                <div class="gap-3 flex h-full items-center justify-center">
                   <span class="text-2xl" aria-hidden="true">📜</span>
                   <span class="text-foreground text-body font-semibold">Match history</span>
                 </div>
@@ -398,7 +398,7 @@ const recentMatch = computed(() => {
               class="h-full w-full cursor-pointer"
               @click="shareGame"
             >
-              <div class="gap-md flex h-full items-center justify-center">
+              <div class="gap-3 flex h-full items-center justify-center">
                 <span class="text-2xl" aria-hidden="true">🔗</span>
                 <div class="flex flex-col items-start">
                   <span class="text-foreground text-body leading-tight font-semibold">
@@ -428,7 +428,7 @@ const recentMatch = computed(() => {
             />
             <div
               v-else
-              class="bg-glass-light border-border-subtle p-lg rounded-sm flex items-center justify-between border"
+              class="bg-glass-light border-border-subtle p-4 rounded-sm flex items-center justify-between border"
             >
               <div class="flex flex-col gap-1">
                 <span
@@ -491,11 +491,11 @@ const recentMatch = computed(() => {
             title="No one online"
             description="Start a match and others will show up here."
           />
-          <ul v-else class="gap-sm grid grid-cols-1 sm:grid-cols-2">
+          <ul v-else class="gap-2 grid grid-cols-1 sm:grid-cols-2">
             <li
               v-for="user in paginatedOnlineUsers"
               :key="user.id"
-              class="border-border-subtle bg-glass-light gap-md p-sm rounded-sm flex items-center border"
+              class="border-border-subtle bg-glass-light gap-3 p-2 rounded-sm flex items-center border"
             >
               <BaseAvatar :name="user.username" size="sm" online />
               <span class="text-body text-foreground truncate font-semibold">
@@ -516,7 +516,7 @@ const recentMatch = computed(() => {
         >
           <template #icon><span aria-hidden="true">👑</span></template>
 
-          <p v-if="leaderboard.loading" class="text-foreground-muted py-xl text-body text-center">
+          <p v-if="leaderboard.loading" class="text-foreground-muted py-6 text-body text-center">
             Loading heroes…
           </p>
 
@@ -556,18 +556,18 @@ const recentMatch = computed(() => {
 
           <div class="grid grid-cols-2 gap-3">
             <div
-              class="bg-glass-light border-border-subtle rounded-sm p-md border text-center"
+              class="bg-glass-light border-border-subtle rounded-sm p-3 border text-center"
             >
               <p class="text-caption text-foreground-muted mb-1.5 tracking-widest uppercase">
                 Network
               </p>
-              <div class="gap-sm flex items-center justify-center">
+              <div class="gap-2 flex items-center justify-center">
                 <span class="bg-success size-2 rounded-pill" aria-hidden="true" />
                 <span class="text-small text-success font-bold tracking-wide">ONLINE</span>
               </div>
             </div>
             <div
-              class="bg-glass-light border-border-subtle rounded-sm p-md border text-center"
+              class="bg-glass-light border-border-subtle rounded-sm p-3 border text-center"
             >
               <p class="text-caption text-foreground-muted mb-1.5 tracking-widest uppercase">
                 Latency

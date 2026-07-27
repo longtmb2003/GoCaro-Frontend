@@ -268,7 +268,7 @@ async function shareAchievement(): Promise<void> {
       aria-labelledby="draw-offer-heading"
     >
       <div class="text-center">
-        <h2 id="draw-offer-heading" class="text-section gap-sm flex items-center justify-center">
+        <h2 id="draw-offer-heading" class="text-section gap-2 flex items-center justify-center">
           <span aria-hidden="true">🏳️</span> Draw Offer
         </h2>
         <p class="text-foreground-secondary text-body mt-3">Your opponent has offered a draw.</p>
@@ -276,7 +276,7 @@ async function shareAchievement(): Promise<void> {
       </div>
 
       <template #footer>
-        <div class="gap-md flex">
+        <div class="gap-3 flex">
           <BaseButton variant="success" class="flex-1" @click="socket.sendRespondDraw(true)">
             Accept
           </BaseButton>

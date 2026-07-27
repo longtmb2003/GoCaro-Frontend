@@ -59,7 +59,7 @@ onMounted(() => {
     <GlassCard title="Top players" class="mx-auto max-w-2xl">
       <template #icon><span aria-hidden="true">👑</span></template>
       <template #actions>
-        <div class="gap-sm flex w-full items-end sm:w-auto">
+        <div class="gap-2 flex w-full items-end sm:w-auto">
           <BaseInput
             v-model="searchQuery"
             name="leaderboard-search"
@@ -73,7 +73,7 @@ onMounted(() => {
         </div>
       </template>
 
-      <p v-if="leaderboard.loading" class="text-foreground-muted py-xl text-body text-center">
+      <p v-if="leaderboard.loading" class="text-foreground-muted py-6 text-body text-center">
         Loading leaderboard…
       </p>
 
@@ -93,7 +93,7 @@ onMounted(() => {
 
         <div
           v-if="leaderboard.entries.length > 0"
-          class="border-border-subtle mt-xl pt-lg flex items-center justify-between border-t"
+          class="border-border-subtle mt-6 pt-4 flex items-center justify-between border-t"
         >
           <BaseButton variant="secondary" :disabled="currentPage <= 1" @click="prevPage">
             Previous

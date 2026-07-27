@@ -38,7 +38,7 @@ onMounted(() => {
         <p class="text-foreground-muted text-caption tracking-wider uppercase">All players</p>
       </template>
 
-      <p v-if="history.loading" class="text-foreground-muted py-xl text-body text-center">
+      <p v-if="history.loading" class="text-foreground-muted py-6 text-body text-center">
         Loading match history…
       </p>
 
@@ -55,7 +55,7 @@ onMounted(() => {
 
         <div
           v-if="history.total > 0"
-          class="border-border-subtle mt-xl pt-lg flex items-center justify-between border-t"
+          class="border-border-subtle mt-6 pt-4 flex items-center justify-between border-t"
         >
           <BaseButton variant="secondary" :disabled="!history.hasPrev" @click="history.prevPage()">
             Previous
