@@ -145,47 +145,65 @@ const summary = computed(() => {
       </RouterLink>
     </div>
 
-    <div v-else-if="summary" class="mx-auto max-w-xl space-y-5">
-      <div
-        class="bg-black/40 backdrop-blur-2xl rounded-2xl border border-white/10 p-5 text-center shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] relative overflow-hidden group"
-      >
-        <div
-          class="absolute inset-0 bg-gradient-to-r from-primary-500/10 to-secondary-500/10 pointer-events-none group-hover:from-primary-500/20 group-hover:to-secondary-500/20 transition-all duration-500"
-        ></div>
-        <p class="text-white font-mono text-sm relative z-10 font-bold drop-shadow-sm">
-          <span class="text-primary-400 font-black">●</span> {{ summary.black }}
-          <span class="text-white/50 mx-2 uppercase text-[10px] font-black tracking-widest"
-            >vs</span
-          >
-          {{ summary.white }} <span class="text-rose-400 font-black">○</span>
-        </p>
-        <p class="text-white/70 mt-2 text-xs font-medium tracking-wide relative z-10">
-          {{ summary.outcome }} <span class="mx-1">•</span> {{ summary.date }}
-        </p>
-      </div>
-
-      <div class="flex justify-center">
+    <div v-else-if="summary" class="grid gap-8 lg:grid-cols-[1fr_16rem] xl:grid-cols-[1fr_20rem] items-start">
+      <!-- Left side: Board & Controls -->
+      <div class="flex flex-col items-center gap-6 w-full">
         <GameBoard
           :board="history.replayBoard"
           :interactive="false"
           :last-move="history.replayLastMove"
+          class="w-full max-w-2xl"
         />
+        
+        <div class="w-full max-w-2xl">
+          <ReplayControls
+            :move-index="history.moveIndex"
+            :total-moves="history.totalMoves"
+            :at-start="history.atStart"
+            :at-end="history.atEnd"
+            :playing="playing"
+            :speed="speed"
+            @first="onFirst"
+            @prev="onPrev"
+            @next="onNext"
+            @last="onLast"
+            @toggle-play="togglePlay"
+            @set-speed="setSpeed"
+          />
+        </div>
       </div>
 
-      <ReplayControls
-        :move-index="history.moveIndex"
-        :total-moves="history.totalMoves"
-        :at-start="history.atStart"
-        :at-end="history.atEnd"
-        :playing="playing"
-        :speed="speed"
-        @first="onFirst"
-        @prev="onPrev"
-        @next="onNext"
-        @last="onLast"
-        @toggle-play="togglePlay"
-        @set-speed="setSpeed"
-      />
+      <!-- Right side: Match Summary -->
+      <div class="space-y-5">
+        <div
+          class="bg-black/40 backdrop-blur-2xl rounded-2xl border border-white/10 p-5 text-center shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] relative overflow-hidden group"
+        >
+          <div
+            class="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 pointer-events-none group-hover:from-indigo-500/20 group-hover:to-purple-500/20 transition-all duration-500"
+          ></div>
+          
+          <h3 class="text-white text-sm font-bold flex justify-center items-center gap-2 mb-4 relative z-10">
+            <span class="text-xl">📜</span> Match Summary
+          </h3>
+          
+          <p class="text-white font-mono text-sm relative z-10 font-bold drop-shadow-sm flex items-center justify-between bg-white/5 rounded-lg p-3 border border-white/5">
+            <span class="text-indigo-400 font-black flex flex-col items-center">
+              <span class="text-xs text-white/50 mb-1 uppercase tracking-widest font-bold">Black</span>
+              <span>● {{ summary.black }}</span>
+            </span>
+            <span class="text-white/50 text-[10px] font-black tracking-widest uppercase">vs</span>
+            <span class="text-rose-400 font-black flex flex-col items-center">
+              <span class="text-xs text-white/50 mb-1 uppercase tracking-widest font-bold">White</span>
+              <span>{{ summary.white }} ○</span>
+            </span>
+          </p>
+          
+          <div class="mt-4 pt-4 border-t border-white/10 relative z-10">
+            <p class="text-white font-bold text-lg drop-shadow-md">{{ summary.outcome }}</p>
+            <p class="text-white/50 mt-1 text-xs font-semibold tracking-wide">{{ summary.date }}</p>
+          </div>
+        </div>
+      </div>
     </div>
   </AppLayout>
 </template>
