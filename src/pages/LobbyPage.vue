@@ -43,35 +43,35 @@ const displayCoins = useCountUp(() => auth.user?.stats.coins ?? 0)
 /** Storefront copy. Presentational only — the store is not wired up yet. */
 const storeItems = [
   {
-    image: '/avatar_pro.png',
+    image: '/avatar_pro.webp',
     alt: 'Pro Avatar artwork',
     name: 'Pro Avatar',
     collection: 'Cybernetics',
     price: 500,
   },
   {
-    image: '/avatar_male.png',
+    image: '/avatar_male.webp',
     alt: 'Neon Boy avatar artwork',
     name: 'Neon Boy',
     collection: 'Cybernetics',
     price: 300,
   },
   {
-    image: '/avatar_female.png',
+    image: '/avatar_female.webp',
     alt: 'Neon Girl avatar artwork',
     name: 'Neon Girl',
     collection: 'Cybernetics',
     price: 300,
   },
   {
-    image: '/avatar_robot.png',
+    image: '/avatar_robot.webp',
     alt: 'Mecha Bot avatar artwork',
     name: 'Mecha Bot',
     collection: 'Cybernetics',
     price: 450,
   },
   {
-    image: '/vip_border.png',
+    image: '/vip_border.webp',
     alt: 'VIP Border artwork',
     name: 'VIP Border',
     collection: 'Royal Collection',
@@ -350,7 +350,7 @@ const recentMatch = computed(() => {
         >
           <!-- Above the fold and almost certainly the LCP element: eager. -->
           <img
-            src="/gomoku_board.png"
+            src="/gomoku_board.webp"
             alt=""
             fetchpriority="high"
             decoding="async"

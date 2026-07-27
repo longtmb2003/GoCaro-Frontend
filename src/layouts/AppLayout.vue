@@ -14,7 +14,7 @@ const showRankRules = ref(false)
 <template>
   <div class="bg-background text-foreground flex min-h-screen flex-col relative overflow-hidden">
     <!-- Ambient Background -->
-    <div class="absolute inset-0 pointer-events-none mix-blend-screen opacity-20 z-0" style="background-image: url('/gocaro_bg.png'); background-size: cover; background-position: center; background-attachment: fixed;"></div>
+    <div class="absolute inset-0 pointer-events-none mix-blend-screen opacity-20 z-0" style="background-image: url('/gocaro_bg.webp'); background-size: cover; background-position: center; background-attachment: fixed;"></div>
     
     <!-- Animated Glowing Orbs -->
     <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-primary-600/30 blur-[120px] animate-pulse pointer-events-none z-0" style="animation-duration: 8s;"></div>
@@ -26,7 +26,7 @@ const showRankRules = ref(false)
         <div class="flex items-center gap-6">
           <RouterLink to="/" class="flex items-center gap-2 group">
             <div class="relative w-8 h-8 rounded overflow-hidden ring-1 ring-white/20 group-hover:ring-primary-500/50 transition-all shadow-[0_0_15px_rgba(255,255,255,0.1)] group-hover:shadow-[0_0_20px_rgba(45,212,191,0.5)]">
-              <img src="/gocaro_logo.png" alt="GoCaro Logo" class="w-full h-full object-cover" />
+              <img src="/gocaro_logo.webp" alt="GoCaro Logo" class="w-full h-full object-cover" />
             </div>
             <h1 class="text-white text-xl font-black tracking-tight drop-shadow-md hidden sm:block">GOCARO</h1>
           </RouterLink>

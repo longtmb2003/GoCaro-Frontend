@@ -154,7 +154,7 @@ async function shareAchievement(): Promise<void> {
 <template>
   <AppLayout title="Match">
     <!-- Match Specific Background Wallpaper -->
-    <div class="fixed inset-0 z-[-1]" style="background-image: url('/match_bg.png'); background-size: cover; background-position: center;">
+    <div class="fixed inset-0 z-[-1]" style="background-image: url('/match_bg.webp'); background-size: cover; background-position: center;">
       <!-- Subtle dark overlay so the board stands out -->
       <div class="absolute inset-0 bg-black/30 backdrop-blur-sm"></div>
     </div>

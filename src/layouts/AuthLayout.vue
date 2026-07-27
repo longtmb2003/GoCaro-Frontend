@@ -68,7 +68,7 @@ withDefaults(defineProps<{ title: string; subtitle?: string }>(), { subtitle: ''
 
       <img
         class="absolute inset-0 h-full w-full object-contain p-8 transition-transform duration-1000 z-10 [animation:float_6s_ease-in-out_infinite]"
-        src="/thumbnail.png"
+        src="/thumbnail.webp"
         alt="GoCaro Cover"
       />
       <div
