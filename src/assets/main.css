@@ -85,16 +85,15 @@
   --color-neutral-900: oklch(0.2 0.011 265);
   --color-neutral-950: #081019;
 
-  /* ── Spacing ──────────────────────────────────────────────────────────── */
-  --spacing-xs: 4px;
-  --spacing-sm: 8px;
-  --spacing-md: 12px;
-  --spacing-lg: 16px;
-  --spacing-xl: 24px;
-  --spacing-2xl: 32px;
-  --spacing-3xl: 40px;
-  --spacing-4xl: 48px;
-  --spacing-5xl: 64px;
+  /*
+   * ── Spacing ────────────────────────────────────────────────────────────
+   * DESIGN_TOKENS.md's scale (4 8 12 16 24 32 40 48 64) is expressed through
+   * Tailwind's numeric scale, since --spacing is 0.25rem: 1 2 3 4 6 8 10 12 16.
+   *
+   * Do NOT add named --spacing-* keys here. Sizing utilities resolve a named
+   * key against --spacing-* before --container-*, so `--spacing-sm` silently
+   * turns `max-w-sm` from 24rem into 8px — and w-/h-/size-/basis- with it.
+   */
 
   /* ── Typography ───────────────────────────────────────────────────────── */
   --text-hero: 2.5rem;
