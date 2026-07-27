@@ -16,50 +16,50 @@ withDefaults(
   <div v-if="entries.length > 0" class="overflow-x-auto">
     <table class="w-full text-left" :class="compact ? 'text-xs' : 'text-sm'">
       <thead
-        class="border-border-subtle bg-surface-elevated border-b"
+        class="border-white/10 bg-white/5 border-b backdrop-blur-md"
         :class="compact ? 'text-[10px]' : 'text-xs'"
       >
         <tr>
-          <th scope="col" class="text-foreground-muted font-medium uppercase tracking-wide" :class="compact ? 'px-3 py-2' : 'px-4 py-3'">
+          <th scope="col" class="text-white/60 font-semibold uppercase tracking-wide" :class="compact ? 'px-3 py-2' : 'px-4 py-3'">
             Rank
           </th>
-          <th scope="col" class="text-foreground-muted font-medium uppercase tracking-wide" :class="compact ? 'px-3 py-2' : 'px-4 py-3'">
+          <th scope="col" class="text-white/60 font-semibold uppercase tracking-wide" :class="compact ? 'px-3 py-2' : 'px-4 py-3'">
             Player
           </th>
           <th
             scope="col"
-            class="text-foreground-muted text-right font-medium uppercase tracking-wide"
+            class="text-white/60 text-right font-semibold uppercase tracking-wide"
             :class="compact ? 'px-3 py-2' : 'px-4 py-3'"
           >
             Rating
           </th>
         </tr>
       </thead>
-      <tbody class="divide-border-subtle divide-y">
+      <tbody class="divide-white/10 divide-y">
         <tr
           v-for="(entry, index) in entries"
           :key="entry.username"
-          :class="entry.username === currentUsername ? 'bg-primary-500/10' : 'hover:bg-surface-elevated transition-colors'"
+          :class="entry.username === currentUsername ? 'bg-amber-500/20' : 'hover:bg-white/5 transition-colors cursor-default'"
         >
-          <td class="text-foreground-muted whitespace-nowrap" :class="compact ? 'px-3 py-2' : 'px-4 py-3'">
-            <span v-if="index === 0" class="text-xl">🥇</span>
-            <span v-else-if="index === 1" class="text-xl">🥈</span>
-            <span v-else-if="index === 2" class="text-xl">🥉</span>
+          <td class="text-white/60 whitespace-nowrap font-medium" :class="compact ? 'px-3 py-2' : 'px-4 py-3'">
+            <span v-if="index === 0" class="text-xl drop-shadow-md">🥇</span>
+            <span v-else-if="index === 1" class="text-xl drop-shadow-md">🥈</span>
+            <span v-else-if="index === 2" class="text-xl drop-shadow-md">🥉</span>
             <span v-else>#{{ index + 1 }}</span>
           </td>
-          <td class="text-foreground whitespace-nowrap font-medium" :class="compact ? 'px-3 py-2' : 'px-4 py-3'">
+          <td class="text-white whitespace-nowrap font-bold drop-shadow-sm" :class="compact ? 'px-3 py-2' : 'px-4 py-3'">
             {{ entry.username }}
             <span
               v-if="entry.username === currentUsername"
-              class="text-primary-500 ml-2 text-xs font-normal"
+              class="text-amber-400 ml-2 text-[10px] font-black tracking-widest uppercase"
             >
               (You)
             </span>
           </td>
-          <td class="text-foreground whitespace-nowrap text-right" :class="compact ? 'px-3 py-2' : 'px-4 py-3'">
+          <td class="text-white whitespace-nowrap text-right" :class="compact ? 'px-3 py-2' : 'px-4 py-3'">
             <div class="flex items-center justify-end gap-2">
-              <span class="font-mono">{{ entry.elo }}</span>
-              <span class="text-[10px] font-bold tracking-wide uppercase opacity-90" :class="getRankTier(entry.elo).color">
+              <span class="font-mono font-bold">{{ entry.elo }}</span>
+              <span class="text-[10px] font-black tracking-widest uppercase opacity-100" :class="getRankTier(entry.elo).color">
                 {{ getRankTier(entry.elo).name }}
               </span>
             </div>
@@ -69,7 +69,7 @@ withDefaults(
     </table>
   </div>
 
-  <p v-else class="text-foreground-muted py-8 text-center text-sm">
+  <p v-else class="text-white/50 py-8 text-center text-sm font-medium">
     No ranked players yet. Play a match to appear here.
   </p>
 </template>

@@ -55,7 +55,7 @@ function handleInput(event: Event): void {
         :disabled="disabled"
         :aria-invalid="hasError"
         :aria-describedby="hasError ? errorId : undefined"
-        class="border-border-subtle bg-background text-foreground focus-visible:border-primary-400 w-full rounded-md border px-4 h-12 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+        class="border-white/10 bg-white/5 backdrop-blur-md text-white focus-visible:border-primary-500 focus-visible:ring-1 focus-visible:ring-primary-500/50 shadow-inner w-full rounded-xl border px-4 h-12 text-sm transition-all disabled:cursor-not-allowed disabled:opacity-60 placeholder:text-white/30"
         :class="[hasError ? 'border-danger-500' : '', type === 'password' ? 'pr-10' : '']"
         @input="handleInput"
       />
