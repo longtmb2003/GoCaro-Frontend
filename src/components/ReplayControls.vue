@@ -28,7 +28,7 @@ const buttonClass =
 </script>
 
 <template>
-  <div class="space-y-5 bg-black/20 backdrop-blur-md p-4 rounded-2xl border border-white/5">
+  <div class="space-y-4 bg-black/20 backdrop-blur-md p-4 rounded-2xl border border-white/5">
     <div class="flex items-center justify-center gap-3">
       <button
         type="button"

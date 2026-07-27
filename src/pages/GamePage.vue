@@ -169,7 +169,7 @@ async function shareAchievement(): Promise<void> {
         />
       </div>
 
-      <div class="space-y-4">
+      <div class="space-y-6">
         <OpponentLeftBanner
           v-if="socket.opponentReconnectSecondsLeft !== null"
           :seconds-left="socket.opponentReconnectSecondsLeft"
@@ -195,14 +195,14 @@ async function shareAchievement(): Promise<void> {
             <p class="text-foreground-muted text-caption font-black tracking-widest uppercase">
               You
             </p>
-            <p class="text-foreground mt-1.5 truncate font-bold">🧑‍💻 {{ auth.displayName }}</p>
+            <p class="text-foreground mt-2 truncate font-bold">🧑‍💻 {{ auth.displayName }}</p>
             <p class="text-accent text-small mt-1 font-semibold">{{ yourColor }}</p>
           </GlassCard>
           <GlassCard as="div" class="text-center">
             <p class="text-foreground-muted text-caption font-black tracking-widest uppercase">
               Opponent
             </p>
-            <p class="text-foreground mt-1.5 truncate font-bold">🧑‍💻 {{ game.opponent }}</p>
+            <p class="text-foreground mt-2 truncate font-bold">🧑‍💻 {{ game.opponent }}</p>
             <p class="text-error text-small mt-1 font-semibold">{{ opponentColor }}</p>
           </GlassCard>
         </div>
@@ -211,7 +211,7 @@ async function shareAchievement(): Promise<void> {
           {{ game.moveError }}
         </p>
 
-        <div v-if="game.phase === 'playing'" class="border-border-subtle border-t pt-5 space-y-3">
+        <div v-if="game.phase === 'playing'" class="border-border-subtle border-t pt-6 space-y-3">
           <div v-if="!confirmingResign" class="flex gap-3">
             <BaseButton
               variant="secondary"

@@ -56,7 +56,7 @@ const elapsedLabel = computed(() => {
       <p v-if="isError" class="text-error text-body mt-2">
         {{ errorMessage ?? 'Something went wrong.' }}
       </p>
-      <div v-else class="text-foreground-muted text-body mt-3 space-y-1" aria-live="polite">
+      <div v-else class="text-foreground-muted text-body mt-3 space-y-2" aria-live="polite">
         <template v-if="status === 'searching'">
           <p class="text-accent text-card font-mono tabular-nums">{{ elapsedLabel }}</p>
           <p v-if="mode === 'ranked' && searchProgress?.search_range" class="text-small">

@@ -62,7 +62,7 @@ function handleSubmit(): void {
 </script>
 
 <template>
-  <form class="space-y-5" novalidate @submit.prevent="handleSubmit">
+  <form class="space-y-4" novalidate @submit.prevent="handleSubmit">
     <BaseInput
       v-model="username"
       name="username"

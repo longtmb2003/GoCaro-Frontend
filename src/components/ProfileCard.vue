@@ -69,20 +69,20 @@ const displayCoins = useCountUp(() => props.stats?.coins || 0)
           <p class="text-foreground text-card truncate">{{ username }}</p>
           <BaseBadge v-if="isGuest" variant="warning" shape="tag" class="shrink-0">Guest</BaseBadge>
         </div>
-        <p class="text-foreground-muted text-small mt-0.5 flex items-center gap-1.5">
+        <p class="text-foreground-muted text-small mt-1 flex items-center gap-2">
           <span class="bg-success size-1.5 rounded-pill" aria-hidden="true" />
           {{ isGuest ? 'Practice Mode' : 'Online' }}
         </p>
       </div>
     </div>
 
-    <div class="border-border-subtle mt-4 sm:mt-6 border-t pt-4 sm:pt-5">
+    <div class="border-border-subtle mt-4 sm:mt-6 border-t pt-4 sm:pt-6">
       <div class="flex flex-col items-center justify-center mb-3 sm:mb-4">
         <p class="text-foreground-muted text-xs font-semibold uppercase tracking-widest mb-1">Rating</p>
         <div class="text-4xl sm:text-5xl font-black bg-gradient-to-r from-primary-400 to-secondary-400 bg-clip-text text-transparent drop-shadow-sm tabular-nums">
           {{ elo }}
         </div>
-        <div class="mt-2 font-bold text-sm flex items-center gap-1.5" :class="rankColor">
+        <div class="mt-2 font-bold text-sm flex items-center gap-2" :class="rankColor">
           <span class="opacity-80">♦</span> {{ rankTier }}
         </div>
       </div>
@@ -92,15 +92,15 @@ const displayCoins = useCountUp(() => props.stats?.coins || 0)
           <div class="text-[10px] text-foreground-muted uppercase tracking-wider font-semibold flex items-center justify-center gap-1">
             <span class="text-yellow-400">🟡</span> Coins
           </div>
-          <div class="text-sm font-bold text-foreground mt-0.5">{{ displayCoins }}</div>
+          <div class="text-sm font-bold text-foreground mt-1">{{ displayCoins }}</div>
         </div>
         <div class="text-center">
           <div class="text-[10px] text-foreground-muted uppercase tracking-wider font-semibold">Win Rate</div>
-          <div class="text-sm font-bold text-foreground mt-0.5">{{ winRate }}%</div>
+          <div class="text-sm font-bold text-foreground mt-1">{{ winRate }}%</div>
         </div>
         <div class="text-center">
           <div class="text-[10px] text-foreground-muted uppercase tracking-wider font-semibold">Streak</div>
-          <div class="text-sm font-bold mt-0.5 flex items-center justify-center gap-1" :class="streak > 0 ? 'text-success-400' : 'text-foreground-muted'">
+          <div class="text-sm font-bold mt-1 flex items-center justify-center gap-1" :class="streak > 0 ? 'text-success-400' : 'text-foreground-muted'">
             <span v-if="streak > 0">+{{ streak }}</span>
             <span v-else>{{ streak }}</span>
             <span v-if="streak > 0" :class="[fireClass, 'animate-bounce drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]']" class="text-base inline-block">{{ fireIcon.split(' ')[0] }}</span>
@@ -117,7 +117,7 @@ const displayCoins = useCountUp(() => props.stats?.coins || 0)
 
       <!-- Rank Progress Bar -->
       <div class="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-border-subtle/50">
-        <div class="flex justify-between items-end text-xs text-foreground font-medium mb-1.5">
+        <div class="flex justify-between items-end text-xs text-foreground font-medium mb-2">
           <span :class="rankColor" class="font-bold tracking-wide">{{ rankTier }}</span>
           <span class="text-[10px] text-foreground-muted tabular-nums font-bold tracking-wider">{{ elo }} / {{ nextLevelMax }}</span>
         </div>
@@ -128,11 +128,11 @@ const displayCoins = useCountUp(() => props.stats?.coins || 0)
       <div class="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-border-subtle/50 grid grid-cols-2 gap-2 text-xs">
         <div class="bg-surface rounded border border-border-subtle p-2 flex flex-col cursor-not-allowed opacity-80 hover:opacity-100 transition-opacity">
           <span class="text-[9px] uppercase tracking-widest text-foreground-muted font-bold">Title</span>
-          <span class="text-foreground font-medium mt-0.5 truncate">Novice</span>
+          <span class="text-foreground font-medium mt-1 truncate">Novice</span>
         </div>
         <div class="bg-surface rounded border border-border-subtle p-2 flex flex-col cursor-not-allowed opacity-80 hover:opacity-100 transition-opacity">
           <span class="text-[9px] uppercase tracking-widest text-foreground-muted font-bold">Background</span>
-          <span class="text-foreground font-medium mt-0.5 truncate">Default</span>
+          <span class="text-foreground font-medium mt-1 truncate">Default</span>
         </div>
       </div>
 
@@ -142,7 +142,7 @@ const displayCoins = useCountUp(() => props.stats?.coins || 0)
           class="w-full flex items-center justify-between text-xs text-foreground-muted font-semibold uppercase tracking-widest hover:text-foreground transition-colors cursor-pointer"
           @click="badgesExpanded = !badgesExpanded"
         >
-          <span class="flex items-center gap-1.5">🏆 4 Badges Unlocked</span>
+          <span class="flex items-center gap-2">🏆 4 Badges Unlocked</span>
           <span class="transform transition-transform duration-200" :class="badgesExpanded ? 'rotate-90' : ''">›</span>
         </button>
         <div v-show="badgesExpanded" class="flex gap-2 mt-3 [animation:fade-in_0.2s_ease-out_forwards]">
@@ -156,10 +156,10 @@ const displayCoins = useCountUp(() => props.stats?.coins || 0)
       <!-- Guest Upsell -->
       <div v-if="isGuest" class="mt-4 p-3 bg-primary-500/10 border border-primary-500/20 rounded-lg">
         <p class="text-xs font-bold text-primary-400 mb-2 uppercase tracking-wide">Sign in to:</p>
-        <ul class="text-xs text-foreground-muted space-y-1 font-medium">
-          <li class="flex items-center gap-1.5"><span class="text-success-400">✓</span> Earn Coins</li>
-          <li class="flex items-center gap-1.5"><span class="text-success-400">✓</span> Unlock Avatars</li>
-          <li class="flex items-center gap-1.5"><span class="text-success-400">✓</span> Join Leaderboard</li>
+        <ul class="text-xs text-foreground-muted space-y-2 font-medium">
+          <li class="flex items-center gap-2"><span class="text-success-400">✓</span> Earn Coins</li>
+          <li class="flex items-center gap-2"><span class="text-success-400">✓</span> Unlock Avatars</li>
+          <li class="flex items-center gap-2"><span class="text-success-400">✓</span> Join Leaderboard</li>
         </ul>
       </div>
     </div>

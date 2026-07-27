@@ -6,7 +6,7 @@ withDefaults(defineProps<{ title: string; subtitle?: string }>(), { subtitle: ''
   <div class="flex min-h-screen bg-neutral-950">
     <!-- Form Side -->
     <div
-      class="flex flex-1 flex-col justify-center px-4 py-12 sm:px-6 lg:flex-none lg:w-[32rem] lg:px-20 xl:px-24 bg-black/40 backdrop-blur-2xl border-r border-white/10 z-10 shadow-[8px_0_32px_0_rgba(0,0,0,0.5)]"
+      class="flex flex-1 flex-col justify-center px-4 py-12 sm:px-6 lg:flex-none lg:w-[32rem] lg:px-12 xl:px-16 bg-black/40 backdrop-blur-2xl border-r border-white/10 z-10 shadow-[8px_0_32px_0_rgba(0,0,0,0.5)]"
     >
       <div class="mx-auto w-full max-w-sm">
         <div class="mb-8 text-center lg:text-left relative">
@@ -79,7 +79,7 @@ withDefaults(defineProps<{ title: string; subtitle?: string }>(), { subtitle: ''
       >
         <div class="absolute -top-3 -right-3">
           <div
-            class="flex items-center gap-1.5 bg-success-500/20 border border-success-500/30 text-success-400 text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full backdrop-blur-sm"
+            class="flex items-center gap-2 bg-success-500/20 border border-success-500/30 text-success-400 text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full backdrop-blur-sm"
           >
             <span class="w-1.5 h-1.5 rounded-full bg-success-400 animate-pulse"></span>
             Server Online

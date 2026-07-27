@@ -558,7 +558,7 @@ const recentMatch = computed(() => {
             <div
               class="bg-glass-light border-border-subtle rounded-sm p-3 border text-center"
             >
-              <p class="text-caption text-foreground-muted mb-1.5 tracking-widest uppercase">
+              <p class="text-caption text-foreground-muted mb-2 tracking-widest uppercase">
                 Network
               </p>
               <div class="gap-2 flex items-center justify-center">
@@ -569,7 +569,7 @@ const recentMatch = computed(() => {
             <div
               class="bg-glass-light border-border-subtle rounded-sm p-3 border text-center"
             >
-              <p class="text-caption text-foreground-muted mb-1.5 tracking-widest uppercase">
+              <p class="text-caption text-foreground-muted mb-2 tracking-widest uppercase">
                 Latency
               </p>
               <div class="flex items-center justify-center gap-1">

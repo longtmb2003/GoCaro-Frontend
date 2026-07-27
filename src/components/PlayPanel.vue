@@ -19,7 +19,7 @@ const emit = defineEmits<{ play: [mode: MatchmakingMode]; upgrade: [] }>()
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <!-- Ranked Card -->
       <button
-        class="cursor-pointer relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary-600 via-primary-500 to-secondary-500 p-5 text-left shadow-lg ring-1 ring-white/20 transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-primary-500/30 group"
+        class="cursor-pointer relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary-600 via-primary-500 to-secondary-500 p-6 text-left shadow-lg ring-1 ring-white/20 transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-primary-500/30 group"
         :aria-describedby="isGuest ? 'ranked-locked' : undefined"
         @click="isGuest ? emit('upgrade') : emit('play', 'ranked')"
       >
@@ -34,7 +34,7 @@ const emit = defineEmits<{ play: [mode: MatchmakingMode]; upgrade: [] }>()
 
       <!-- Casual Card -->
       <button
-        class="cursor-pointer relative overflow-hidden rounded-2xl bg-surface-elevated p-5 text-left shadow-lg ring-1 ring-border-subtle transition-all hover:-translate-y-1 hover:shadow-xl hover:bg-surface/80 group"
+        class="cursor-pointer relative overflow-hidden rounded-2xl bg-surface-elevated p-6 text-left shadow-lg ring-1 ring-border-subtle transition-all hover:-translate-y-1 hover:shadow-xl hover:bg-surface/80 group"
         @click="emit('play', 'casual')"
       >
         <div class="absolute -right-4 -top-4 text-6xl opacity-10 transition-transform group-hover:scale-110 group-hover:-rotate-12">😊</div>

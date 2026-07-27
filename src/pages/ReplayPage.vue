@@ -151,7 +151,7 @@ const summary = computed(() => {
       </RouterLink>
     </div>
 
-    <div v-else-if="summary" class="grid gap-8 lg:grid-cols-[1fr_16rem] xl:grid-cols-[1fr_20rem] items-start">
+    <div v-else-if="summary" class="grid gap-6 lg:grid-cols-[1fr_16rem] xl:grid-cols-[1fr_20rem] items-start">
       <!-- Left side: Board & Controls -->
       <div class="flex flex-col items-center gap-6 w-full">
         <GameBoard
@@ -180,7 +180,7 @@ const summary = computed(() => {
       </div>
 
       <!-- Right side: Match Summary -->
-      <div class="space-y-5">
+      <div class="space-y-6">
         <GlassCard title="Match Summary" heading-tag="h3">
           <template #icon><span aria-hidden="true">📜</span></template>
 
