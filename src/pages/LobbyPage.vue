@@ -524,13 +524,9 @@ const recentMatch = computed(() => {
           </div>
           <div class="flex items-center justify-between mb-5 relative z-10">
             <h3 class="text-white text-sm font-bold flex items-center gap-2">
-              <span class="text-xl drop-shadow-[0_0_10px_rgba(236,72,153,0.8)]">🛍️</span> Cosmetics
-              Store
+              <span class="text-xl drop-shadow-[0_0_10px_rgba(236,72,153,0.8)]">🛍️</span> Cosmetics Store 
             </h3>
-            <span
-              class="text-xs font-bold text-pink-300 bg-pink-500/10 px-2 py-1 rounded-md border border-pink-500/20 shadow-inner"
-              >Featured Items</span
-            >
+            <span class="text-xs font-bold text-pink-300 bg-pink-500/10 px-2 py-1 rounded-md border border-pink-500/20 shadow-inner uppercase tracking-wider">Coming Soon</span>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 relative z-10">
             <!-- Avatar Pro -->
