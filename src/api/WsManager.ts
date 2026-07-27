@@ -13,6 +13,12 @@ export interface WsManagerOptions {
   onMessage: (message: SocketMessage) => void
   onOpen?: () => void
   onError?: (error: Event) => void
+  /**
+   * Fired on every close, including the ones that trigger an auto-reconnect.
+   * A manual `close()` detaches the handler first, so callers that track
+   * connection state must also reset it in their own teardown.
+   */
+  onClose?: () => void
 }
 
 /**
@@ -65,6 +71,7 @@ export class WsManager {
       if (this.socket === socket) {
         this.socket = null
       }
+      this.options.onClose?.()
       // Only an unexpected drop reconnects; a manual close stays closed.
       if (!this.manuallyClosed && this.options.autoReconnect === true) {
         this.scheduleReconnect()

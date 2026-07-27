@@ -107,6 +107,15 @@ const paginatedLeaderboard = computed(() => {
   return leaderboard.entries.slice(0, 10)
 })
 
+/** Presentation for the real lobby socket state, using the status tokens. */
+const NETWORK_STATUS = {
+  online: { label: 'ONLINE', dot: 'bg-success', text: 'text-success' },
+  connecting: { label: 'CONNECTING', dot: 'bg-warning', text: 'text-warning' },
+  offline: { label: 'OFFLINE', dot: 'bg-error', text: 'text-error' },
+} as const
+
+const networkStatus = computed(() => NETWORK_STATUS[lobby.connectionState])
+
 const isMatchmaking = computed(
   () =>
     socket.status === 'connecting' || socket.status === 'searching' || socket.status === 'error',
@@ -559,9 +568,11 @@ const recentMatch = computed(() => {
               <p class="text-caption text-foreground-muted mb-2 tracking-widest uppercase">
                 Network
               </p>
-              <div class="gap-2 flex items-center justify-center">
-                <span class="bg-success size-2 rounded-pill" aria-hidden="true" />
-                <span class="text-small text-success font-bold tracking-wide">ONLINE</span>
+              <div class="gap-2 flex items-center justify-center" aria-live="polite">
+                <span class="size-2 rounded-pill" :class="networkStatus.dot" aria-hidden="true" />
+                <span class="text-small font-bold tracking-wide" :class="networkStatus.text">
+                  {{ networkStatus.label }}
+                </span>
               </div>
             </GlassCard>
             <GlassCard as="div" variant="nested" class="text-center">
@@ -569,8 +580,11 @@ const recentMatch = computed(() => {
                 Latency
               </p>
               <div class="flex items-center justify-center gap-1">
-                <span class="text-small text-foreground-secondary font-bold tracking-wide">---</span>
-                <span class="text-caption text-foreground-muted font-bold">ms</span>
+                <!-- Not measured yet; say so rather than showing a placeholder
+                     that reads like a value. -->
+                <span class="text-small text-foreground-muted font-bold tracking-wide">
+                  Unavailable
+                </span>
               </div>
             </GlassCard>
           </div>
