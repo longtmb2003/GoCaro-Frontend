@@ -58,9 +58,9 @@ async function handleSubmit(credentials: Credentials): Promise<void> {
       <PlayAsGuestButton :disabled="loading || loginSuccess" />
 
       <div class="my-6 flex items-center gap-3">
-        <span class="bg-border-subtle h-px flex-1" aria-hidden="true" />
-        <span class="text-foreground-muted text-xs font-medium uppercase">or</span>
-        <span class="bg-border-subtle h-px flex-1" aria-hidden="true" />
+        <span class="bg-white/20 h-px flex-1" aria-hidden="true" />
+        <span class="text-white/50 text-xs font-bold uppercase tracking-widest">or</span>
+        <span class="bg-white/20 h-px flex-1" aria-hidden="true" />
       </div>
 
       <CredentialsForm

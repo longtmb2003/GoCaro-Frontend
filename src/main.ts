@@ -10,9 +10,11 @@ import './assets/main.css'
 const app = createApp(App)
 
 app.use(createPinia())
-app.use(router)
 
+// Initialize auth BEFORE routing so the route guard sees the loaded state
 await useAuthStore().initialize()
+
+app.use(router)
 await router.isReady()
 
 app.mount('#app')

@@ -167,64 +167,93 @@ async function shareAchievement(): Promise<void> {
           :seconds-left="socket.opponentReconnectSecondsLeft"
         />
 
-        <div class="border-border-subtle bg-surface/80 backdrop-blur-md rounded-2xl border p-4 shadow-lg ring-1 ring-white/10 relative overflow-hidden">
-          <div class="absolute inset-0 bg-gradient-to-br from-primary-500/10 to-secondary-500/10 pointer-events-none"></div>
-          <p class="text-foreground text-center font-semibold" aria-live="polite">
+        <div
+          class="bg-black/40 backdrop-blur-2xl rounded-2xl border border-white/10 p-5 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] relative overflow-hidden group"
+        >
+          <div
+            class="absolute inset-0 bg-gradient-to-br from-primary-500/10 to-secondary-500/10 pointer-events-none group-hover:from-primary-500/20 group-hover:to-secondary-500/20 transition-all duration-500"
+          ></div>
+          <p
+            class="text-white text-center font-bold tracking-wide uppercase text-sm drop-shadow-md"
+            aria-live="polite"
+          >
             {{ turnLabel }}
           </p>
           <TurnTimer
             v-if="game.phase === 'playing'"
-            class="mt-3"
+            class="mt-3 relative z-10"
             :seconds-left="socket.turnSecondsLeft"
             :total-seconds="socket.turnBudgetSeconds"
           />
         </div>
 
         <div class="grid grid-cols-2 gap-3">
-          <div class="border-border-subtle bg-surface/80 backdrop-blur-sm rounded-xl border p-3 text-center shadow-md relative overflow-hidden">
-            <div class="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent pointer-events-none"></div>
-            <p class="text-foreground-muted text-xs font-medium tracking-wide uppercase">You</p>
-            <p class="text-foreground mt-1 truncate font-semibold">🧑‍💻 {{ auth.displayName }}</p>
-            <p class="text-foreground-muted mt-0.5 text-sm">{{ yourColor }}</p>
-          </div>
-          <div class="border-border-subtle bg-surface/80 backdrop-blur-sm rounded-xl border p-3 text-center shadow-md relative overflow-hidden">
-            <div class="absolute inset-0 bg-gradient-to-bl from-red-500/10 to-transparent pointer-events-none"></div>
-            <p class="text-foreground-muted text-xs font-medium tracking-wide uppercase">
-              Opponent
+          <div
+            class="bg-black/40 backdrop-blur-2xl rounded-xl border border-white/10 p-4 text-center shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] relative overflow-hidden hover:border-primary-500/30 transition-all"
+          >
+            <div
+              class="absolute inset-0 bg-gradient-to-br from-primary-500/10 to-transparent pointer-events-none"
+            ></div>
+            <p class="text-white/60 text-xs font-black tracking-widest uppercase">You</p>
+            <p class="text-white mt-1.5 truncate font-bold drop-shadow-sm">
+              🧑‍💻 {{ auth.displayName }}
             </p>
-            <p class="text-foreground mt-1 truncate font-semibold">🧑‍💻 {{ game.opponent }}</p>
-            <p class="text-foreground-muted mt-0.5 text-sm">{{ opponentColor }}</p>
+            <p class="text-primary-300 mt-1 text-sm font-semibold">{{ yourColor }}</p>
+          </div>
+          <div
+            class="bg-black/40 backdrop-blur-2xl rounded-xl border border-white/10 p-4 text-center shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] relative overflow-hidden hover:border-rose-500/30 transition-all"
+          >
+            <div
+              class="absolute inset-0 bg-gradient-to-bl from-rose-500/10 to-transparent pointer-events-none"
+            ></div>
+            <p class="text-white/60 text-xs font-black tracking-widest uppercase">Opponent</p>
+            <p class="text-white mt-1.5 truncate font-bold drop-shadow-sm">
+              🧑‍💻 {{ game.opponent }}
+            </p>
+            <p class="text-rose-300 mt-1 text-sm font-semibold">{{ opponentColor }}</p>
           </div>
         </div>
 
-        <p v-if="game.moveError" class="text-danger-400 text-center text-sm" role="alert">
+        <p
+          v-if="game.moveError"
+          class="text-danger-400 text-center text-sm font-medium drop-shadow-sm"
+          role="alert"
+        >
           {{ game.moveError }}
         </p>
 
-        <div v-if="game.phase === 'playing'" class="border-border-subtle border-t pt-4 space-y-3">
-          <div v-if="!confirmingResign" class="flex gap-2">
+        <div v-if="game.phase === 'playing'" class="border-white/10 border-t pt-5 space-y-3">
+          <div v-if="!confirmingResign" class="flex gap-3">
             <BaseButton
               variant="secondary"
-              class="flex-1"
+              class="flex-1 border-white/20 bg-white/5 hover:bg-white/10 text-white shadow-lg shadow-black/20"
               :disabled="socket.waitingForDrawResponse || socket.drawOffersLeft === 0"
               @click="socket.sendOfferDraw()"
             >
-              {{ socket.waitingForDrawResponse ? 'Waiting...' : `🏳️ Draw (${socket.drawOffersLeft})` }}
+              {{
+                socket.waitingForDrawResponse ? 'Waiting...' : `🏳️ Draw (${socket.drawOffersLeft})`
+              }}
             </BaseButton>
             <BaseButton
-              class="flex-1 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-400 hover:to-rose-500 text-white border-0 shadow-lg shadow-red-500/30"
+              class="flex-1 bg-gradient-to-r from-rose-500 to-red-600 hover:from-rose-400 hover:to-red-500 text-white border-white/20 shadow-[0_0_15px_rgba(225,29,72,0.4)]"
               @click="confirmingResign = true"
             >
               Resign
             </BaseButton>
           </div>
-          <div v-else class="space-y-2">
-            <p class="text-foreground text-center text-sm">Resign this match?</p>
-            <div class="flex gap-2">
-              <BaseButton class="flex-1 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-400 hover:to-rose-500 text-white border-0 shadow-lg shadow-red-500/30" @click="confirmResign"
+          <div v-else class="space-y-3">
+            <p class="text-white text-center text-sm font-bold tracking-wide">Resign this match?</p>
+            <div class="flex gap-3">
+              <BaseButton
+                class="flex-1 bg-gradient-to-r from-rose-500 to-red-600 hover:from-rose-400 hover:to-red-500 text-white border-white/20 shadow-[0_0_15px_rgba(225,29,72,0.4)]"
+                @click="confirmResign"
                 >Confirm</BaseButton
               >
-              <BaseButton variant="secondary" class="flex-1" @click="confirmingResign = false">
+              <BaseButton
+                variant="secondary"
+                class="flex-1 border-white/20 bg-white/5 hover:bg-white/10 text-white"
+                @click="confirmingResign = false"
+              >
                 Keep playing
               </BaseButton>
             </div>
@@ -253,20 +282,32 @@ async function shareAchievement(): Promise<void> {
     <!-- Draw Offer Dialog -->
     <div
       v-if="socket.drawOfferPending"
-      class="fixed inset-0 z-1300 flex items-center justify-center bg-black/60 p-4"
+      class="fixed inset-0 z-[1300] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
     >
-      <div class="bg-surface/90 backdrop-blur-xl w-full max-w-sm rounded-2xl p-8 text-center shadow-2xl ring-1 ring-white/20 relative overflow-hidden">
-        <div class="absolute inset-0 bg-gradient-to-br from-primary-500/20 to-secondary-500/20 pointer-events-none"></div>
-        <h2 class="text-xl font-bold flex justify-center items-center gap-2">
-          <span class="text-3xl">🏳️</span> Draw Offer
+      <div
+        class="bg-black/60 backdrop-blur-2xl w-full max-w-sm rounded-3xl p-8 text-center shadow-[0_8px_32px_0_rgba(0,0,0,0.5)] border border-white/20 relative overflow-hidden"
+      >
+        <div
+          class="absolute inset-0 bg-gradient-to-br from-primary-500/20 to-secondary-500/20 pointer-events-none"
+        ></div>
+        <h2
+          class="text-white text-2xl font-black tracking-wide drop-shadow-md flex justify-center items-center gap-3"
+        >
+          <span class="text-4xl drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]">🏳️</span> Draw Offer
         </h2>
-        <p class="text-foreground-muted mt-2 text-sm">Your opponent has offered a draw.</p>
-        <p class="text-foreground-muted mt-1 text-xs">(Making a move will decline it)</p>
-        <div class="mt-8 flex gap-3 relative">
-          <BaseButton class="flex-1 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 border-0 shadow-lg shadow-emerald-500/30" @click="socket.sendRespondDraw(true)">
+        <p class="text-white/80 mt-3 text-sm font-medium">Your opponent has offered a draw.</p>
+        <p class="text-white/50 mt-1 text-xs font-semibold">(Making a move will decline it)</p>
+        <div class="mt-8 flex gap-3 relative z-10">
+          <BaseButton
+            class="flex-1 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-white border-white/20 shadow-[0_0_15px_rgba(16,185,129,0.4)]"
+            @click="socket.sendRespondDraw(true)"
+          >
             Accept
           </BaseButton>
-          <BaseButton class="flex-1 bg-gradient-to-r from-gray-600 to-slate-700 hover:from-gray-500 hover:to-slate-600 text-white border-0 shadow-lg" @click="socket.sendRespondDraw(false)">
+          <BaseButton
+            class="flex-1 bg-gradient-to-r from-gray-600 to-slate-700 hover:from-gray-500 hover:to-slate-600 text-white border-white/20 shadow-lg"
+            @click="socket.sendRespondDraw(false)"
+          >
             Decline
           </BaseButton>
         </div>

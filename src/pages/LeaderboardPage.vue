@@ -54,32 +54,36 @@ onMounted(() => {
     </template>
 
     <section
-      class="border-border-subtle bg-surface mx-auto max-w-2xl rounded-lg border p-6 shadow-sm"
+      class="bg-black/40 backdrop-blur-2xl mx-auto max-w-2xl rounded-2xl border border-white/10 p-6 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] relative overflow-hidden group"
       aria-label="Leaderboard"
     >
-      <div class="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <h2 class="text-foreground text-lg font-semibold">Top players</h2>
+      <div class="absolute -right-10 -top-10 text-9xl opacity-5 pointer-events-none group-hover:scale-110 transition-transform duration-500">👑</div>
+      
+      <div class="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-10">
+        <h2 class="text-white text-xl font-extrabold flex items-center gap-2">
+          <span class="text-2xl drop-shadow-[0_0_10px_rgba(245,158,11,0.8)]">👑</span> Top players
+        </h2>
         <div class="relative w-full sm:w-auto flex gap-2">
           <input
             v-model="searchQuery"
             type="text"
             placeholder="Search by username..."
-            class="border-border-subtle bg-background text-foreground focus:border-primary-500 focus:ring-primary-500/20 w-full sm:w-64 rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 transition-all"
+            class="border-white/10 bg-white/5 backdrop-blur-md text-white focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500/50 shadow-inner w-full sm:w-64 rounded-xl border px-4 h-10 text-sm transition-all placeholder:text-white/30"
             @keyup.enter="handleSearch"
           />
           <BaseButton @click="handleSearch">Search</BaseButton>
         </div>
       </div>
 
-      <div v-if="leaderboard.loading" class="text-foreground-muted py-8 text-center text-sm">
+      <div v-if="leaderboard.loading" class="text-white/50 py-8 text-center text-sm font-medium relative z-10">
         Loading leaderboard…
       </div>
 
-      <div v-else-if="leaderboard.error" class="py-8 text-center">
-        <p class="text-danger-400 text-sm">{{ leaderboard.error }}</p>
+      <div v-else-if="leaderboard.error" class="py-8 text-center relative z-10">
+        <p class="text-danger-400 text-sm font-medium">{{ leaderboard.error }}</p>
         <BaseButton
           variant="secondary"
-          class="mt-4"
+          class="mt-4 border-white/10 bg-white/5 hover:bg-white/10 text-white"
           @click="leaderboard.load(FULL_LEADERBOARD_LIMIT)"
         >
           Try again
@@ -87,22 +91,24 @@ onMounted(() => {
       </div>
 
       <template v-else>
-        <LeaderboardTable
-          :entries="paginatedEntries"
-          :current-username="auth.user?.username ?? ''"
-        />
+        <div class="relative z-10">
+          <LeaderboardTable
+            :entries="paginatedEntries"
+            :current-username="auth.user?.username ?? ''"
+          />
+        </div>
 
         <div
           v-if="leaderboard.entries.length > 0"
-          class="border-border-subtle mt-4 flex items-center justify-between border-t pt-4"
+          class="border-white/10 mt-6 flex items-center justify-between border-t pt-4 relative z-10"
         >
-          <BaseButton variant="secondary" :disabled="currentPage <= 1" @click="prevPage">
+          <BaseButton variant="secondary" :disabled="currentPage <= 1" class="border-white/20 bg-white/5 hover:bg-white/10 text-white" @click="prevPage">
             Previous
           </BaseButton>
-          <span class="text-foreground-muted text-sm tabular-nums">
+          <span class="text-white/60 font-semibold tracking-wide text-sm tabular-nums">
             Page {{ currentPage }} of {{ totalPages }}
           </span>
-          <BaseButton variant="secondary" :disabled="currentPage >= totalPages" @click="nextPage">
+          <BaseButton variant="secondary" :disabled="currentPage >= totalPages" class="border-white/20 bg-white/5 hover:bg-white/10 text-white" @click="nextPage">
             Next
           </BaseButton>
         </div>

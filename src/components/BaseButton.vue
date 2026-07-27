@@ -21,9 +21,12 @@ const props = withDefaults(
 const isDisabled = computed(() => props.disabled || props.loading)
 
 const variantClasses: Record<Variant, string> = {
-  primary: 'bg-gradient-to-r from-primary-600 to-primary-500 text-white shadow-lg shadow-primary-500/20 hover:shadow-primary-500/40 hover:from-primary-500 hover:to-primary-400 border border-primary-400/20',
-  secondary: 'bg-surface-elevated text-foreground border border-border-subtle hover:bg-surface hover:border-primary-500/30 hover:shadow-[0_0_10px_rgba(59,130,246,0.1)] transition-all',
-  danger: 'bg-gradient-to-r from-danger-600 to-danger-500 text-white shadow-lg shadow-danger-500/20 hover:shadow-danger-500/40 hover:from-danger-500 hover:to-danger-400 border border-danger-400/20',
+  primary:
+    'bg-gradient-to-r from-primary-500 to-secondary-600 text-white shadow-[0_0_15px_rgba(45,212,191,0.4)] hover:shadow-[0_0_25px_rgba(45,212,191,0.6)] hover:from-primary-400 hover:to-secondary-500 border border-white/20 transition-all duration-300',
+  secondary:
+    'bg-white/5 backdrop-blur-md text-white border border-white/20 hover:bg-white/10 hover:border-white/30 hover:shadow-[0_0_15px_rgba(255,255,255,0.1)] transition-all duration-300',
+  danger:
+    'bg-gradient-to-r from-rose-500 to-red-600 text-white shadow-[0_0_15px_rgba(244,63,94,0.4)] hover:shadow-[0_0_25px_rgba(244,63,94,0.6)] hover:from-rose-400 hover:to-red-500 border border-white/20 transition-all duration-300',
 }
 </script>
 
@@ -31,7 +34,7 @@ const variantClasses: Record<Variant, string> = {
   <button
     :type="type"
     :disabled="isDisabled"
-    class="inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
+    class="inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
     :class="variantClasses[variant]"
   >
     <svg

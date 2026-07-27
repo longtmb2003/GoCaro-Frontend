@@ -111,7 +111,7 @@ const displayCoins = useCountUp(() => props.stats?.coins || 0)
           <div class="text-sm font-bold mt-0.5 flex items-center justify-center gap-1" :class="streak > 0 ? 'text-success-400' : 'text-foreground-muted'">
             <span v-if="streak > 0">+{{ streak }}</span>
             <span v-else>{{ streak }}</span>
-            <span v-if="streak > 0" :class="fireClass" class="text-base">{{ fireIcon.split(' ')[0] }}</span>
+            <span v-if="streak > 0" :class="[fireClass, 'animate-bounce drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]']" class="text-base inline-block">{{ fireIcon.split(' ')[0] }}</span>
           </div>
         </div>
       </div>

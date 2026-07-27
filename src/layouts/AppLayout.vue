@@ -20,17 +20,45 @@ const showRankRules = ref(false)
     <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-primary-600/30 blur-[120px] animate-pulse pointer-events-none z-0" style="animation-duration: 8s;"></div>
     <div class="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-secondary-600/20 blur-[150px] animate-pulse pointer-events-none z-0" style="animation-duration: 10s; animation-delay: 2s;"></div>
     
-    <header class="border-border-subtle bg-surface/70 backdrop-blur-xl border-b sticky top-0 z-50 shadow-sm">
-      <div class="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-4 sm:px-6">
-        <div class="flex items-center gap-3">
-          <RouterLink to="/" class="flex items-center gap-2">
-            <img src="/gocaro_logo.png" alt="GoCaro Logo" class="h-8 w-8 rounded object-cover shadow-sm ring-1 ring-white/20" />
-            <h1 class="text-foreground text-lg font-semibold tracking-tight">{{ title }}</h1>
+    <header class="bg-black/60 backdrop-blur-3xl border-b border-white/10 sticky top-0 z-50 shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
+      <div class="mx-auto flex w-full max-w-7xl items-center justify-between px-4 h-16 sm:px-6">
+        <div class="flex items-center gap-6">
+          <RouterLink to="/" class="flex items-center gap-2 group">
+            <div class="relative w-8 h-8 rounded overflow-hidden ring-1 ring-white/20 group-hover:ring-primary-500/50 transition-all shadow-[0_0_15px_rgba(255,255,255,0.1)] group-hover:shadow-[0_0_20px_rgba(45,212,191,0.5)]">
+              <img src="/gocaro_logo.png" alt="GoCaro Logo" class="w-full h-full object-cover" />
+            </div>
+            <h1 class="text-white text-xl font-black tracking-tight drop-shadow-md hidden sm:block">GOCARO</h1>
           </RouterLink>
+
+          <!-- Nav Links -->
+          <nav class="hidden md:flex items-center gap-1 ml-4 bg-white/5 rounded-xl p-1 border border-white/5">
+            <RouterLink 
+              to="/" 
+              class="px-4 py-1.5 rounded-lg text-sm font-bold transition-all text-white/60 hover:text-white hover:bg-white/10 border border-transparent"
+              exact-active-class="!bg-primary-500 !text-white shadow-[0_0_15px_rgba(45,212,191,0.5)] !border-primary-400/50"
+            >
+              Lobby
+            </RouterLink>
+            <RouterLink 
+              to="/leaderboard" 
+              class="px-4 py-1.5 rounded-lg text-sm font-bold transition-all text-white/60 hover:text-white hover:bg-white/10 border border-transparent"
+              active-class="!bg-primary-500 !text-white shadow-[0_0_15px_rgba(45,212,191,0.5)] !border-primary-400/50"
+            >
+              Leaderboard
+            </RouterLink>
+            <RouterLink 
+              to="/history" 
+              class="px-4 py-1.5 rounded-lg text-sm font-bold transition-all text-white/60 hover:text-white hover:bg-white/10 border border-transparent"
+              active-class="!bg-primary-500 !text-white shadow-[0_0_15px_rgba(45,212,191,0.5)] !border-primary-400/50"
+            >
+              History
+            </RouterLink>
+          </nav>
         </div>
+        
         <div class="flex items-center gap-3">
-          <button class="cursor-pointer text-xs font-semibold text-primary-400 hover:text-primary-300 transition-colors bg-primary-500/10 px-3 py-1.5 rounded-full ring-1 ring-primary-500/20 mr-2" @click="showRankRules = true">
-            ℹ️ Rank Info
+          <button class="cursor-pointer text-xs font-bold text-primary-300 hover:text-white transition-colors bg-primary-500/20 hover:bg-primary-500/30 px-3 py-1.5 rounded-lg border border-primary-500/30 shadow-inner mr-2 flex items-center gap-1.5" @click="showRankRules = true">
+            <span>ℹ️</span> <span class="hidden sm:inline">Rank Info</span>
           </button>
           <slot name="actions" />
         </div>

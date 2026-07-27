@@ -66,31 +66,31 @@ function describeOutcome(match: MatchSummary, mine: boolean): { outcome: string;
 const rows = computed<HistoryRow[]>(() => props.matches.map(toRow))
 
 const toneClass: Record<Tone, string> = {
-  win: 'text-success-500',
-  loss: 'text-danger-400',
-  neutral: 'text-foreground-muted',
+  win: 'text-success-400 drop-shadow-sm',
+  loss: 'text-danger-400 drop-shadow-sm',
+  neutral: 'text-white/60',
 }
 </script>
 
 <template>
-  <ul v-if="rows.length > 0" class="divide-border-subtle divide-y">
+  <ul v-if="rows.length > 0" class="divide-white/10 divide-y">
     <li v-for="row in rows" :key="row.id">
       <RouterLink
         :to="`/replay/${row.id}`"
-        class="hover:bg-surface-elevated -mx-2 flex items-center justify-between gap-4 rounded-md px-2 py-3 transition-colors"
-        :class="row.mine ? 'bg-primary-600/10' : ''"
+        class="hover:bg-white/5 -mx-2 flex items-center justify-between gap-4 rounded-xl px-4 py-3 transition-all duration-300"
+        :class="row.mine ? 'bg-primary-500/10' : ''"
       >
         <div class="min-w-0">
-          <p class="text-foreground truncate font-medium">
+          <p class="text-white truncate font-bold drop-shadow-sm">
             <span class="font-mono text-sm">{{ row.players }}</span>
           </p>
-          <p class="text-foreground-muted mt-1 flex items-center gap-2 text-xs">
+          <p class="text-white/60 mt-1 flex items-center gap-2 text-xs font-medium">
             <span
-              class="rounded-sm px-1.5 py-0.5 text-[0.65rem] font-semibold tracking-wide uppercase"
+              class="rounded px-1.5 py-0.5 text-[0.65rem] font-black tracking-widest uppercase"
               :class="
                 row.ranked
-                  ? 'bg-primary-600/15 text-primary-400'
-                  : 'bg-foreground/5 text-foreground-muted'
+                  ? 'bg-primary-500/20 text-primary-300 shadow-inner'
+                  : 'bg-white/10 text-white/70 shadow-inner'
               "
             >
               {{ row.ranked ? 'Ranked' : 'Casual' }}
@@ -98,12 +98,15 @@ const toneClass: Record<Tone, string> = {
             <span>{{ row.date }} · {{ row.moves }} moves</span>
           </p>
         </div>
-        <span class="shrink-0 text-sm font-semibold" :class="toneClass[row.tone]">
+        <span
+          class="shrink-0 text-sm font-black uppercase tracking-wider"
+          :class="toneClass[row.tone]"
+        >
           {{ row.outcome }}
         </span>
       </RouterLink>
     </li>
   </ul>
 
-  <p v-else class="text-foreground-muted py-8 text-center text-sm">No matches played yet.</p>
+  <p v-else class="text-white/50 py-8 text-center text-sm font-medium">No matches played yet.</p>
 </template>

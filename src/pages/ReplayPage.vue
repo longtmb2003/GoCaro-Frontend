@@ -146,13 +146,22 @@ const summary = computed(() => {
     </div>
 
     <div v-else-if="summary" class="mx-auto max-w-xl space-y-5">
-      <div class="border-border-subtle bg-surface rounded-lg border p-4 text-center">
-        <p class="text-foreground font-mono text-sm">
-          <span class="font-semibold">●</span> {{ summary.black }}
-          <span class="text-foreground-muted">vs</span>
-          {{ summary.white }} <span class="font-semibold">○</span>
+      <div
+        class="bg-black/40 backdrop-blur-2xl rounded-2xl border border-white/10 p-5 text-center shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] relative overflow-hidden group"
+      >
+        <div
+          class="absolute inset-0 bg-gradient-to-r from-primary-500/10 to-secondary-500/10 pointer-events-none group-hover:from-primary-500/20 group-hover:to-secondary-500/20 transition-all duration-500"
+        ></div>
+        <p class="text-white font-mono text-sm relative z-10 font-bold drop-shadow-sm">
+          <span class="text-primary-400 font-black">●</span> {{ summary.black }}
+          <span class="text-white/50 mx-2 uppercase text-[10px] font-black tracking-widest"
+            >vs</span
+          >
+          {{ summary.white }} <span class="text-rose-400 font-black">○</span>
         </p>
-        <p class="text-foreground-muted mt-1 text-xs">{{ summary.outcome }} · {{ summary.date }}</p>
+        <p class="text-white/70 mt-2 text-xs font-medium tracking-wide relative z-10">
+          {{ summary.outcome }} <span class="mx-1">•</span> {{ summary.date }}
+        </p>
       </div>
 
       <div class="flex justify-center">
