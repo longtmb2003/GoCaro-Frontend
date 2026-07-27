@@ -90,14 +90,16 @@ function prevOnlinePage() {
         description="Start a match and other players will show up here."
       />
       <ul v-else class="gap-3 grid grid-cols-2 sm:grid-cols-3">
-        <li
+        <GlassCard
           v-for="user in paginatedOnlineUsers"
           :key="user.id"
-          class="border-border-subtle bg-glass-light gap-3 p-2 rounded-sm flex items-center border"
+          as="li"
+          variant="nested"
+          class="gap-3 flex items-center"
         >
           <BaseAvatar :name="user.username" size="sm" online />
           <span class="text-body text-foreground truncate font-medium">{{ user.username }}</span>
-        </li>
+        </GlassCard>
       </ul>
     </div>
 

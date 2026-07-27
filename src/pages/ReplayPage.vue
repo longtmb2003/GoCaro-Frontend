@@ -184,8 +184,10 @@ const summary = computed(() => {
         <GlassCard title="Match Summary" heading-tag="h3">
           <template #icon><span aria-hidden="true">📜</span></template>
 
-          <p
-            class="text-foreground bg-glass-light border-border-subtle rounded-sm text-body p-3 flex items-center justify-between border font-mono font-bold"
+          <GlassCard
+            as="p"
+            variant="nested"
+            class="text-foreground text-body flex items-center justify-between font-mono font-bold"
           >
             <span class="text-accent flex flex-col items-center font-black">
               <span class="text-caption text-foreground-muted mb-1 tracking-widest uppercase">
@@ -202,7 +204,7 @@ const summary = computed(() => {
               </span>
               <span>{{ summary.white }} ○</span>
             </span>
-          </p>
+          </GlassCard>
 
           <div class="border-border-subtle mt-4 pt-4 border-t text-center">
             <p class="text-foreground text-card">{{ summary.outcome }}</p>

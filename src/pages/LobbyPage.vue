@@ -255,9 +255,7 @@ const recentMatch = computed(() => {
           <template #icon><span aria-hidden="true">🎯</span></template>
 
           <div class="space-y-3">
-            <div
-              class="bg-glass-light border-border-subtle rounded-sm p-3 gap-2 flex flex-col border"
-            >
+            <GlassCard as="div" variant="nested" class="gap-2 flex flex-col">
               <div class="flex items-center justify-between">
                 <span class="text-small text-foreground font-semibold">Play 2 Matches</span>
                 <BaseBadge variant="warning">+50 Coins</BaseBadge>
@@ -283,11 +281,9 @@ const recentMatch = computed(() => {
                   }}
                 </span>
               </div>
-            </div>
+            </GlassCard>
 
-            <div
-              class="bg-glass-light border-border-subtle rounded-sm p-3 gap-2 flex flex-col border"
-            >
+            <GlassCard as="div" variant="nested" class="gap-2 flex flex-col">
               <div class="flex items-center justify-between">
                 <span class="text-small text-foreground font-semibold">Share with friends</span>
                 <BaseBadge variant="warning">+50 Coins</BaseBadge>
@@ -303,7 +299,7 @@ const recentMatch = computed(() => {
                   {{ missionShareStatus === 'Completed' ? '1 / 1' : '0 / 1' }}
                 </span>
               </div>
-            </div>
+            </GlassCard>
 
             <BaseDivider />
 
@@ -426,9 +422,11 @@ const recentMatch = computed(() => {
               title="No matches yet"
               description="Play your first game to see it here."
             />
-            <div
+            <GlassCard
               v-else
-              class="bg-glass-light border-border-subtle p-4 rounded-sm flex items-center justify-between border"
+              as="div"
+              variant="nested"
+              class="flex items-center justify-between"
             >
               <div class="flex flex-col gap-1">
                 <span
@@ -465,7 +463,7 @@ const recentMatch = computed(() => {
                   })
                 }}
               </div>
-            </div>
+            </GlassCard>
           </GlassCard>
         </div>
 
@@ -492,16 +490,18 @@ const recentMatch = computed(() => {
             description="Start a match and others will show up here."
           />
           <ul v-else class="gap-2 grid grid-cols-1 sm:grid-cols-2">
-            <li
+            <GlassCard
               v-for="user in paginatedOnlineUsers"
               :key="user.id"
-              class="border-border-subtle bg-glass-light gap-3 p-2 rounded-sm flex items-center border"
+              as="li"
+              variant="nested"
+              class="gap-3 flex items-center"
             >
               <BaseAvatar :name="user.username" size="sm" online />
               <span class="text-body text-foreground truncate font-semibold">
                 {{ user.username }}
               </span>
-            </li>
+            </GlassCard>
           </ul>
         </GlassCard>
       </div>
@@ -555,9 +555,7 @@ const recentMatch = computed(() => {
           <template #icon><span aria-hidden="true">⚡</span></template>
 
           <div class="grid grid-cols-2 gap-3">
-            <div
-              class="bg-glass-light border-border-subtle rounded-sm p-3 border text-center"
-            >
+            <GlassCard as="div" variant="nested" class="text-center">
               <p class="text-caption text-foreground-muted mb-2 tracking-widest uppercase">
                 Network
               </p>
@@ -565,10 +563,8 @@ const recentMatch = computed(() => {
                 <span class="bg-success size-2 rounded-pill" aria-hidden="true" />
                 <span class="text-small text-success font-bold tracking-wide">ONLINE</span>
               </div>
-            </div>
-            <div
-              class="bg-glass-light border-border-subtle rounded-sm p-3 border text-center"
-            >
+            </GlassCard>
+            <GlassCard as="div" variant="nested" class="text-center">
               <p class="text-caption text-foreground-muted mb-2 tracking-widest uppercase">
                 Latency
               </p>
@@ -576,7 +572,7 @@ const recentMatch = computed(() => {
                 <span class="text-small text-foreground-secondary font-bold tracking-wide">---</span>
                 <span class="text-caption text-foreground-muted font-bold">ms</span>
               </div>
-            </div>
+            </GlassCard>
           </div>
         </GlassCard>
       </div>
