@@ -175,7 +175,7 @@ async function shareAchievement(): Promise<void> {
           :seconds-left="socket.opponentReconnectSecondsLeft"
         />
 
-        <GlassCard as="div">
+        <GlassCard as="div" variant="elevated">
           <p
             class="text-foreground text-body text-center font-bold tracking-wide uppercase"
             aria-live="polite"

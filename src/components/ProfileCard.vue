@@ -146,10 +146,10 @@ const displayCoins = useCountUp(() => props.stats?.coins || 0)
           <span class="transform transition-transform duration-200" :class="badgesExpanded ? 'rotate-90' : ''">›</span>
         </button>
         <div v-show="badgesExpanded" class="flex gap-2 mt-3 [animation:fade-in_0.2s_ease-out_forwards]">
-          <div class="w-8 h-8 rounded-full bg-surface-sunken flex items-center justify-center text-sm shadow-inner opacity-60 hover:opacity-100 hover:scale-110 transition-all cursor-help" title="First Victory">🏆</div>
-          <div class="w-8 h-8 rounded-full bg-surface-sunken flex items-center justify-center text-sm shadow-inner opacity-60 hover:opacity-100 hover:scale-110 transition-all cursor-help" title="5 Win Streak">🔥</div>
-          <div class="w-8 h-8 rounded-full bg-surface-sunken flex items-center justify-center text-sm shadow-inner opacity-60 hover:opacity-100 hover:scale-110 transition-all cursor-help" title="Veteran Player">⭐</div>
-          <div class="w-8 h-8 rounded-full bg-surface-sunken flex items-center justify-center text-sm shadow-inner opacity-60 hover:opacity-100 hover:scale-110 transition-all cursor-help" title="Top 100 Rank">👑</div>
+          <div class="w-8 h-8 rounded-full bg-surface-sunken flex items-center justify-center text-sm opacity-60 hover:opacity-100 hover:scale-110 transition-all cursor-help" title="First Victory">🏆</div>
+          <div class="w-8 h-8 rounded-full bg-surface-sunken flex items-center justify-center text-sm opacity-60 hover:opacity-100 hover:scale-110 transition-all cursor-help" title="5 Win Streak">🔥</div>
+          <div class="w-8 h-8 rounded-full bg-surface-sunken flex items-center justify-center text-sm opacity-60 hover:opacity-100 hover:scale-110 transition-all cursor-help" title="Veteran Player">⭐</div>
+          <div class="w-8 h-8 rounded-full bg-surface-sunken flex items-center justify-center text-sm opacity-60 hover:opacity-100 hover:scale-110 transition-all cursor-help" title="Top 100 Rank">👑</div>
         </div>
       </div>
 

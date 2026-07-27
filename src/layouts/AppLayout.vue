@@ -20,7 +20,7 @@ const showRankRules = ref(false)
     <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-primary-600/30 blur-[120px] animate-pulse pointer-events-none z-0" style="animation-duration: 8s;"></div>
     <div class="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-secondary-600/20 blur-[150px] animate-pulse pointer-events-none z-0" style="animation-duration: 10s; animation-delay: 2s;"></div>
     
-    <header class="bg-black/60 backdrop-blur-3xl border-b border-white/10 sticky top-0 z-50 shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
+    <header class="bg-black/60 backdrop-blur-3xl border-b border-white/10 sticky top-0 z-50 shadow-card">
       <div class="mx-auto flex w-full max-w-7xl items-center justify-between px-4 h-16 sm:px-6">
         <div class="flex items-center gap-6">
           <RouterLink to="/" class="flex items-center gap-2 group">
@@ -57,7 +57,7 @@ const showRankRules = ref(false)
         </div>
         
         <div class="flex items-center gap-3">
-          <button class="cursor-pointer text-xs font-bold text-primary-300 hover:text-white transition-colors bg-primary-500/20 hover:bg-primary-500/30 px-3 py-1.5 rounded-lg border border-primary-500/30 shadow-inner mr-2 flex items-center gap-2" @click="showRankRules = true">
+          <button class="cursor-pointer text-xs font-bold text-primary-300 hover:text-white transition-colors bg-primary-500/20 hover:bg-primary-500/30 px-3 py-1.5 rounded-lg border border-primary-500/30 mr-2 flex items-center gap-2" @click="showRankRules = true">
             <span>ℹ️</span> <span class="hidden sm:inline">Rank Info</span>
           </button>
           <slot name="actions" />

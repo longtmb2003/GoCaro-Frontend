@@ -29,7 +29,7 @@ withDefaults(defineProps<{ title: string; subtitle?: string }>(), { subtitle: ''
         </div>
 
         <div
-          class="bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 p-6 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] sm:p-8 hover:border-primary-500/50 hover:shadow-[0_0_20px_rgba(45,212,191,0.2)] transition-all duration-300"
+          class="bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 p-6 shadow-card sm:p-8 hover:border-primary-500/50 hover:shadow-[0_0_20px_rgba(45,212,191,0.2)] transition-all duration-300"
         >
           <slot />
         </div>
@@ -75,7 +75,7 @@ withDefaults(defineProps<{ title: string; subtitle?: string }>(), { subtitle: ''
 
       <!-- Premium Glassmorphic Badge -->
       <div
-        class="absolute bottom-12 right-12 backdrop-blur-md bg-surface/30 border border-white/10 p-6 rounded-2xl shadow-2xl z-30 group hover:bg-surface/40 transition-colors"
+        class="absolute bottom-12 right-12 backdrop-blur-md bg-surface/30 border border-white/10 p-6 rounded-2xl shadow-floating z-30 group hover:bg-surface/40 transition-colors"
       >
         <div class="absolute -top-3 -right-3">
           <div

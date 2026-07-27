@@ -10,7 +10,7 @@ const { toasts, removeToast } = useToast()
       <div
         v-for="toast in toasts"
         :key="toast.id"
-        class="toast-card flex items-center justify-between gap-4 px-4 py-3 rounded-lg shadow-xl border cursor-pointer min-w-[280px]"
+        class="toast-card flex items-center justify-between gap-4 px-4 py-3 rounded-lg shadow-floating border cursor-pointer min-w-[280px]"
         :class="{
           'bg-surface-elevated border-success-500/30 shadow-success-500/10': toast.type === 'success',
           'bg-surface-elevated border-danger-500/30 shadow-danger-500/10': toast.type === 'error',

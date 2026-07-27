@@ -70,7 +70,7 @@ function handleInput(event: Event): void {
         :placeholder="placeholder"
         :aria-invalid="hasError"
         :aria-describedby="hasError ? errorId : undefined"
-        class="border-border bg-glass-light text-foreground placeholder:text-foreground-disabled focus-visible:border-accent px-4 text-body duration-fast h-12 w-full rounded-button border shadow-inner backdrop-blur-md transition disabled:cursor-not-allowed disabled:opacity-60"
+        class="border-border bg-glass-light text-foreground placeholder:text-foreground-disabled focus-visible:border-accent px-4 text-body duration-fast h-12 w-full rounded-button border backdrop-blur-md transition disabled:cursor-not-allowed disabled:opacity-60"
         :class="[hasError ? 'border-error' : '', type === 'password' ? 'pr-10' : '']"
         @input="handleInput"
       />
