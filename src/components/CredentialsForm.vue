@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
-import BaseButton from '@/components/BaseButton.vue'
-import BaseInput from '@/components/BaseInput.vue'
+import BaseButton from '@/components/ui/BaseButton.vue'
+import BaseInput from '@/components/ui/BaseInput.vue'
 import type { Credentials } from '@/types/auth'
 
 const props = withDefaults(
@@ -91,7 +91,7 @@ function handleSubmit(): void {
     </div>
     
     <p v-if="serverError" class="text-danger-400 text-sm" role="alert">{{ serverError }}</p>
-    <BaseButton type="submit" variant="primary" class="w-full h-12 text-base" :loading="loading">
+    <BaseButton type="submit" variant="primary" size="lg" class="w-full" :loading="loading">
       {{ loading && submitLabel === 'Sign in' ? 'Signing in...' : submitLabel }}
     </BaseButton>
   </form>

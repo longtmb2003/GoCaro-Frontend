@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 
+import BaseBadge from '@/components/ui/BaseBadge.vue'
+import BaseProgress from '@/components/ui/BaseProgress.vue'
+import GlassCard from '@/components/ui/GlassCard.vue'
 import type { AccountType } from '@/types/auth'
 import { useCountUp } from '@/composables/useCountUp'
 
@@ -58,33 +61,22 @@ const displayCoins = useCountUp(() => props.stats?.coins || 0)
 </script>
 
 <template>
-  <section
-    class="border-border-subtle bg-surface/80 backdrop-blur-md rounded-xl border p-4 sm:p-6 shadow-lg relative overflow-hidden group"
-    aria-label="Your profile"
-  >
-    <!-- Background highlight -->
-    <div class="absolute -right-10 -top-10 w-40 h-40 bg-primary-500/10 rounded-full blur-3xl group-hover:bg-primary-500/20 transition-colors"></div>
-
-    <div class="flex items-center gap-4 relative z-10">
+  <GlassCard as="section" aria-label="Your profile">
+    <div class="flex items-center gap-4">
       <RankFrame :elo="elo" :initial="initial" />
       <div class="min-w-0 flex-1">
         <div class="flex items-center gap-2">
-          <p class="text-foreground truncate text-lg font-bold">{{ username }}</p>
-          <span
-            v-if="isGuest"
-            class="bg-warning-500/15 text-warning-600 shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider"
-          >
-            Guest
-          </span>
+          <p class="text-foreground text-card truncate">{{ username }}</p>
+          <BaseBadge v-if="isGuest" variant="warning" shape="tag" class="shrink-0">Guest</BaseBadge>
         </div>
-        <p class="text-foreground-muted text-xs font-medium mt-0.5 flex items-center gap-1.5">
-          <span class="w-1.5 h-1.5 rounded-full bg-success-500 shadow-[0_0_8px_rgba(34,197,94,0.8)]"></span>
+        <p class="text-foreground-muted text-small mt-0.5 flex items-center gap-1.5">
+          <span class="bg-success size-1.5 rounded-pill" aria-hidden="true" />
           {{ isGuest ? 'Practice Mode' : 'Online' }}
         </p>
       </div>
     </div>
 
-    <div class="border-border-subtle mt-4 sm:mt-6 border-t pt-4 sm:pt-5 relative z-10">
+    <div class="border-border-subtle mt-4 sm:mt-6 border-t pt-4 sm:pt-5">
       <div class="flex flex-col items-center justify-center mb-3 sm:mb-4">
         <p class="text-foreground-muted text-xs font-semibold uppercase tracking-widest mb-1">Rating</p>
         <div class="text-4xl sm:text-5xl font-black bg-gradient-to-r from-primary-400 to-secondary-400 bg-clip-text text-transparent drop-shadow-sm tabular-nums">
@@ -129,9 +121,7 @@ const displayCoins = useCountUp(() => props.stats?.coins || 0)
           <span :class="rankColor" class="font-bold tracking-wide">{{ rankTier }}</span>
           <span class="text-[10px] text-foreground-muted tabular-nums font-bold tracking-wider">{{ elo }} / {{ nextLevelMax }}</span>
         </div>
-        <div class="h-2.5 w-full bg-surface-sunken rounded-sm overflow-hidden border border-border-subtle/30 shadow-inner">
-          <div class="h-full bg-gradient-to-r from-primary-600 to-secondary-500 transition-all duration-1000 ease-out" :style="{ width: `${progressPercent}%` }"></div>
-        </div>
+        <BaseProgress :value="progressPercent" :label="`Progress to ${nextLevelMax.toString()} rating`" />
       </div>
       
       <!-- Customization Teasers -->
@@ -173,6 +163,5 @@ const displayCoins = useCountUp(() => props.stats?.coins || 0)
         </ul>
       </div>
     </div>
-
-  </section>
+  </GlassCard>
 </template>

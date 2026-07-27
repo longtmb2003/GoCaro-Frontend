@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed } from 'vue'
 
-import BaseButton from '@/components/BaseButton.vue'
+import BaseButton from '@/components/ui/BaseButton.vue'
+import BaseModal from '@/components/ui/BaseModal.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -16,18 +17,8 @@ const props = withDefaults(
 
 defineEmits<{ playAgain: []; exit: []; share: [] }>()
 
-const dialog = ref<HTMLElement | null>(null)
-
-onMounted(() => {
-  dialog.value?.querySelector('button')?.focus()
-})
-
 const headingClass = computed(() =>
-  props.tone === 'win'
-    ? 'text-success-500'
-    : props.tone === 'loss'
-      ? 'text-danger-400'
-      : 'text-foreground',
+  props.tone === 'win' ? 'text-success' : props.tone === 'loss' ? 'text-error' : 'text-foreground',
 )
 
 // A rating change is shown even when it is zero — that is a real ranked outcome
@@ -44,46 +35,39 @@ const ratingLabel = computed(() => {
 const ratingClass = computed(() => {
   const delta = props.ratingDelta
   if (delta === null || delta === 0) {
-    return 'bg-foreground/5 text-foreground-muted'
+    return 'bg-glass-light text-foreground-muted'
   }
-  return delta > 0
-    ? 'bg-success-500/15 text-success-500'
-    : 'bg-danger-500/15 text-danger-400'
+  return delta > 0 ? 'bg-success/15 text-success' : 'bg-error/15 text-error'
 })
 </script>
 
 <template>
-  <div
-    ref="dialog"
-    class="fixed inset-0 z-1300 flex items-center justify-center bg-black/60 p-4"
-    role="dialog"
-    aria-modal="true"
+  <!-- Not dismissible: the player must choose play again or exit. -->
+  <BaseModal
+    :dismissible="false"
     aria-labelledby="result-heading"
+    :class="tone === 'win' ? 'ring-success win-pulse ring-2' : ''"
   >
-    <div
-      class="result-card bg-surface-elevated w-full max-w-sm rounded-lg p-6 text-center shadow-lg"
-      :class="{ 'ring-2 ring-success-500 shadow-success-500/20 win-pulse': tone === 'win' }"
-    >
-      <h2 id="result-heading" class="text-2xl font-bold flex items-center justify-center gap-2" :class="headingClass">
-        <span v-if="tone === 'win'" class="text-3xl">🏆</span>
-        <span v-if="tone === 'loss'" class="text-3xl">💔</span>
-        <span v-if="tone === 'draw'" class="text-3xl">🤝</span>
+    <div class="text-center">
+      <h2 id="result-heading" class="text-section gap-sm flex items-center justify-center" :class="headingClass">
+        <span v-if="tone === 'win'" aria-hidden="true">🏆</span>
+        <span v-if="tone === 'loss'" aria-hidden="true">💔</span>
+        <span v-if="tone === 'draw'" aria-hidden="true">🤝</span>
         {{ heading }}
       </h2>
-      <p class="text-foreground-muted mt-2 text-sm">{{ message }}</p>
+      <p class="text-foreground-muted text-body mt-2">{{ message }}</p>
 
-      <p v-if="ratingDelta !== null" class="mt-4">
-        <span
-          class="inline-flex items-baseline gap-1.5 rounded-md px-3 py-1.5"
-          :class="ratingClass"
-        >
-          <span class="text-lg font-bold tabular-nums">{{ ratingLabel }}</span>
-          <span class="text-sm font-medium opacity-80">rating</span>
+      <p v-if="ratingDelta !== null" class="mt-lg">
+        <span class="gap-xs px-md py-xs rounded-sm inline-flex items-baseline" :class="ratingClass">
+          <span class="text-card tabular-nums">{{ ratingLabel }}</span>
+          <span class="text-body font-medium opacity-80">rating</span>
         </span>
       </p>
+    </div>
 
-      <div class="mt-6 space-y-2">
-        <BaseButton v-if="tone === 'win'" class="w-full bg-gradient-to-r from-success-500 to-emerald-600 border-0 text-white shadow-lg shadow-success-500/20" @click="$emit('share')">
+    <template #footer>
+      <div class="space-y-2">
+        <BaseButton v-if="tone === 'win'" variant="success" class="w-full" @click="$emit('share')">
           🔗 Share Achievement (+50 Coins)
         </BaseButton>
         <BaseButton class="w-full" @click="$emit('playAgain')">Play again</BaseButton>
@@ -91,38 +75,35 @@ const ratingClass = computed(() => {
           Back to lobby
         </BaseButton>
       </div>
-    </div>
-  </div>
+    </template>
+  </BaseModal>
 </template>
 
-<style scoped>
-@keyframes result-in {
-  from {
-    transform: scale(0.94);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-.result-card {
-  animation: result-in 300ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
+<!--
+  Deliberately NOT scoped. This class is handed to BaseModal and lands on the
+  dialog panel, which Teleports to <body> and therefore never carries this
+  component's data-v attribute — a scoped rule here silently does nothing.
+  Entry animation comes from BaseModal; this is only the victory glow.
+-->
+<style>
 @keyframes win-glow {
-  0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
-  70% { box-shadow: 0 0 0 15px rgba(34, 197, 94, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--color-success) 40%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 15px transparent;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
 }
 
 .win-pulse {
-  animation: result-in 300ms cubic-bezier(0.16, 1, 0.3, 1), win-glow 2s infinite;
+  animation: win-glow 2s infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .result-card, .win-pulse {
+  .win-pulse {
     animation: none;
   }
 }

@@ -11,6 +11,9 @@ const props = withDefaults(
     error?: string
     required?: boolean
     disabled?: boolean
+    placeholder?: string
+    /** Keeps the label for screen readers when the field is visually obvious. */
+    labelHidden?: boolean
   }>(),
   {
     type: 'text',
@@ -18,6 +21,8 @@ const props = withDefaults(
     error: '',
     required: false,
     disabled: false,
+    placeholder: undefined,
+    labelHidden: false,
   },
 )
 
@@ -42,8 +47,17 @@ function handleInput(event: Event): void {
 </script>
 
 <template>
-  <div class="space-y-1.5">
-    <label :for="inputId" class="text-foreground block text-sm font-medium">{{ label }}</label>
+  <!--
+    Flex + gap rather than space-y: an sr-only label is absolutely positioned,
+    so it drops out of flow instead of leaving a phantom gap above the field.
+  -->
+  <div class="gap-xs flex flex-col">
+    <label
+      :for="inputId"
+      class="text-foreground text-small block font-medium"
+      :class="labelHidden ? 'sr-only' : ''"
+      >{{ label }}</label
+    >
     <div class="relative">
       <input
         :id="inputId"
@@ -53,16 +67,17 @@ function handleInput(event: Event): void {
         :autocomplete="autocomplete"
         :required="required"
         :disabled="disabled"
+        :placeholder="placeholder"
         :aria-invalid="hasError"
         :aria-describedby="hasError ? errorId : undefined"
-        class="border-white/10 bg-white/5 backdrop-blur-md text-white focus-visible:border-primary-500 focus-visible:ring-1 focus-visible:ring-primary-500/50 shadow-inner w-full rounded-xl border px-4 h-12 text-sm transition-all disabled:cursor-not-allowed disabled:opacity-60 placeholder:text-white/30"
-        :class="[hasError ? 'border-danger-500' : '', type === 'password' ? 'pr-10' : '']"
+        class="border-border bg-glass-light text-foreground placeholder:text-foreground-disabled focus-visible:border-accent px-lg text-body duration-fast h-12 w-full rounded-button border shadow-inner backdrop-blur-md transition disabled:cursor-not-allowed disabled:opacity-60"
+        :class="[hasError ? 'border-error' : '', type === 'password' ? 'pr-10' : '']"
         @input="handleInput"
       />
       <button
         v-if="type === 'password'"
         type="button"
-        class="absolute right-3 top-1/2 -translate-y-1/2 text-foreground-muted hover:text-foreground transition-colors p-1"
+        class="text-foreground-muted hover:text-foreground duration-fast absolute top-1/2 right-3 -translate-y-1/2 p-1 transition"
         :aria-label="showPassword ? 'Hide password' : 'Show password'"
         @click="showPassword = !showPassword"
       >
@@ -70,11 +85,11 @@ function handleInput(event: Event): void {
         <span v-else class="relative inline-block">
           👁️
           <span class="absolute inset-0 flex items-center justify-center">
-            <span class="w-full h-[1.5px] bg-foreground rotate-45 transform origin-center shadow-sm"></span>
+            <span class="bg-foreground h-px w-full origin-center rotate-45 transform" />
           </span>
         </span>
       </button>
     </div>
-    <p v-if="hasError" :id="errorId" class="text-danger-400 text-sm" role="alert">{{ error }}</p>
+    <p v-if="hasError" :id="errorId" class="text-error text-small" role="alert">{{ error }}</p>
   </div>
 </template>

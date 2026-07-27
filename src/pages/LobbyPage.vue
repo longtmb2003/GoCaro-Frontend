@@ -3,7 +3,15 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 
 import { ApiError } from '@/api/ApiError'
-import BaseButton from '@/components/BaseButton.vue'
+import BaseAvatar from '@/components/ui/BaseAvatar.vue'
+import BaseBadge from '@/components/ui/BaseBadge.vue'
+import BaseButton from '@/components/ui/BaseButton.vue'
+import BaseDivider from '@/components/ui/BaseDivider.vue'
+import BaseProgress from '@/components/ui/BaseProgress.vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
+import ErrorState from '@/components/ui/ErrorState.vue'
+import GlassCard from '@/components/ui/GlassCard.vue'
+import StoreItemCard from '@/components/cards/StoreItemCard.vue'
 import GuestLogoutDialog from '@/components/GuestLogoutDialog.vue'
 import LeaderboardTable from '@/components/LeaderboardTable.vue'
 import LeaderboardModal from '@/components/LeaderboardModal.vue'
@@ -31,6 +39,47 @@ const { addToast } = useToast()
 const router = useRouter()
 
 const displayCoins = useCountUp(() => auth.user?.stats.coins ?? 0)
+
+/** Storefront copy. Presentational only — the store is not wired up yet. */
+const storeItems = [
+  {
+    image: '/avatar_pro.png',
+    alt: 'Pro Avatar artwork',
+    name: 'Pro Avatar',
+    collection: 'Cybernetics',
+    price: 500,
+  },
+  {
+    image: '/avatar_male.png',
+    alt: 'Neon Boy avatar artwork',
+    name: 'Neon Boy',
+    collection: 'Cybernetics',
+    price: 300,
+  },
+  {
+    image: '/avatar_female.png',
+    alt: 'Neon Girl avatar artwork',
+    name: 'Neon Girl',
+    collection: 'Cybernetics',
+    price: 300,
+  },
+  {
+    image: '/avatar_robot.png',
+    alt: 'Mecha Bot avatar artwork',
+    name: 'Mecha Bot',
+    collection: 'Cybernetics',
+    price: 450,
+  },
+  {
+    image: '/vip_border.png',
+    alt: 'VIP Border artwork',
+    name: 'VIP Border',
+    collection: 'Royal Collection',
+    price: 1200,
+    rarity: 'Legendary',
+    wide: true,
+  },
+]
 
 const upgradeOpen = ref(false)
 const upgradeLoading = ref(false)
@@ -177,18 +226,15 @@ const recentMatch = computed(() => {
       </span>
       <BaseButton
         variant="secondary"
-        class="border-white/20 bg-white/5 hover:bg-white/10 text-white backdrop-blur-md transition-all shadow-[0_0_10px_rgba(255,255,255,0.05)]"
         @click="handleLogout"
         >Log out</BaseButton
       >
     </template>
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6 items-start">
-      <!-- Left Column: Profile & Online Users -->
+      <!-- Left Column: Profile, Mission, Store -->
       <div class="contents lg:flex lg:flex-col lg:gap-6 lg:col-span-3">
-        <div
-          class="relative order-3 md:order-3 md:col-span-1 lg:order-none transform hover:-translate-y-1 transition-transform duration-300"
-        >
+        <div class="order-3 md:order-3 md:col-span-1 lg:order-none">
           <ProfileCard
             v-if="auth.user"
             :username="auth.displayName"
@@ -198,102 +244,38 @@ const recentMatch = computed(() => {
           />
         </div>
 
-        <!-- Online Users Section -->
-        <section
-          v-if="auth.isAuthenticated"
-          class="bg-black/40 backdrop-blur-2xl rounded-2xl border border-white/10 p-5 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] hover:border-primary-500/50 hover:shadow-[0_0_20px_rgba(45,212,191,0.2)] transition-all duration-300 order-8 md:order-8 md:col-span-1 lg:order-none group"
-          aria-label="Online Users"
-        >
-          <div class="mb-4 flex items-center justify-between">
-            <h2 class="text-white text-sm font-bold flex items-center gap-2">
-              <span
-                class="w-2.5 h-2.5 rounded-full bg-success-500 shadow-[0_0_8px_rgba(34,197,94,0.8)] animate-pulse"
-              ></span>
-              Online ({{ lobby.onlineUsers.length }})
-            </h2>
-            <div class="flex items-center gap-1">
-              <button
-                class="cursor-pointer text-xs text-primary-300 hover:text-white font-medium transition-colors bg-white/5 hover:bg-white/10 rounded-md px-2.5 py-1.5 border border-white/5"
-                @click="onlineModalOpen = true"
-              >
-                View All
-              </button>
-            </div>
-          </div>
-
-          <div
-            v-if="lobby.onlineUsers.length === 0"
-            class="text-white/50 py-4 text-center text-xs font-medium"
-          >
-            No one online.
-          </div>
-          <div v-else class="grid grid-cols-1 gap-2.5 mt-2">
-            <div
-              v-for="user in paginatedOnlineUsers"
-              :key="user.id"
-              class="border border-white/5 rounded-xl p-2.5 flex items-center gap-3 bg-white/5 hover:bg-white/10 shadow-sm transition-all cursor-default"
-            >
-              <div class="relative">
-                <div
-                  class="w-8 h-8 shrink-0 rounded-full bg-gradient-to-br from-primary-500 to-secondary-600 flex items-center justify-center text-xs font-bold text-white shadow-lg ring-2 ring-white/10"
-                >
-                  {{ user.username.charAt(0).toUpperCase() }}
-                </div>
-                <div
-                  class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-success-500 ring-2 ring-neutral-900 rounded-full shadow-[0_0_5px_rgba(34,197,94,0.8)]"
-                ></div>
-              </div>
-              <div class="flex flex-col min-w-0">
-                <span class="text-sm font-semibold truncate text-white drop-shadow-sm">{{
-                  user.username
-                }}</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
         <!-- Daily Missions -->
-        <section
+        <GlassCard
           v-if="auth.isAuthenticated"
-          class="bg-black/40 backdrop-blur-2xl rounded-2xl border border-white/10 p-5 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] hover:border-warning-500/50 hover:shadow-[0_0_20px_rgba(234,179,8,0.2)] transition-all duration-300 relative overflow-hidden group order-4 md:order-5 md:col-span-1 lg:order-none"
-          aria-label="Daily Missions"
+          as="section"
+          variant="interactive"
+          title="Daily Missions"
+          class="order-6 md:order-5 md:col-span-1 lg:order-none"
         >
-          <div
-            class="absolute -right-6 -top-6 text-7xl opacity-5 pointer-events-none group-hover:scale-110 group-hover:rotate-12 transition-transform duration-500"
-          >
-            🎯
-          </div>
-          <h2 class="text-white text-sm font-bold flex items-center gap-2 mb-4 relative z-10">
-            <span class="text-xl">🎯</span> Daily Missions
-          </h2>
-          <div class="space-y-3 relative z-10">
+          <template #icon><span aria-hidden="true">🎯</span></template>
+
+          <div class="space-y-3">
             <div
-              class="bg-white/5 rounded-xl p-3 border border-white/10 flex flex-col gap-2 shadow-inner hover:bg-white/10 transition-colors"
+              class="bg-glass-light border-border-subtle rounded-sm p-md gap-sm flex flex-col border"
             >
-              <div class="flex justify-between items-center">
-                <span class="text-xs font-semibold text-white">Play 2 Matches</span>
-                <span
-                  class="text-[10px] text-warning-400 font-bold bg-warning-500/10 px-2 py-0.5 rounded border border-warning-500/20 shadow-sm"
-                  >+50 Coins</span
-                >
+              <div class="flex items-center justify-between">
+                <span class="text-small text-foreground font-semibold">Play 2 Matches</span>
+                <BaseBadge variant="warning">+50 Coins</BaseBadge>
               </div>
-              <div class="flex items-center gap-3">
-                <div
-                  class="flex-1 h-2 bg-black/50 rounded-full overflow-hidden shadow-inner ring-1 ring-white/5"
-                >
-                  <div
-                    class="h-full bg-gradient-to-r from-warning-500 to-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.5)] transition-all duration-1000 ease-out"
-                    :style="{
-                      width:
-                        missionPlay2Status === 'Completed'
-                          ? '100%'
-                          : (auth.user?.stats?.matches_played || 0) % 2 === 1
-                            ? '50%'
-                            : '0%',
-                    }"
-                  ></div>
-                </div>
-                <span class="text-xs font-bold text-white/70 tabular-nums">
+              <div class="gap-md flex items-center">
+                <BaseProgress
+                  class="flex-1"
+                  tone="warning"
+                  label="Play 2 Matches progress"
+                  :value="
+                    missionPlay2Status === 'Completed'
+                      ? 100
+                      : (auth.user?.stats?.matches_played || 0) % 2 === 1
+                        ? 50
+                        : 0
+                  "
+                />
+                <span class="text-small text-foreground-secondary font-bold tabular-nums">
                   {{
                     missionPlay2Status === 'Completed'
                       ? '2 / 2'
@@ -304,98 +286,88 @@ const recentMatch = computed(() => {
             </div>
 
             <div
-              class="bg-white/5 rounded-xl p-3 border border-white/10 flex flex-col gap-2 shadow-inner hover:bg-white/10 transition-colors"
+              class="bg-glass-light border-border-subtle rounded-sm p-md gap-sm flex flex-col border"
             >
-              <div class="flex justify-between items-center">
-                <span class="text-xs font-semibold text-white">Share with friends</span>
-                <span
-                  class="text-[10px] text-warning-400 font-bold bg-warning-500/10 px-2 py-0.5 rounded border border-warning-500/20 shadow-sm"
-                  >+50 Coins</span
-                >
+              <div class="flex items-center justify-between">
+                <span class="text-small text-foreground font-semibold">Share with friends</span>
+                <BaseBadge variant="warning">+50 Coins</BaseBadge>
               </div>
-              <div class="flex items-center gap-3">
-                <div
-                  class="flex-1 h-2 bg-black/50 rounded-full overflow-hidden shadow-inner ring-1 ring-white/5"
-                >
-                  <div
-                    class="h-full bg-gradient-to-r from-warning-500 to-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.5)] transition-all duration-1000 ease-out"
-                    :style="{ width: missionShareStatus === 'Completed' ? '100%' : '0%' }"
-                  ></div>
-                </div>
-                <span class="text-xs font-bold text-white/70 tabular-nums">
+              <div class="gap-md flex items-center">
+                <BaseProgress
+                  class="flex-1"
+                  tone="warning"
+                  label="Share with friends progress"
+                  :value="missionShareStatus === 'Completed' ? 100 : 0"
+                />
+                <span class="text-small text-foreground-secondary font-bold tabular-nums">
                   {{ missionShareStatus === 'Completed' ? '1 / 1' : '0 / 1' }}
                 </span>
               </div>
             </div>
 
-            <div class="text-center pt-3 mt-1 relative">
-              <div
-                class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent h-px top-0"
-              ></div>
-              <p class="text-xs text-white/60 font-semibold tracking-widest uppercase">
-                TOTAL COINS:
-                <span
-                  class="text-warning-400 text-sm ml-1 drop-shadow-[0_0_5px_rgba(245,158,11,0.8)]"
-                  >{{ displayCoins }}</span
-                >
-              </p>
-            </div>
+            <BaseDivider />
+
+            <p class="text-caption text-foreground-muted text-center tracking-widest uppercase">
+              Total coins:
+              <span class="text-warning text-small ml-1 font-bold">{{ displayCoins }}</span>
+            </p>
           </div>
-        </section>
+        </GlassCard>
+
+        <!-- Store -->
+        <GlassCard
+          as="section"
+          title="Cosmetics Store"
+          class="order-7 md:order-9 md:col-span-2 lg:order-none"
+        >
+          <template #icon><span aria-hidden="true">🛍️</span></template>
+          <template #actions>
+            <BaseBadge variant="neutral">Coming Soon</BaseBadge>
+          </template>
+
+          <div class="gap-lg grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1">
+            <StoreItemCard
+              v-for="item in storeItems"
+              :key="item.name"
+              v-bind="item"
+              :class="item.wide ? 'sm:col-span-2' : ''"
+            />
+          </div>
+        </GlassCard>
       </div>
 
-      <!-- Center Column: Hero & Play Panel -->
+      <!-- Center Column: Hero, Play Panel, Recent Matches, Online Players -->
       <div class="contents lg:flex lg:flex-col lg:gap-6 lg:col-span-6">
+        <!-- Hero: Illustration → Title → Description, with the Play Panel
+             immediately below supplying the primary and secondary CTAs. -->
         <div
-          class="rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] ring-1 ring-white/20 relative min-h-[14rem] md:h-56 group order-1 md:order-1 md:col-span-2 lg:order-none"
+          class="hero-viewport rounded-card shadow-floating ring-border-strong relative overflow-hidden ring-1 order-1 md:order-1 md:col-span-2 lg:order-none"
         >
+          <!-- Above the fold and almost certainly the LCP element: eager. -->
           <img
             src="/gomoku_board.png"
-            alt="GoCaro Board"
-            class="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 lg:group-hover:scale-110 opacity-70 mix-blend-screen"
+            alt=""
+            fetchpriority="high"
+            decoding="async"
+            class="absolute inset-0 h-full w-full object-cover opacity-70 mix-blend-screen"
           />
           <div
-            class="absolute inset-0 bg-gradient-to-t from-[#0B0F19] via-[#0B0F19]/60 to-transparent z-0"
+            class="from-background via-background/60 absolute inset-0 bg-gradient-to-t to-transparent"
           ></div>
 
-          <!-- Animated Light Sweep -->
+          <!-- Light movement is the only hero motion MOTION-GUIDE.md allows. -->
           <div
-            class="absolute inset-0 opacity-30 z-10 bg-gradient-to-r from-transparent via-primary-400/30 to-transparent skew-x-[-20deg] [animation:light-sweep_3s_infinite]"
+            class="via-accent/30 animate-light-sweep absolute inset-0 -skew-x-20 bg-gradient-to-r from-transparent to-transparent opacity-30 motion-reduce:animate-none"
           ></div>
 
-          <!-- Decorative Floating Icons -->
           <div
-            class="absolute top-6 right-8 text-3xl opacity-90 animate-float hidden sm:block"
-            style="animation-duration: 4s"
+            class="from-background/80 p-xl absolute bottom-0 left-0 w-full bg-gradient-to-t to-transparent"
           >
-            ✨
-          </div>
-          <div
-            class="absolute top-12 left-1/4 text-2xl opacity-70 animate-float hidden sm:block"
-            style="animation-duration: 3s; animation-delay: 1s"
-          >
-            🎲
-          </div>
-          <div
-            class="absolute bottom-8 right-1/4 text-4xl opacity-90 animate-float hidden sm:block"
-            style="animation-duration: 5s; animation-delay: 2s"
-          >
-            🔥
-          </div>
-
-          <div
-            class="absolute bottom-0 left-0 p-6 z-20 w-full bg-gradient-to-t from-black/80 to-transparent"
-          >
-            <h1
-              class="text-4xl font-extrabold text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.3)] flex items-center gap-3 tracking-tight"
-            >
+            <h2 class="text-page sm:text-hero text-foreground gap-md flex items-center tracking-tight">
               GoCaro
-              <span
-                class="inline-block hover:animate-spin text-3xl cursor-default transition-all duration-300"
-                >👋</span
-              >
-            </h1>
-            <p class="text-primary-200 mt-2 text-sm font-medium drop-shadow-md">
+              <span aria-hidden="true">👋</span>
+            </h2>
+            <p class="text-foreground-secondary text-body mt-2">
               The ultimate online Gomoku experience.
             </p>
           </div>
@@ -410,79 +382,63 @@ const recentMatch = computed(() => {
 
         <div class="order-5 md:order-6 md:col-span-1 lg:order-none flex flex-col gap-4">
           <div class="grid grid-cols-2 gap-4">
-            <RouterLink
-              to="/history"
-              class="cursor-pointer bg-black/40 backdrop-blur-xl hover:bg-white/10 block rounded-2xl border border-white/10 p-4 transition-all flex items-center justify-center gap-3 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] hover:border-primary-500/50 hover:shadow-[0_0_20px_rgba(45,212,191,0.2)] group"
-            >
-              <span
-                class="text-2xl group-hover:scale-125 transition-transform duration-300 drop-shadow-md"
-                >📜</span
-              >
-              <span class="text-white font-semibold text-sm drop-shadow-sm">Match history</span>
+            <RouterLink to="/history" class="block h-full">
+              <GlassCard as="div" variant="interactive" class="h-full">
+                <div class="gap-md flex h-full items-center justify-center">
+                  <span class="text-2xl" aria-hidden="true">📜</span>
+                  <span class="text-foreground text-body font-semibold">Match history</span>
+                </div>
+              </GlassCard>
             </RouterLink>
 
-            <button
-              class="cursor-pointer bg-black/40 backdrop-blur-xl hover:bg-white/10 block rounded-2xl border border-white/10 p-4 transition-all flex items-center justify-center gap-3 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] hover:border-success-500/50 hover:shadow-[0_0_20px_rgba(34,197,94,0.2)] group relative overflow-hidden w-full"
+            <GlassCard
+              as="button"
+              type="button"
+              variant="interactive"
+              class="h-full w-full cursor-pointer"
               @click="shareGame"
             >
-              <div
-                class="absolute inset-0 bg-gradient-to-r from-success-500/5 to-transparent pointer-events-none"
-              ></div>
-              <span
-                class="text-2xl group-hover:scale-125 transition-transform duration-300 drop-shadow-md"
-                >🔗</span
-              >
-              <div class="flex flex-col items-start">
-                <span class="text-white font-semibold text-sm leading-tight drop-shadow-sm"
-                  >Share game</span
-                >
-                <span
-                  class="text-success-400 text-[10px] font-bold uppercase tracking-wider drop-shadow-sm"
-                  >+50 Coins</span
-                >
+              <div class="gap-md flex h-full items-center justify-center">
+                <span class="text-2xl" aria-hidden="true">🔗</span>
+                <div class="flex flex-col items-start">
+                  <span class="text-foreground text-body leading-tight font-semibold">
+                    Share game
+                  </span>
+                  <span class="text-success text-caption font-bold tracking-wider uppercase">
+                    +50 Coins
+                  </span>
+                </div>
               </div>
-            </button>
+            </GlassCard>
           </div>
 
           <!-- Recent Match Preview -->
-          <div
-            class="bg-black/40 backdrop-blur-2xl rounded-2xl border border-white/10 p-5 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] hover:border-white/20 transition-all duration-300 relative overflow-hidden group"
-          >
-            <div
-              class="absolute -right-4 -bottom-4 text-7xl opacity-5 pointer-events-none group-hover:rotate-12 transition-transform"
-            >
-              ⚔️
-            </div>
-            <div class="flex items-center justify-between mb-4 relative z-10">
-              <h3 class="text-white text-sm font-bold flex items-center gap-2">
-                <span class="text-xl">⚔️</span> Recent Match
-              </h3>
-              <RouterLink
-                to="/history"
-                class="text-xs font-semibold text-primary-300 hover:text-white bg-primary-500/20 hover:bg-primary-500/40 px-2.5 py-1.5 rounded transition-colors shadow-inner"
-                >View All</RouterLink
-              >
-            </div>
+          <GlassCard as="div" title="Recent Match" variant="interactive">
+            <template #icon><span aria-hidden="true">⚔️</span></template>
+            <template #actions>
+              <RouterLink to="/history">
+                <BaseButton variant="ghost" size="sm">View All</BaseButton>
+              </RouterLink>
+            </template>
 
-            <div
+            <EmptyState
               v-if="!recentMatch"
-              class="text-center py-5 bg-white/5 rounded-xl border border-white/5 shadow-inner"
-            >
-              <p class="text-white/50 text-xs font-medium">No matches yet. Play your first game!</p>
-            </div>
+              title="No matches yet"
+              description="Play your first game to see it here."
+            />
             <div
               v-else
-              class="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5 transition-all hover:bg-white/10 hover:border-primary-500/30 shadow-inner cursor-default relative z-10"
+              class="bg-glass-light border-border-subtle p-lg rounded-sm flex items-center justify-between border"
             >
               <div class="flex flex-col gap-1">
                 <span
-                  class="text-base font-bold drop-shadow-sm"
+                  class="text-card"
                   :class="
                     recentMatch.winner_id === auth.user?.id
-                      ? 'text-success-400'
+                      ? 'text-success'
                       : recentMatch.winner_id
-                        ? 'text-danger-400'
-                        : 'text-warning-400'
+                        ? 'text-error'
+                        : 'text-warning'
                   "
                 >
                   {{
@@ -493,14 +449,14 @@ const recentMatch = computed(() => {
                         : 'DRAW'
                   }}
                 </span>
-                <span class="text-xs text-white/60 font-medium tracking-wide">
-                  <span class="text-primary-300 font-semibold">{{
+                <span class="text-small text-foreground-muted">
+                  <span class="text-accent font-semibold">{{
                     recentMatch.is_ranked ? 'Ranked' : 'Casual'
                   }}</span>
                   • {{ recentMatch.total_moves }} Moves
                 </span>
               </div>
-              <div class="text-xs font-medium text-white/40 text-right">
+              <div class="text-small text-foreground-muted text-right">
                 {{
                   new Date(recentMatch.created_at).toLocaleDateString(undefined, {
                     month: 'short',
@@ -510,153 +466,71 @@ const recentMatch = computed(() => {
                 }}
               </div>
             </div>
-          </div>
+          </GlassCard>
         </div>
 
-        <!-- Shop Section -->
-        <div
-          class="bg-black/40 backdrop-blur-2xl rounded-2xl border border-white/10 p-5 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] hover:border-pink-500/30 transition-all duration-300 relative overflow-hidden order-7 md:order-7 md:col-span-2 lg:order-none group"
+        <!-- Online Players -->
+        <GlassCard
+          v-if="auth.isAuthenticated"
+          as="section"
+          variant="interactive"
+          :title="`Online (${lobby.onlineUsers.length.toString()})`"
+          class="order-9 md:order-8 md:col-span-1 lg:order-none"
         >
-          <div
-            class="absolute -left-4 -bottom-4 text-8xl opacity-5 pointer-events-none group-hover:scale-110 group-hover:-rotate-6 transition-transform duration-500"
-          >
-            🛍️
-          </div>
-          <div class="flex items-center justify-between mb-5 relative z-10">
-            <h3 class="text-white text-sm font-bold flex items-center gap-2">
-              <span class="text-xl drop-shadow-[0_0_10px_rgba(236,72,153,0.8)]">🛍️</span> Cosmetics Store 
-            </h3>
-            <span class="text-xs font-bold text-pink-300 bg-pink-500/10 px-2 py-1 rounded-md border border-pink-500/20 shadow-inner uppercase tracking-wider">Coming Soon</span>
-          </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 relative z-10">
-            <!-- Avatar Pro -->
-            <div class="bg-gradient-to-b from-white/5 to-white/0 rounded-xl p-4 flex flex-col gap-3 border border-white/10 hover:border-indigo-500/50 hover:shadow-[0_0_20px_rgba(99,102,241,0.2)] transition-all group/item">
-              <div class="w-full aspect-square rounded-xl overflow-hidden ring-2 ring-indigo-500/50 shadow-[0_0_15px_rgba(99,102,241,0.5)] group-hover/item:scale-105 transition-transform">
-                <img src="/avatar_pro.png" alt="Avatar Pro" class="w-full h-full object-cover" />
-              </div>
-              <div class="flex flex-col justify-between flex-1 mt-1">
-                <div>
-                  <h4 class="text-white text-xs font-black tracking-wide drop-shadow-sm flex items-center gap-1">
-                    Pro Avatar
-                  </h4>
-                  <p class="text-indigo-300 text-[9px] font-bold mt-0.5 uppercase tracking-wider">Cybernetics</p>
-                </div>
-                <button class="mt-3 w-full py-1.5 rounded-lg text-xs font-bold bg-indigo-500 hover:bg-indigo-400 text-white shadow-[0_0_15px_rgba(99,102,241,0.4)] transition-colors flex items-center justify-center gap-1.5">
-                  <span class="text-warning-300 drop-shadow-md">💰</span> 500
-                </button>
-              </div>
-            </div>
+          <template #icon>
+            <span class="bg-success size-2.5 rounded-pill" aria-hidden="true" />
+          </template>
+          <template #actions>
+            <BaseButton variant="ghost" size="sm" @click="onlineModalOpen = true">
+              View All
+            </BaseButton>
+          </template>
 
-            <!-- Avatar Male -->
-            <div class="bg-gradient-to-b from-white/5 to-white/0 rounded-xl p-4 flex flex-col gap-3 border border-white/10 hover:border-blue-500/50 hover:shadow-[0_0_20px_rgba(59,130,246,0.2)] transition-all group/item">
-              <div class="w-full aspect-square rounded-xl overflow-hidden ring-2 ring-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.5)] group-hover/item:scale-105 transition-transform">
-                <img src="/avatar_male.png" alt="Male Avatar" class="w-full h-full object-cover" />
-              </div>
-              <div class="flex flex-col justify-between flex-1 mt-1">
-                <div>
-                  <h4 class="text-white text-xs font-black tracking-wide drop-shadow-sm flex items-center gap-1">
-                    Neon Boy
-                  </h4>
-                  <p class="text-blue-300 text-[9px] font-bold mt-0.5 uppercase tracking-wider">Cybernetics</p>
-                </div>
-                <button class="mt-3 w-full py-1.5 rounded-lg text-xs font-bold bg-blue-500 hover:bg-blue-400 text-white shadow-[0_0_15px_rgba(59,130,246,0.4)] transition-colors flex items-center justify-center gap-1.5">
-                  <span class="text-warning-300 drop-shadow-md">💰</span> 300
-                </button>
-              </div>
-            </div>
-
-            <!-- Avatar Female -->
-            <div class="bg-gradient-to-b from-white/5 to-white/0 rounded-xl p-4 flex flex-col gap-3 border border-white/10 hover:border-pink-500/50 hover:shadow-[0_0_20px_rgba(236,72,153,0.2)] transition-all group/item">
-              <div class="w-full aspect-square rounded-xl overflow-hidden ring-2 ring-pink-500/50 shadow-[0_0_15px_rgba(236,72,153,0.5)] group-hover/item:scale-105 transition-transform">
-                <img src="/avatar_female.png" alt="Female Avatar" class="w-full h-full object-cover" />
-              </div>
-              <div class="flex flex-col justify-between flex-1 mt-1">
-                <div>
-                  <h4 class="text-white text-xs font-black tracking-wide drop-shadow-sm flex items-center gap-1">
-                    Neon Girl
-                  </h4>
-                  <p class="text-pink-300 text-[9px] font-bold mt-0.5 uppercase tracking-wider">Cybernetics</p>
-                </div>
-                <button class="mt-3 w-full py-1.5 rounded-lg text-xs font-bold bg-pink-500 hover:bg-pink-400 text-white shadow-[0_0_15px_rgba(236,72,153,0.4)] transition-colors flex items-center justify-center gap-1.5">
-                  <span class="text-warning-300 drop-shadow-md">💰</span> 300
-                </button>
-              </div>
-            </div>
-
-            <!-- Avatar Robot -->
-            <div class="bg-gradient-to-b from-white/5 to-white/0 rounded-xl p-4 flex flex-col gap-3 border border-white/10 hover:border-emerald-500/50 hover:shadow-[0_0_20px_rgba(16,185,129,0.2)] transition-all group/item">
-              <div class="w-full aspect-square rounded-xl overflow-hidden ring-2 ring-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.5)] group-hover/item:scale-105 transition-transform">
-                <img src="/avatar_robot.png" alt="Robot Avatar" class="w-full h-full object-cover" />
-              </div>
-              <div class="flex flex-col justify-between flex-1 mt-1">
-                <div>
-                  <h4 class="text-white text-xs font-black tracking-wide drop-shadow-sm flex items-center gap-1">
-                    Mecha Bot
-                  </h4>
-                  <p class="text-emerald-300 text-[9px] font-bold mt-0.5 uppercase tracking-wider">Cybernetics</p>
-                </div>
-                <button class="mt-3 w-full py-1.5 rounded-lg text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-white shadow-[0_0_15px_rgba(16,185,129,0.4)] transition-colors flex items-center justify-center gap-1.5">
-                  <span class="text-warning-300 drop-shadow-md">💰</span> 450
-                </button>
-              </div>
-            </div>
-
-            <!-- VIP Border -->
-            <div class="bg-gradient-to-b from-white/5 to-white/0 rounded-xl p-4 flex flex-col gap-3 border border-white/10 hover:border-amber-500/50 hover:shadow-[0_0_20px_rgba(245,158,11,0.2)] transition-all group/item sm:col-span-2 lg:col-span-4 lg:flex-row lg:items-center">
-              <div class="w-16 h-16 shrink-0 rounded-xl overflow-hidden p-1 bg-black/50 ring-2 ring-amber-500/50 shadow-[0_0_15px_rgba(245,158,11,0.5)] group-hover/item:scale-105 transition-transform">
-                <img src="/vip_border.png" alt="VIP Border" class="w-full h-full object-contain" />
-              </div>
-              <div class="flex flex-col justify-between flex-1">
-                <div>
-                  <h4 class="text-white text-sm font-black tracking-wide drop-shadow-sm flex items-center gap-1.5">
-                    VIP Border <span class="text-[10px] bg-amber-500 text-white px-1.5 py-0.5 rounded shadow-sm">LEGENDARY</span>
-                  </h4>
-                  <p class="text-white/50 text-[10px] font-semibold mt-0.5 uppercase tracking-wider">Royal Collection</p>
-                </div>
-                <button class="mt-2 w-full lg:w-auto px-6 py-1.5 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-400 text-white shadow-[0_0_15px_rgba(245,158,11,0.4)] transition-colors flex items-center justify-center gap-1.5">
-                  <span class="text-warning-100 drop-shadow-md">💰</span> 1200 Coins
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+          <EmptyState
+            v-if="lobby.onlineUsers.length === 0"
+            title="No one online"
+            description="Start a match and others will show up here."
+          />
+          <ul v-else class="gap-sm grid grid-cols-1 sm:grid-cols-2">
+            <li
+              v-for="user in paginatedOnlineUsers"
+              :key="user.id"
+              class="border-border-subtle bg-glass-light gap-md p-sm rounded-sm flex items-center border"
+            >
+              <BaseAvatar :name="user.username" size="sm" online />
+              <span class="text-body text-foreground truncate font-semibold">
+                {{ user.username }}
+              </span>
+            </li>
+          </ul>
+        </GlassCard>
       </div>
 
-      <!-- Right Column: Leaderboard & Stats -->
+      <!-- Right Column: Leaderboard & Server Status -->
       <div class="contents lg:flex lg:flex-col lg:gap-6 lg:col-span-3">
-        <section
-          class="bg-black/40 backdrop-blur-2xl rounded-2xl border border-white/10 p-5 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] hover:border-amber-500/30 hover:shadow-[0_0_25px_rgba(245,158,11,0.15)] transition-all duration-300 relative overflow-hidden order-6 md:order-4 md:col-span-1 lg:order-none"
-          aria-label="Leaderboard"
+        <GlassCard
+          as="section"
+          title="Leaderboard"
+          variant="interactive"
+          class="order-4 md:order-4 md:col-span-1 lg:order-none"
         >
-          <div class="absolute -right-10 -top-10 text-9xl opacity-5 pointer-events-none">👑</div>
-          <div class="mb-4 flex items-center justify-between relative z-10">
-            <h2 class="text-white text-sm font-bold flex items-center gap-2">
-              <span class="text-xl drop-shadow-[0_0_10px_rgba(245,158,11,0.8)]">👑</span>
-              Leaderboard
-            </h2>
-          </div>
+          <template #icon><span aria-hidden="true">👑</span></template>
 
-          <div
-            v-if="leaderboard.loading"
-            class="text-white/50 py-8 text-center text-xs font-medium relative z-10"
-          >
+          <p v-if="leaderboard.loading" class="text-foreground-muted py-xl text-body text-center">
             Loading heroes…
-          </div>
+          </p>
 
-          <div v-else-if="leaderboard.error" class="py-8 text-center relative z-10">
-            <p class="text-danger-400 text-xs font-medium">{{ leaderboard.error }}</p>
-            <BaseButton
-              variant="secondary"
-              class="mt-3 text-xs py-1 px-3 border-white/10 bg-white/5 hover:bg-white/10 text-white"
-              @click="leaderboard.load()"
-            >
-              Retry
-            </BaseButton>
-          </div>
+          <ErrorState v-else-if="leaderboard.error" :message="leaderboard.error">
+            <template #action>
+              <BaseButton variant="secondary" size="sm" @click="leaderboard.load()">
+                Retry
+              </BaseButton>
+            </template>
+          </ErrorState>
 
           <div
             v-else
-            class="overflow-y-auto pr-1 custom-scrollbar relative z-10 max-h-48 sm:max-h-64 lg:max-h-[30rem]"
+            class="custom-scrollbar max-h-48 overflow-y-auto pr-1 sm:max-h-64 lg:max-h-120"
           >
             <LeaderboardTable
               :entries="paginatedLeaderboard"
@@ -665,61 +539,46 @@ const recentMatch = computed(() => {
             />
 
             <div class="mt-4 text-center">
-              <button
-                class="cursor-pointer inline-block text-amber-400 hover:text-amber-300 hover:underline underline-offset-4 text-xs font-bold transition-colors uppercase tracking-wider"
-                @click="leaderboardModalOpen = true"
-              >
+              <BaseButton variant="ghost" size="sm" @click="leaderboardModalOpen = true">
                 View all rankings →
-              </button>
+              </BaseButton>
             </div>
           </div>
-        </section>
+        </GlassCard>
 
-        <!-- System Status -->
-        <section
-          class="bg-black/40 backdrop-blur-2xl rounded-2xl border border-white/10 p-5 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] relative overflow-hidden group hover:border-primary-500/30 transition-all duration-300 order-9 md:order-9 md:col-span-1 lg:order-none"
-          aria-label="System Status"
+        <!-- Server Status -->
+        <GlassCard
+          as="section"
+          title="System Status"
+          class="order-8 md:order-7 md:col-span-1 lg:order-none"
         >
-          <div
-            class="absolute -right-4 -bottom-4 text-7xl opacity-5 pointer-events-none group-hover:scale-110 group-hover:rotate-12 transition-transform duration-500"
-          >
-            ⚡
-          </div>
-          <h2 class="text-white text-sm font-bold flex items-center gap-2 mb-4 relative z-10">
-            <span class="text-xl text-primary-400 drop-shadow-[0_0_8px_rgba(45,212,191,0.8)]"
-              >⚡</span
-            >
-            System Status
-          </h2>
-          <div class="grid grid-cols-2 gap-3 relative z-10">
+          <template #icon><span aria-hidden="true">⚡</span></template>
+
+          <div class="grid grid-cols-2 gap-3">
             <div
-              class="bg-white/5 rounded-xl p-3 text-center border border-white/5 relative overflow-hidden shadow-inner"
+              class="bg-glass-light border-border-subtle rounded-sm p-md border text-center"
             >
-              <div class="text-[9px] text-white/50 uppercase tracking-widest font-bold mb-1.5">
+              <p class="text-caption text-foreground-muted mb-1.5 tracking-widest uppercase">
                 Network
-              </div>
-              <div class="flex items-center justify-center gap-2">
-                <span
-                  class="w-2 h-2 rounded-full bg-success-500 shadow-[0_0_10px_rgba(34,197,94,1)] animate-pulse"
-                ></span>
-                <span class="text-xs font-black text-success-400 tracking-wide drop-shadow-sm"
-                  >ONLINE</span
-                >
+              </p>
+              <div class="gap-sm flex items-center justify-center">
+                <span class="bg-success size-2 rounded-pill" aria-hidden="true" />
+                <span class="text-small text-success font-bold tracking-wide">ONLINE</span>
               </div>
             </div>
             <div
-              class="bg-white/5 rounded-xl p-3 text-center border border-white/5 relative overflow-hidden shadow-inner"
+              class="bg-glass-light border-border-subtle rounded-sm p-md border text-center"
             >
-              <div class="text-[9px] text-white/50 uppercase tracking-widest font-bold mb-1.5">
+              <p class="text-caption text-foreground-muted mb-1.5 tracking-widest uppercase">
                 Latency
-              </div>
+              </p>
               <div class="flex items-center justify-center gap-1">
-                <span class="text-sm font-black text-white/80 tracking-wide">---</span>
-                <span class="text-[10px] text-white/40 font-bold">ms</span>
+                <span class="text-small text-foreground-secondary font-bold tracking-wide">---</span>
+                <span class="text-caption text-foreground-muted font-bold">ms</span>
               </div>
             </div>
           </div>
-        </section>
+        </GlassCard>
       </div>
     </div>
 

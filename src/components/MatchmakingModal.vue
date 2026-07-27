@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed } from 'vue'
 
-import BaseButton from '@/components/BaseButton.vue'
+import BaseButton from '@/components/ui/BaseButton.vue'
+import BaseModal from '@/components/ui/BaseModal.vue'
+import BaseSpinner from '@/components/ui/BaseSpinner.vue'
 import type { MatchmakingStatus } from '@/stores/socket'
 import type { MatchmakingMode } from '@/types/game'
 
@@ -31,60 +33,48 @@ const heading = computed(() =>
         : 'Finding an opponent',
 )
 
-const dialog = ref<HTMLElement | null>(null)
-
-onMounted(() => {
-  dialog.value?.querySelector('button')?.focus()
-})
-
-function onKeydown(event: KeyboardEvent): void {
-  if (event.key === 'Escape') {
-    emit('cancel')
+const elapsedLabel = computed(() => {
+  const progress = props.searchProgress
+  if (progress === null) {
+    return '00:00'
   }
-}
+  const minutes = Math.floor(progress.elapsed_seconds / 60)
+  const seconds = progress.elapsed_seconds % 60
+  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+})
 </script>
 
 <template>
-  <div
-    ref="dialog"
-    class="fixed inset-0 z-1300 flex items-center justify-center bg-black/60 p-4"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="matchmaking-heading"
-    @keydown="onKeydown"
-  >
-    <div class="bg-surface/90 backdrop-blur-xl w-full max-w-sm rounded-2xl p-8 text-center shadow-2xl ring-1 ring-white/20 relative overflow-hidden">
-      <div class="absolute inset-0 bg-gradient-to-br from-primary-500/20 to-secondary-500/20 pointer-events-none"></div>
-      
-      <div v-if="!isError" class="mb-6 flex justify-center relative" aria-hidden="true">
-        <div class="absolute inset-0 rounded-full bg-primary-500/20 blur-xl animate-pulse"></div>
-        <span class="border-primary-500 size-12 animate-spin rounded-full border-4 border-t-transparent shadow-lg" />
+  <BaseModal aria-labelledby="matchmaking-heading" @close="emit('cancel')">
+    <div class="text-center">
+      <div v-if="!isError" class="mb-xl flex justify-center">
+        <BaseSpinner size="lg" />
       </div>
 
-      <h2 id="matchmaking-heading" class="text-foreground text-xl font-bold relative">{{ heading }}</h2>
+      <h2 id="matchmaking-heading" class="text-card text-foreground">{{ heading }}</h2>
 
-      <p v-if="isError" class="text-danger-400 mt-2 text-sm relative">
+      <p v-if="isError" class="text-error text-body mt-2">
         {{ errorMessage ?? 'Something went wrong.' }}
       </p>
-      <div v-else class="text-foreground-muted mt-3 text-sm relative space-y-1" aria-live="polite">
+      <div v-else class="text-foreground-muted text-body mt-3 space-y-1" aria-live="polite">
         <template v-if="status === 'searching'">
-          <div class="font-mono text-lg font-medium text-primary-400">
-            {{ searchProgress ? `${Math.floor(searchProgress.elapsed_seconds / 60).toString().padStart(2, '0')}:${(searchProgress.elapsed_seconds % 60).toString().padStart(2, '0')}` : '00:00' }}
-          </div>
-          <p v-if="mode === 'ranked' && searchProgress?.search_range" class="text-xs">
+          <p class="text-accent text-card font-mono tabular-nums">{{ elapsedLabel }}</p>
+          <p v-if="mode === 'ranked' && searchProgress?.search_range" class="text-small">
             searching within ±{{ searchProgress.search_range }} rating
           </p>
-          <p v-else class="text-xs">Looking for a worthy opponent...</p>
+          <p v-else class="text-small">Looking for a worthy opponent...</p>
         </template>
         <template v-else>Opening a connection…</template>
       </div>
+    </div>
 
-      <div class="mt-8 flex justify-center gap-3 relative">
-        <BaseButton v-if="isError" class="flex-1 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-400 hover:to-primary-500 border-0 shadow-lg shadow-primary-500/30 text-white" @click="emit('retry')">Try again</BaseButton>
-        <BaseButton ref="cancelButton" class="flex-1 bg-gradient-to-r from-gray-600 to-slate-700 hover:from-gray-500 hover:to-slate-600 text-white border-0 shadow-lg" @click="emit('cancel')">
+    <template #footer>
+      <div class="gap-md flex justify-center">
+        <BaseButton v-if="isError" class="flex-1" @click="emit('retry')">Try again</BaseButton>
+        <BaseButton variant="secondary" class="flex-1" @click="emit('cancel')">
           {{ isError ? 'Close' : 'Cancel' }}
         </BaseButton>
       </div>
-    </div>
-  </div>
+    </template>
+  </BaseModal>
 </template>

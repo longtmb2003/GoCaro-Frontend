@@ -2,7 +2,10 @@
 import { onMounted, ref, computed } from 'vue'
 import { RouterLink } from 'vue-router'
 
-import BaseButton from '@/components/BaseButton.vue'
+import BaseButton from '@/components/ui/BaseButton.vue'
+import BaseInput from '@/components/ui/BaseInput.vue'
+import ErrorState from '@/components/ui/ErrorState.vue'
+import GlassCard from '@/components/ui/GlassCard.vue'
 import LeaderboardTable from '@/components/LeaderboardTable.vue'
 import AppLayout from '@/layouts/AppLayout.vue'
 import { useAuthStore } from '@/stores/auth'
@@ -53,66 +56,56 @@ onMounted(() => {
       </RouterLink>
     </template>
 
-    <section
-      class="bg-black/40 backdrop-blur-2xl mx-auto max-w-2xl rounded-2xl border border-white/10 p-6 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] relative overflow-hidden group"
-      aria-label="Leaderboard"
-    >
-      <div class="absolute -right-10 -top-10 text-9xl opacity-5 pointer-events-none group-hover:scale-110 transition-transform duration-500">👑</div>
-      
-      <div class="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-10">
-        <h2 class="text-white text-xl font-extrabold flex items-center gap-2">
-          <span class="text-2xl drop-shadow-[0_0_10px_rgba(245,158,11,0.8)]">👑</span> Top players
-        </h2>
-        <div class="relative w-full sm:w-auto flex gap-2">
-          <input
+    <GlassCard title="Top players" class="mx-auto max-w-2xl">
+      <template #icon><span aria-hidden="true">👑</span></template>
+      <template #actions>
+        <div class="gap-sm flex w-full items-end sm:w-auto">
+          <BaseInput
             v-model="searchQuery"
-            type="text"
-            placeholder="Search by username..."
-            class="border-white/10 bg-white/5 backdrop-blur-md text-white focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500/50 shadow-inner w-full sm:w-64 rounded-xl border px-4 h-10 text-sm transition-all placeholder:text-white/30"
+            name="leaderboard-search"
+            label="Search by username"
+            placeholder="Search by username…"
+            label-hidden
+            class="w-full sm:w-64"
             @keyup.enter="handleSearch"
           />
           <BaseButton @click="handleSearch">Search</BaseButton>
         </div>
-      </div>
+      </template>
 
-      <div v-if="leaderboard.loading" class="text-white/50 py-8 text-center text-sm font-medium relative z-10">
+      <p v-if="leaderboard.loading" class="text-foreground-muted py-xl text-body text-center">
         Loading leaderboard…
-      </div>
+      </p>
 
-      <div v-else-if="leaderboard.error" class="py-8 text-center relative z-10">
-        <p class="text-danger-400 text-sm font-medium">{{ leaderboard.error }}</p>
-        <BaseButton
-          variant="secondary"
-          class="mt-4 border-white/10 bg-white/5 hover:bg-white/10 text-white"
-          @click="leaderboard.load(FULL_LEADERBOARD_LIMIT)"
-        >
-          Try again
-        </BaseButton>
-      </div>
+      <ErrorState v-else-if="leaderboard.error" :message="leaderboard.error">
+        <template #action>
+          <BaseButton variant="secondary" @click="leaderboard.load(FULL_LEADERBOARD_LIMIT)">
+            Try again
+          </BaseButton>
+        </template>
+      </ErrorState>
 
       <template v-else>
-        <div class="relative z-10">
-          <LeaderboardTable
-            :entries="paginatedEntries"
-            :current-username="auth.user?.username ?? ''"
-          />
-        </div>
+        <LeaderboardTable
+          :entries="paginatedEntries"
+          :current-username="auth.user?.username ?? ''"
+        />
 
         <div
           v-if="leaderboard.entries.length > 0"
-          class="border-white/10 mt-6 flex items-center justify-between border-t pt-4 relative z-10"
+          class="border-border-subtle mt-xl pt-lg flex items-center justify-between border-t"
         >
-          <BaseButton variant="secondary" :disabled="currentPage <= 1" class="border-white/20 bg-white/5 hover:bg-white/10 text-white" @click="prevPage">
+          <BaseButton variant="secondary" :disabled="currentPage <= 1" @click="prevPage">
             Previous
           </BaseButton>
-          <span class="text-white/60 font-semibold tracking-wide text-sm tabular-nums">
+          <span class="text-foreground-muted text-small font-semibold tabular-nums">
             Page {{ currentPage }} of {{ totalPages }}
           </span>
-          <BaseButton variant="secondary" :disabled="currentPage >= totalPages" class="border-white/20 bg-white/5 hover:bg-white/10 text-white" @click="nextPage">
+          <BaseButton variant="secondary" :disabled="currentPage >= totalPages" @click="nextPage">
             Next
           </BaseButton>
         </div>
       </template>
-    </section>
+    </GlassCard>
   </AppLayout>
 </template>

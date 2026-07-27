@@ -35,7 +35,7 @@ const innerClasses = computed(() => {
 <template>
   <div class="relative flex items-center justify-center shrink-0">
     <div
-      class="flex items-center justify-center rounded-full font-bold text-white transition-transform group-hover:scale-105"
+      class="flex items-center justify-center rounded-full font-bold text-white"
       :class="[sizeClasses, frameClasses, innerClasses]"
       aria-hidden="true"
     >

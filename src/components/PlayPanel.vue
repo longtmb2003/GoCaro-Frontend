@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import BaseBadge from '@/components/ui/BaseBadge.vue'
 import type { MatchmakingMode } from '@/types/game'
 
 withDefaults(defineProps<{ isGuest?: boolean }>(), { isGuest: false })
@@ -26,9 +27,9 @@ const emit = defineEmits<{ play: [mode: MatchmakingMode]; upgrade: [] }>()
         <h3 class="text-xl font-bold text-white drop-shadow-sm">Ranked</h3>
         <p class="mt-1 text-xs font-medium text-white/90">Play for ELO rating</p>
         
-        <div v-if="isGuest" id="ranked-locked" class="mt-3 inline-flex items-center gap-1 rounded-full bg-black/30 px-2.5 py-1 text-[10px] font-bold text-white backdrop-blur-sm">
-          <span>🔒 Sign in required</span>
-        </div>
+        <BaseBadge v-if="isGuest" id="ranked-locked" variant="neutral" class="mt-3">
+          🔒 Sign in required
+        </BaseBadge>
       </button>
 
       <!-- Casual Card -->
@@ -40,9 +41,7 @@ const emit = defineEmits<{ play: [mode: MatchmakingMode]; upgrade: [] }>()
         <h3 class="text-xl font-bold text-foreground drop-shadow-sm">Casual</h3>
         <p class="mt-1 text-xs font-medium text-foreground-muted">Just for fun, no pressure</p>
         
-        <div class="mt-3 inline-flex items-center gap-1 rounded-full bg-primary-500/10 px-2.5 py-1 text-[10px] font-bold text-primary-500">
-          <span>🎮 Practice mode</span>
-        </div>
+        <BaseBadge variant="primary" class="mt-3">🎮 Practice mode</BaseBadge>
       </button>
     </div>
   </section>

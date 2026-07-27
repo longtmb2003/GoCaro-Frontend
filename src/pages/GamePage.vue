@@ -2,7 +2,9 @@
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
-import BaseButton from '@/components/BaseButton.vue'
+import BaseButton from '@/components/ui/BaseButton.vue'
+import BaseModal from '@/components/ui/BaseModal.vue'
+import GlassCard from '@/components/ui/GlassCard.vue'
 import GameBoard from '@/components/GameBoard.vue'
 import GameResultBanner from '@/components/GameResultBanner.vue'
 import OpponentLeftBanner from '@/components/OpponentLeftBanner.vue'
@@ -151,6 +153,12 @@ async function shareAchievement(): Promise<void> {
 
 <template>
   <AppLayout title="Match">
+    <!-- Match Specific Background Wallpaper -->
+    <div class="fixed inset-0 z-[-1]" style="background-image: url('/match_bg.png'); background-size: cover; background-position: center;">
+      <!-- Subtle dark overlay so the board stands out -->
+      <div class="absolute inset-0 bg-black/30 backdrop-blur-sm"></div>
+    </div>
+
     <div class="grid gap-6 lg:grid-cols-[1fr_16rem] xl:grid-cols-[1fr_18rem]">
       <div class="flex justify-center">
         <GameBoard
@@ -167,66 +175,47 @@ async function shareAchievement(): Promise<void> {
           :seconds-left="socket.opponentReconnectSecondsLeft"
         />
 
-        <div
-          class="bg-black/40 backdrop-blur-2xl rounded-2xl border border-white/10 p-5 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] relative overflow-hidden group"
-        >
-          <div
-            class="absolute inset-0 bg-gradient-to-br from-primary-500/10 to-secondary-500/10 pointer-events-none group-hover:from-primary-500/20 group-hover:to-secondary-500/20 transition-all duration-500"
-          ></div>
+        <GlassCard as="div">
           <p
-            class="text-white text-center font-bold tracking-wide uppercase text-sm drop-shadow-md"
+            class="text-foreground text-body text-center font-bold tracking-wide uppercase"
             aria-live="polite"
           >
             {{ turnLabel }}
           </p>
           <TurnTimer
             v-if="game.phase === 'playing'"
-            class="mt-3 relative z-10"
+            class="mt-3"
             :seconds-left="socket.turnSecondsLeft"
             :total-seconds="socket.turnBudgetSeconds"
           />
-        </div>
+        </GlassCard>
 
         <div class="grid grid-cols-2 gap-3">
-          <div
-            class="bg-black/40 backdrop-blur-2xl rounded-xl border border-white/10 p-4 text-center shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] relative overflow-hidden hover:border-primary-500/30 transition-all"
-          >
-            <div
-              class="absolute inset-0 bg-gradient-to-br from-primary-500/10 to-transparent pointer-events-none"
-            ></div>
-            <p class="text-white/60 text-xs font-black tracking-widest uppercase">You</p>
-            <p class="text-white mt-1.5 truncate font-bold drop-shadow-sm">
-              🧑‍💻 {{ auth.displayName }}
+          <GlassCard as="div" class="text-center">
+            <p class="text-foreground-muted text-caption font-black tracking-widest uppercase">
+              You
             </p>
-            <p class="text-primary-300 mt-1 text-sm font-semibold">{{ yourColor }}</p>
-          </div>
-          <div
-            class="bg-black/40 backdrop-blur-2xl rounded-xl border border-white/10 p-4 text-center shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] relative overflow-hidden hover:border-rose-500/30 transition-all"
-          >
-            <div
-              class="absolute inset-0 bg-gradient-to-bl from-rose-500/10 to-transparent pointer-events-none"
-            ></div>
-            <p class="text-white/60 text-xs font-black tracking-widest uppercase">Opponent</p>
-            <p class="text-white mt-1.5 truncate font-bold drop-shadow-sm">
-              🧑‍💻 {{ game.opponent }}
+            <p class="text-foreground mt-1.5 truncate font-bold">🧑‍💻 {{ auth.displayName }}</p>
+            <p class="text-accent text-small mt-1 font-semibold">{{ yourColor }}</p>
+          </GlassCard>
+          <GlassCard as="div" class="text-center">
+            <p class="text-foreground-muted text-caption font-black tracking-widest uppercase">
+              Opponent
             </p>
-            <p class="text-rose-300 mt-1 text-sm font-semibold">{{ opponentColor }}</p>
-          </div>
+            <p class="text-foreground mt-1.5 truncate font-bold">🧑‍💻 {{ game.opponent }}</p>
+            <p class="text-error text-small mt-1 font-semibold">{{ opponentColor }}</p>
+          </GlassCard>
         </div>
 
-        <p
-          v-if="game.moveError"
-          class="text-danger-400 text-center text-sm font-medium drop-shadow-sm"
-          role="alert"
-        >
+        <p v-if="game.moveError" class="text-error text-small text-center font-medium" role="alert">
           {{ game.moveError }}
         </p>
 
-        <div v-if="game.phase === 'playing'" class="border-white/10 border-t pt-5 space-y-3">
+        <div v-if="game.phase === 'playing'" class="border-border-subtle border-t pt-5 space-y-3">
           <div v-if="!confirmingResign" class="flex gap-3">
             <BaseButton
               variant="secondary"
-              class="flex-1 border-white/20 bg-white/5 hover:bg-white/10 text-white shadow-lg shadow-black/20"
+              class="flex-1"
               :disabled="socket.waitingForDrawResponse || socket.drawOffersLeft === 0"
               @click="socket.sendOfferDraw()"
             >
@@ -234,26 +223,19 @@ async function shareAchievement(): Promise<void> {
                 socket.waitingForDrawResponse ? 'Waiting...' : `🏳️ Draw (${socket.drawOffersLeft})`
               }}
             </BaseButton>
-            <BaseButton
-              class="flex-1 bg-gradient-to-r from-rose-500 to-red-600 hover:from-rose-400 hover:to-red-500 text-white border-white/20 shadow-[0_0_15px_rgba(225,29,72,0.4)]"
-              @click="confirmingResign = true"
-            >
+            <BaseButton variant="danger" class="flex-1" @click="confirmingResign = true">
               Resign
             </BaseButton>
           </div>
           <div v-else class="space-y-3">
-            <p class="text-white text-center text-sm font-bold tracking-wide">Resign this match?</p>
+            <p class="text-foreground text-body text-center font-bold tracking-wide">
+              Resign this match?
+            </p>
             <div class="flex gap-3">
-              <BaseButton
-                class="flex-1 bg-gradient-to-r from-rose-500 to-red-600 hover:from-rose-400 hover:to-red-500 text-white border-white/20 shadow-[0_0_15px_rgba(225,29,72,0.4)]"
-                @click="confirmResign"
-                >Confirm</BaseButton
-              >
-              <BaseButton
-                variant="secondary"
-                class="flex-1 border-white/20 bg-white/5 hover:bg-white/10 text-white"
-                @click="confirmingResign = false"
-              >
+              <BaseButton variant="danger" class="flex-1" @click="confirmResign">
+                Confirm
+              </BaseButton>
+              <BaseButton variant="secondary" class="flex-1" @click="confirmingResign = false">
                 Keep playing
               </BaseButton>
             </div>
@@ -279,39 +261,30 @@ async function shareAchievement(): Promise<void> {
       @share="shareAchievement"
     />
 
-    <!-- Draw Offer Dialog -->
-    <div
+    <!-- Draw Offer Dialog. Not dismissible: the offer needs an explicit answer. -->
+    <BaseModal
       v-if="socket.drawOfferPending"
-      class="fixed inset-0 z-[1300] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+      :dismissible="false"
+      aria-labelledby="draw-offer-heading"
     >
-      <div
-        class="bg-black/60 backdrop-blur-2xl w-full max-w-sm rounded-3xl p-8 text-center shadow-[0_8px_32px_0_rgba(0,0,0,0.5)] border border-white/20 relative overflow-hidden"
-      >
-        <div
-          class="absolute inset-0 bg-gradient-to-br from-primary-500/20 to-secondary-500/20 pointer-events-none"
-        ></div>
-        <h2
-          class="text-white text-2xl font-black tracking-wide drop-shadow-md flex justify-center items-center gap-3"
-        >
-          <span class="text-4xl drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]">🏳️</span> Draw Offer
+      <div class="text-center">
+        <h2 id="draw-offer-heading" class="text-section gap-sm flex items-center justify-center">
+          <span aria-hidden="true">🏳️</span> Draw Offer
         </h2>
-        <p class="text-white/80 mt-3 text-sm font-medium">Your opponent has offered a draw.</p>
-        <p class="text-white/50 mt-1 text-xs font-semibold">(Making a move will decline it)</p>
-        <div class="mt-8 flex gap-3 relative z-10">
-          <BaseButton
-            class="flex-1 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-white border-white/20 shadow-[0_0_15px_rgba(16,185,129,0.4)]"
-            @click="socket.sendRespondDraw(true)"
-          >
+        <p class="text-foreground-secondary text-body mt-3">Your opponent has offered a draw.</p>
+        <p class="text-foreground-muted text-small mt-1">(Making a move will decline it)</p>
+      </div>
+
+      <template #footer>
+        <div class="gap-md flex">
+          <BaseButton variant="success" class="flex-1" @click="socket.sendRespondDraw(true)">
             Accept
           </BaseButton>
-          <BaseButton
-            class="flex-1 bg-gradient-to-r from-gray-600 to-slate-700 hover:from-gray-500 hover:to-slate-600 text-white border-white/20 shadow-lg"
-            @click="socket.sendRespondDraw(false)"
-          >
+          <BaseButton variant="secondary" class="flex-1" @click="socket.sendRespondDraw(false)">
             Decline
           </BaseButton>
         </div>
-      </div>
-    </div>
+      </template>
+    </BaseModal>
   </AppLayout>
 </template>
