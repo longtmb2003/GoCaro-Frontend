@@ -18,6 +18,18 @@ const TOKEN_STORAGE_KEY = 'gocaro.token'
 /** Length of the id prefix the backend derives a guest's display name from. */
 const GUEST_NAME_ID_LENGTH = 8
 
+/**
+ * How many times to try loading the profile when restoring a session, and the
+ * base delay between tries (it grows each attempt). Sized to ride out a backend
+ * cold start without giving up the session.
+ */
+const PROFILE_LOAD_ATTEMPTS = 3
+const PROFILE_LOAD_RETRY_MS = 1500
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
 export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(null)
   const user = ref<AuthUser | null>(null)
@@ -59,13 +71,14 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   /**
-   * Restores a session from a persisted token on app start.
+   * Restores a session from a persisted token on app start (e.g. after a reload).
    *
-   * A 401 means the token is genuinely invalid or expired, so it is discarded.
-   * Network or server errors are transient: the token is kept so the session
-   * can recover on a later attempt rather than logging the user out over a
-   * temporary outage. The user stays unauthenticated until profile load
-   * succeeds, so the route guard still gates protected pages.
+   * Only a 401 ends the session: it means the token is genuinely invalid or
+   * expired. Every other failure is treated as transient — a backend still
+   * waking from cold start, a slow network, a 5xx — and is retried rather than
+   * silently dropping the user to the login page. This is what keeps the session
+   * alive across a refresh until the user logs out or the token actually expires.
+   * The token is kept regardless, so a later action can still recover.
    */
   async function initialize(): Promise<void> {
     const stored = localStorage.getItem(TOKEN_STORAGE_KEY)
@@ -73,11 +86,19 @@ export const useAuthStore = defineStore('auth', () => {
       return
     }
     persistToken(stored)
-    try {
-      user.value = await fetchProfile()
-    } catch (error) {
-      if (error instanceof ApiError && error.status === 401) {
-        logout()
+
+    for (let attempt = 1; attempt <= PROFILE_LOAD_ATTEMPTS; attempt++) {
+      try {
+        user.value = await fetchProfile()
+        return
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 401) {
+          logout()
+          return
+        }
+        if (attempt < PROFILE_LOAD_ATTEMPTS) {
+          await delay(PROFILE_LOAD_RETRY_MS * attempt)
+        }
       }
     }
   }
