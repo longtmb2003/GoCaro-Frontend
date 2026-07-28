@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { Flag, User } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 
 import BaseButton from '@/components/ui/BaseButton.vue'
@@ -195,14 +196,20 @@ async function shareAchievement(): Promise<void> {
             <p class="text-foreground-muted text-caption font-black tracking-widest uppercase">
               You
             </p>
-            <p class="text-foreground mt-2 truncate font-bold">🧑‍💻 {{ auth.displayName }}</p>
+            <p class="text-foreground mt-2 gap-2 flex items-center justify-center font-bold">
+              <User :size="16" class="shrink-0" aria-hidden="true" />
+              <span class="truncate">{{ auth.displayName }}</span>
+            </p>
             <p class="text-accent text-small mt-1 font-semibold">{{ yourColor }}</p>
           </GlassCard>
           <GlassCard as="div" class="text-center">
             <p class="text-foreground-muted text-caption font-black tracking-widest uppercase">
               Opponent
             </p>
-            <p class="text-foreground mt-2 truncate font-bold">🧑‍💻 {{ game.opponent }}</p>
+            <p class="text-foreground mt-2 gap-2 flex items-center justify-center font-bold">
+              <User :size="16" class="shrink-0" aria-hidden="true" />
+              <span class="truncate">{{ game.opponent }}</span>
+            </p>
             <p class="text-error text-small mt-1 font-semibold">{{ opponentColor }}</p>
           </GlassCard>
         </div>
@@ -219,9 +226,10 @@ async function shareAchievement(): Promise<void> {
               :disabled="socket.waitingForDrawResponse || socket.drawOffersLeft === 0"
               @click="socket.sendOfferDraw()"
             >
-              {{
-                socket.waitingForDrawResponse ? 'Waiting...' : `🏳️ Draw (${socket.drawOffersLeft})`
-              }}
+              <template v-if="socket.waitingForDrawResponse">Waiting...</template>
+              <template v-else>
+                <Flag :size="16" aria-hidden="true" /> Draw ({{ socket.drawOffersLeft }})
+              </template>
             </BaseButton>
             <BaseButton variant="danger" class="flex-1" @click="confirmingResign = true">
               Resign
@@ -269,7 +277,7 @@ async function shareAchievement(): Promise<void> {
     >
       <div class="text-center">
         <h2 id="draw-offer-heading" class="text-section gap-2 flex items-center justify-center">
-          <span aria-hidden="true">🏳️</span> Draw Offer
+          <Flag :size="20" aria-hidden="true" /> Draw Offer
         </h2>
         <p class="text-foreground-secondary text-body mt-3">Your opponent has offered a draw.</p>
         <p class="text-foreground-muted text-small mt-1">(Making a move will decline it)</p>

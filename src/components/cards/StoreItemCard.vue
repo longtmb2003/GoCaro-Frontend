@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Coins } from 'lucide-vue-next'
 import BaseBadge from '@/components/ui/BaseBadge.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 
@@ -49,7 +50,7 @@ withDefaults(
       <!-- The shop is not built yet: the price is roadmap information, not an
            offer, so the control must not behave like one. -->
       <BaseButton size="sm" disabled class="mt-3 w-full">
-        <span aria-hidden="true">💰</span> {{ price }}
+        <Coins :size="16" aria-hidden="true" /> {{ price }}
       </BaseButton>
     </div>
   </div>

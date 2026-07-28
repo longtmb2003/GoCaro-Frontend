@@ -2,6 +2,7 @@
 import { onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 
+import { Scroll } from 'lucide-vue-next'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import ErrorState from '@/components/ui/ErrorState.vue'
 import GlassCard from '@/components/ui/GlassCard.vue'
@@ -33,7 +34,7 @@ onMounted(() => {
       title="Recent matches"
       class="mx-auto max-w-2xl"
     >
-      <template #icon><span aria-hidden="true">📜</span></template>
+      <template #icon><Scroll :size="18" aria-hidden="true" /></template>
       <template #actions>
         <p class="text-foreground-muted text-caption tracking-wider uppercase">All players</p>
       </template>

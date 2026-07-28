@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { Crown, Hand, Link2, Scroll, ShoppingBag, Swords, Target, Zap } from 'lucide-vue-next'
 import { RouterLink, useRouter } from 'vue-router'
 
 import { ApiError } from '@/api/ApiError'
@@ -261,7 +262,7 @@ const recentMatch = computed(() => {
           title="Daily Missions"
           class="order-6 md:order-5 md:col-span-1 lg:order-none"
         >
-          <template #icon><span aria-hidden="true">🎯</span></template>
+          <template #icon><Target :size="18" aria-hidden="true" /></template>
 
           <div class="space-y-3">
             <GlassCard as="div" variant="nested" class="gap-2 flex flex-col">
@@ -325,7 +326,7 @@ const recentMatch = computed(() => {
           title="Cosmetics Store"
           class="order-7 md:order-9 md:col-span-2 lg:order-none"
         >
-          <template #icon><span aria-hidden="true">🛍️</span></template>
+          <template #icon><ShoppingBag :size="18" aria-hidden="true" /></template>
           <template #actions>
             <BaseBadge variant="neutral">Coming Soon</BaseBadge>
           </template>
@@ -370,7 +371,7 @@ const recentMatch = computed(() => {
           >
             <h2 class="text-page sm:text-hero text-foreground gap-3 flex items-center tracking-tight">
               GoCaro
-              <span aria-hidden="true">👋</span>
+              <Hand :size="32" aria-hidden="true" />
             </h2>
             <p class="text-foreground-secondary text-body mt-2">
               The ultimate online Gomoku experience.
@@ -390,7 +391,7 @@ const recentMatch = computed(() => {
             <RouterLink to="/history" class="block h-full">
               <GlassCard as="div" variant="interactive" class="h-full">
                 <div class="gap-3 flex h-full items-center justify-center">
-                  <span class="text-2xl" aria-hidden="true">📜</span>
+                  <Scroll :size="24" aria-hidden="true" />
                   <span class="text-foreground text-body font-semibold">Match history</span>
                 </div>
               </GlassCard>
@@ -404,7 +405,7 @@ const recentMatch = computed(() => {
               @click="shareGame"
             >
               <div class="gap-3 flex h-full items-center justify-center">
-                <span class="text-2xl" aria-hidden="true">🔗</span>
+                <Link2 :size="24" aria-hidden="true" />
                 <div class="flex flex-col items-start">
                   <span class="text-foreground text-body leading-tight font-semibold">
                     Share game
@@ -419,7 +420,7 @@ const recentMatch = computed(() => {
 
           <!-- Recent Match Preview -->
           <GlassCard as="div" title="Recent Match" variant="interactive">
-            <template #icon><span aria-hidden="true">⚔️</span></template>
+            <template #icon><Swords :size="18" aria-hidden="true" /></template>
             <template #actions>
               <RouterLink to="/history">
                 <BaseButton variant="ghost" size="sm">View All</BaseButton>
@@ -523,7 +524,7 @@ const recentMatch = computed(() => {
           variant="interactive"
           class="order-4 md:order-4 md:col-span-1 lg:order-none"
         >
-          <template #icon><span aria-hidden="true">👑</span></template>
+          <template #icon><Crown :size="18" aria-hidden="true" /></template>
 
           <p v-if="leaderboard.loading" class="text-foreground-muted py-6 text-body text-center">
             Loading heroes…
@@ -561,7 +562,7 @@ const recentMatch = computed(() => {
           title="System Status"
           class="order-8 md:order-7 md:col-span-1 lg:order-none"
         >
-          <template #icon><span aria-hidden="true">⚡</span></template>
+          <template #icon><Zap :size="18" aria-hidden="true" /></template>
 
           <div class="grid grid-cols-2 gap-3">
             <GlassCard as="div" variant="nested" class="text-center">

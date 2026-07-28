@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
 
 import BaseAvatar from '@/components/ui/BaseAvatar.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
@@ -45,18 +46,7 @@ function prevOnlinePage() {
             @click="prevOnlinePage"
           >
             <span class="sr-only">Previous page</span>
-            <svg
-              class="size-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-            >
-              <path d="m15 18-6-6 6-6" />
-            </svg>
+            <ChevronLeft :size="16" aria-hidden="true" />
           </BaseButton>
           <span class="text-small text-foreground-muted tabular-nums">
             Page {{ onlinePage + 1 }} of {{ totalOnlinePages }}
@@ -68,18 +58,7 @@ function prevOnlinePage() {
             @click="nextOnlinePage"
           >
             <span class="sr-only">Next page</span>
-            <svg
-              class="size-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-            >
-              <path d="m9 18 6-6-6-6" />
-            </svg>
+            <ChevronRight :size="16" aria-hidden="true" />
           </BaseButton>
         </div>
       </div>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, useId, ref } from 'vue'
+import { Eye, EyeOff } from 'lucide-vue-next'
 
 const props = withDefaults(
   defineProps<{
@@ -81,13 +82,8 @@ function handleInput(event: Event): void {
         :aria-label="showPassword ? 'Hide password' : 'Show password'"
         @click="showPassword = !showPassword"
       >
-        <span v-if="!showPassword">👁️</span>
-        <span v-else class="relative inline-block">
-          👁️
-          <span class="absolute inset-0 flex items-center justify-center">
-            <span class="bg-foreground h-px w-full origin-center rotate-45 transform" />
-          </span>
-        </span>
+        <Eye v-if="!showPassword" :size="20" aria-hidden="true" />
+        <EyeOff v-else :size="20" aria-hidden="true" />
       </button>
     </div>
     <p v-if="hasError" :id="errorId" class="text-error text-small" role="alert">{{ error }}</p>

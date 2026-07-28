@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { CircleCheck, Info, TriangleAlert, X } from 'lucide-vue-next'
+
 import { useToast } from '@/composables/useToast'
 
 const { toasts, removeToast } = useToast()
@@ -19,12 +21,25 @@ const { toasts, removeToast } = useToast()
         @click="removeToast(toast.id)"
       >
         <div class="flex items-center gap-3">
-          <span v-if="toast.type === 'success'" class="text-success-400 text-lg">✓</span>
-          <span v-if="toast.type === 'error'" class="text-danger-400 text-lg">⚠</span>
-          <span v-if="toast.type === 'info'" class="text-primary-400 text-lg">ℹ</span>
+          <CircleCheck
+            v-if="toast.type === 'success'"
+            class="text-success-400"
+            :size="20"
+            aria-hidden="true"
+          />
+          <TriangleAlert
+            v-if="toast.type === 'error'"
+            class="text-danger-400"
+            :size="20"
+            aria-hidden="true"
+          />
+          <Info v-if="toast.type === 'info'" class="text-primary-400" :size="20" aria-hidden="true" />
           <p class="text-sm font-medium text-foreground">{{ toast.message }}</p>
         </div>
-        <button class="text-foreground-muted hover:text-foreground">✕</button>
+        <button class="text-foreground-muted hover:text-foreground">
+          <span class="sr-only">Dismiss notification</span>
+          <X :size="20" aria-hidden="true" />
+        </button>
       </div>
     </TransitionGroup>
   </div>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, useId } from 'vue'
+import { X } from 'lucide-vue-next'
 
 import BaseDivider from './BaseDivider.vue'
 import { useFocusTrap } from '@/composables/useFocusTrap'
@@ -114,17 +115,7 @@ function onKeydown(event: KeyboardEvent): void {
                 @click="emit('close')"
               >
                 <span class="sr-only">Close</span>
-                <svg
-                  class="size-5"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  aria-hidden="true"
-                >
-                  <path d="M6 18 18 6M6 6l12 12" />
-                </svg>
+                <X :size="20" aria-hidden="true" />
               </button>
             </div>
             <BaseDivider class="mb-4" />

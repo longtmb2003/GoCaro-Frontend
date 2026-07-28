@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Medal } from 'lucide-vue-next'
 import type { LeaderboardEntry } from '@/types/leaderboard'
 import { getRankTier } from '@/config/ranks'
 
@@ -54,9 +55,12 @@ withDefaults(
             class="text-foreground-muted whitespace-nowrap font-medium"
             :class="compact ? 'px-3 py-2' : 'px-4 py-3'"
           >
-            <span v-if="index === 0" class="text-card">🥇</span>
-            <span v-else-if="index === 1" class="text-card">🥈</span>
-            <span v-else-if="index === 2" class="text-card">🥉</span>
+            <!-- The medal replaces the visible rank number for the top three, so
+                 the number stays available to assistive tech. -->
+            <template v-if="index < 3">
+              <Medal :size="18" aria-hidden="true" />
+              <span class="sr-only">#{{ index + 1 }}</span>
+            </template>
             <span v-else>#{{ index + 1 }}</span>
           </td>
           <td

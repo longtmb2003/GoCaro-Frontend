@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseModal from '@/components/ui/BaseModal.vue'
+import GlassCard from '@/components/ui/GlassCard.vue'
 import { RANK_TIERS } from '@/config/ranks'
 import RankFrame from './RankFrame.vue'
 

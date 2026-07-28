@@ -2,6 +2,7 @@
 import { computed, onUnmounted, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 
+import { Circle, Scroll } from 'lucide-vue-next'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import GlassCard from '@/components/ui/GlassCard.vue'
 import GameBoard from '@/components/GameBoard.vue'
@@ -182,7 +183,7 @@ const summary = computed(() => {
       <!-- Right side: Match Summary -->
       <div class="space-y-6">
         <GlassCard title="Match Summary" heading-tag="h3">
-          <template #icon><span aria-hidden="true">📜</span></template>
+          <template #icon><Scroll :size="18" aria-hidden="true" /></template>
 
           <GlassCard
             as="p"
@@ -193,7 +194,7 @@ const summary = computed(() => {
               <span class="text-caption text-foreground-muted mb-1 tracking-widest uppercase">
                 Black
               </span>
-              <span>● {{ summary.black }}</span>
+              <span class="gap-2 flex items-center"><Circle :size="16" fill="currentColor" aria-hidden="true" />{{ summary.black }}</span>
             </span>
             <span class="text-foreground-muted text-caption font-black tracking-widest uppercase">
               vs
@@ -202,7 +203,7 @@ const summary = computed(() => {
               <span class="text-caption text-foreground-muted mb-1 tracking-widest uppercase">
                 White
               </span>
-              <span>{{ summary.white }} ○</span>
+              <span class="gap-2 flex items-center">{{ summary.white }}<Circle :size="16" aria-hidden="true" /></span>
             </span>
           </GlassCard>
 

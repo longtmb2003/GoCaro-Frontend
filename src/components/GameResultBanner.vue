@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
+import { Handshake, HeartCrack, Share2, Trophy } from 'lucide-vue-next'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseModal from '@/components/ui/BaseModal.vue'
 
@@ -50,9 +51,9 @@ const ratingClass = computed(() => {
   >
     <div class="text-center">
       <h2 id="result-heading" class="text-section gap-2 flex items-center justify-center" :class="headingClass">
-        <span v-if="tone === 'win'" aria-hidden="true">🏆</span>
-        <span v-if="tone === 'loss'" aria-hidden="true">💔</span>
-        <span v-if="tone === 'draw'" aria-hidden="true">🤝</span>
+        <Trophy v-if="tone === 'win'" :size="24" aria-hidden="true" />
+        <HeartCrack v-if="tone === 'loss'" :size="24" aria-hidden="true" />
+        <Handshake v-if="tone === 'draw'" :size="24" aria-hidden="true" />
         {{ heading }}
       </h2>
       <p class="text-foreground-muted text-body mt-2">{{ message }}</p>
@@ -68,7 +69,7 @@ const ratingClass = computed(() => {
     <template #footer>
       <div class="space-y-2">
         <BaseButton v-if="tone === 'win'" variant="success" class="w-full" @click="$emit('share')">
-          🔗 Share Achievement (+50 Coins)
+          <Share2 :size="16" aria-hidden="true" /> Share Achievement (+50 Coins)
         </BaseButton>
         <BaseButton class="w-full" @click="$emit('playAgain')">Play again</BaseButton>
         <BaseButton variant="secondary" class="w-full" @click="$emit('exit')">

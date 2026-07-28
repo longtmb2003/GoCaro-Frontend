@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Pause, Play } from 'lucide-vue-next'
+
 defineProps<{
   moveIndex: number
   totalMoves: number
@@ -37,7 +39,7 @@ const buttonClass =
         aria-label="First move"
         @click="emit('first')"
       >
-        «
+        <ChevronsLeft :size="20" aria-hidden="true" />
       </button>
       <button
         type="button"
@@ -46,7 +48,7 @@ const buttonClass =
         aria-label="Previous move"
         @click="emit('prev')"
       >
-        ‹
+        <ChevronLeft :size="20" aria-hidden="true" />
       </button>
       <button
         type="button"
@@ -56,7 +58,8 @@ const buttonClass =
         :aria-label="playing ? 'Pause' : 'Play'"
         @click="emit('togglePlay')"
       >
-        {{ playing ? '‖' : '▶' }}
+        <Pause v-if="playing" :size="24" aria-hidden="true" />
+        <Play v-else :size="24" aria-hidden="true" />
       </button>
       <button
         type="button"
@@ -65,7 +68,7 @@ const buttonClass =
         aria-label="Next move"
         @click="emit('next')"
       >
-        ›
+        <ChevronRight :size="20" aria-hidden="true" />
       </button>
       <button
         type="button"
@@ -74,7 +77,7 @@ const buttonClass =
         aria-label="Last move"
         @click="emit('last')"
       >
-        »
+        <ChevronsRight :size="20" aria-hidden="true" />
       </button>
     </div>
 

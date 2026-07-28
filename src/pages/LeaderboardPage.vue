@@ -2,6 +2,7 @@
 import { onMounted, ref, computed } from 'vue'
 import { RouterLink } from 'vue-router'
 
+import { Crown } from 'lucide-vue-next'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseInput from '@/components/ui/BaseInput.vue'
 import ErrorState from '@/components/ui/ErrorState.vue'
@@ -57,7 +58,7 @@ onMounted(() => {
     </template>
 
     <GlassCard title="Top players" class="mx-auto max-w-2xl">
-      <template #icon><span aria-hidden="true">👑</span></template>
+      <template #icon><Crown :size="18" aria-hidden="true" /></template>
       <template #actions>
         <div class="gap-2 flex w-full items-end sm:w-auto">
           <BaseInput

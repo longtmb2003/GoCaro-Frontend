@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
+import { Check, Coins, Diamond, Flame, Trophy } from 'lucide-vue-next'
 import BaseBadge from '@/components/ui/BaseBadge.vue'
 import BaseProgress from '@/components/ui/BaseProgress.vue'
 import GlassCard from '@/components/ui/GlassCard.vue'
@@ -70,7 +71,7 @@ const displayCoins = useCountUp(() => props.stats?.coins || 0)
           {{ elo }}
         </div>
         <div class="mt-2 text-small font-bold flex items-center gap-2" :class="rankColor">
-          <span class="opacity-80">♦</span> {{ rankTier }}
+          <Diamond :size="16" class="opacity-80" aria-hidden="true" /> {{ rankTier }}
         </div>
       </div>
 
@@ -79,7 +80,7 @@ const displayCoins = useCountUp(() => props.stats?.coins || 0)
           <div
             class="text-caption text-foreground-muted uppercase tracking-wider font-semibold flex items-center justify-center gap-1"
           >
-            <span class="text-warning" aria-hidden="true">🟡</span> Coins
+            <Coins :size="16" class="text-warning" aria-hidden="true" /> Coins
           </div>
           <div class="text-small font-bold text-foreground mt-1">{{ displayCoins }}</div>
         </div>
@@ -99,7 +100,7 @@ const displayCoins = useCountUp(() => props.stats?.coins || 0)
           >
             <span v-if="streak > 0">+{{ streak }}</span>
             <span v-else>{{ streak }}</span>
-            <span v-if="streak > 0" class="text-warning" aria-hidden="true">🔥</span>
+            <Flame v-if="streak > 0" :size="16" class="text-warning" aria-hidden="true" />
           </div>
         </div>
       </div>
@@ -155,7 +156,7 @@ const displayCoins = useCountUp(() => props.stats?.coins || 0)
         <div
           class="text-caption text-foreground-muted font-semibold uppercase tracking-widest flex items-center justify-between"
         >
-          <span class="flex items-center gap-2">🏆 Badges</span>
+          <span class="flex items-center gap-2"><Trophy :size="16" aria-hidden="true" /> Badges</span>
           <span>Coming soon</span>
         </div>
       </div>
@@ -164,9 +165,9 @@ const displayCoins = useCountUp(() => props.stats?.coins || 0)
       <div v-if="isGuest" class="mt-4 p-3 bg-primary-500/10 border border-primary-500/20 rounded-sm">
         <p class="text-caption font-bold text-accent mb-2 uppercase tracking-wide">Sign in to:</p>
         <ul class="text-caption text-foreground-muted space-y-2 font-medium">
-          <li class="flex items-center gap-2"><span class="text-success">✓</span> Earn Coins</li>
-          <li class="flex items-center gap-2"><span class="text-success">✓</span> Unlock Avatars</li>
-          <li class="flex items-center gap-2"><span class="text-success">✓</span> Join Leaderboard</li>
+          <li class="flex items-center gap-2"><Check :size="16" class="text-success" aria-hidden="true" /> Earn Coins</li>
+          <li class="flex items-center gap-2"><Check :size="16" class="text-success" aria-hidden="true" /> Unlock Avatars</li>
+          <li class="flex items-center gap-2"><Check :size="16" class="text-success" aria-hidden="true" /> Join Leaderboard</li>
         </ul>
       </div>
     </div>
