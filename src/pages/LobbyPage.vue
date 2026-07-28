@@ -12,7 +12,6 @@ import BaseProgress from '@/components/ui/BaseProgress.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import ErrorState from '@/components/ui/ErrorState.vue'
 import GlassCard from '@/components/ui/GlassCard.vue'
-import StoreItemCard from '@/components/cards/StoreItemCard.vue'
 import GuestLogoutDialog from '@/components/GuestLogoutDialog.vue'
 import LeaderboardTable from '@/components/LeaderboardTable.vue'
 import LeaderboardModal from '@/components/LeaderboardModal.vue'
@@ -41,45 +40,17 @@ const router = useRouter()
 
 const displayCoins = useCountUp(() => auth.user?.stats.coins ?? 0)
 
-/** Storefront copy. Presentational only — the store is not wired up yet. */
-const storeItems = [
-  {
-    image: '/avatar_pro.webp',
-    alt: 'Pro Avatar artwork',
-    name: 'Pro Avatar',
-    collection: 'Cybernetics',
-    price: 500,
-  },
-  {
-    image: '/avatar_male.webp',
-    alt: 'Neon Boy avatar artwork',
-    name: 'Neon Boy',
-    collection: 'Cybernetics',
-    price: 300,
-  },
-  {
-    image: '/avatar_female.webp',
-    alt: 'Neon Girl avatar artwork',
-    name: 'Neon Girl',
-    collection: 'Cybernetics',
-    price: 300,
-  },
-  {
-    image: '/avatar_robot.webp',
-    alt: 'Mecha Bot avatar artwork',
-    name: 'Mecha Bot',
-    collection: 'Cybernetics',
-    price: 450,
-  },
-  {
-    image: '/vip_border.webp',
-    alt: 'VIP Border artwork',
-    name: 'VIP Border',
-    collection: 'Royal Collection',
-    price: 1200,
-    rarity: 'Legendary',
-    wide: true,
-  },
+/**
+ * A preview of the cosmetics being built, not a catalogue. There is no shop, so
+ * there are no prices, collections or rarities here: those would be invented
+ * economy data for a feature that cannot be transacted with yet.
+ */
+const cosmeticPreviews = [
+  { image: '/avatar_pro.webp', alt: 'Pro Avatar artwork' },
+  { image: '/avatar_male.webp', alt: 'Neon Boy avatar artwork' },
+  { image: '/avatar_female.webp', alt: 'Neon Girl avatar artwork' },
+  { image: '/avatar_robot.webp', alt: 'Mecha Bot avatar artwork' },
+  { image: '/vip_border.webp', alt: 'VIP Border artwork' },
 ]
 
 const upgradeOpen = ref(false)
@@ -331,13 +302,28 @@ const recentMatch = computed(() => {
             <BaseBadge variant="neutral">Coming Soon</BaseBadge>
           </template>
 
-          <div class="gap-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1">
-            <StoreItemCard
-              v-for="item in storeItems"
-              :key="item.name"
-              v-bind="item"
-              :class="item.wide ? 'sm:col-span-2' : ''"
-            />
+          <!-- A teaser, not a storefront: one honest line plus a thumbnail
+               strip. max-w-xs keeps the thumbnails small when the section runs
+               full width at md, so the row reads the same in both slots. -->
+          <div class="gap-3 flex flex-col">
+            <p class="text-small text-foreground-muted">
+              Avatars and profile borders are in development.
+            </p>
+            <ul class="gap-2 grid grid-cols-5 max-w-xs">
+              <li
+                v-for="preview in cosmeticPreviews"
+                :key="preview.image"
+                class="bg-surface-sunken ring-border-subtle rounded-sm aspect-square overflow-hidden ring-1"
+              >
+                <img
+                  :src="preview.image"
+                  :alt="preview.alt"
+                  loading="lazy"
+                  decoding="async"
+                  class="h-full w-full object-cover"
+                />
+              </li>
+            </ul>
           </div>
         </GlassCard>
       </div>
