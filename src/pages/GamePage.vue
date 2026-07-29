@@ -40,7 +40,6 @@ interface Banner {
   heading: string
   message: string
   tone: GameResult['outcome']
-  ratingDelta: number | null
 }
 
 const banner = computed<Banner | null>(() => {
@@ -50,12 +49,11 @@ const banner = computed<Banner | null>(() => {
       heading: 'Connection lost',
       message: 'You were disconnected from the match.',
       tone: 'draw',
-      ratingDelta: null,
     }
   }
   if (game.phase === 'over' && game.result !== null) {
     const { heading, message } = resultText(game.result)
-    return { heading, message, tone: game.result.outcome, ratingDelta: game.result.ratingDelta }
+    return { heading, message, tone: game.result.outcome }
   }
   return null
 })
@@ -263,7 +261,6 @@ async function shareAchievement(): Promise<void> {
       :heading="banner.heading"
       :message="banner.message"
       :tone="banner.tone"
-      :rating-delta="banner.ratingDelta"
       @play-again="playAgain"
       @exit="leave"
       @share="shareAchievement"

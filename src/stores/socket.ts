@@ -231,7 +231,6 @@ export const useSocketStore = defineStore('socket', () => {
           game.finish({
             outcome,
             reason,
-            ratingDelta: ratingDeltaFor(message.payload, game.yourSymbol),
           })
         }
         break
@@ -496,25 +495,6 @@ function isMatchFoundPayload(payload: unknown): payload is MatchFoundPayload {
   )
 }
 
-/**
- * Picks this player's side of a ranked result: black is symbol 1, white is 2.
- *
- * Returns null whenever no rating was at stake, so the UI can stay silent rather
- * than show a misleading zero. It reads the raw frame instead of the narrowed
- * payload on purpose: a `game_over` that arrives without rating fields must
- * still end the match, since the result matters far more than the number.
- */
-function ratingDeltaFor(payload: unknown, symbol: PlayerSymbol | null): number | null {
-  if (typeof payload !== 'object' || payload === null || symbol === null) {
-    return null
-  }
-  const record = payload as Record<string, unknown>
-  if (record.is_ranked !== true) {
-    return null
-  }
-  const delta = symbol === 1 ? record.delta_black : record.delta_white
-  return typeof delta === 'number' ? delta : null
-}
 
 function isQueueSearchingPayload(payload: unknown): payload is QueueSearchingPayload {
   if (typeof payload !== 'object' || payload === null) {

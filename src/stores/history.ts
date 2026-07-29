@@ -2,9 +2,11 @@ import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 
 import { ApiError } from '@/api/ApiError'
-import { fetchMatch, fetchMatches } from '@/api/match'
-import type { CellValue, PlayerSymbol } from '@/types/game'
-import type { MatchMove, MatchSummary } from '@/types/match'
+import { fetchMatches } from '@/api/match'
+import { fetchReplay } from '@/api/replay'
+import type { CellValue } from '@/types/game'
+import type { MatchSummary } from '@/types/match'
+import type { ReplayMove } from '@/types/replay'
 import { createEmptyBoard } from '@/utils/board'
 
 const PAGE_SIZE = 20
@@ -53,7 +55,7 @@ export const useHistoryStore = defineStore('history', () => {
   }
 
   const replayMatch = ref<MatchSummary | null>(null)
-  const moves = ref<MatchMove[]>([])
+  const moves = ref<ReplayMove[]>([])
   const moveIndex = ref(0)
   const replayLoading = ref(false)
   const replayError = ref<string | null>(null)
@@ -61,10 +63,6 @@ export const useHistoryStore = defineStore('history', () => {
   const totalMoves = computed(() => moves.value.length)
   const atStart = computed(() => moveIndex.value === 0)
   const atEnd = computed(() => moveIndex.value >= moves.value.length)
-
-  function symbolFor(move: MatchMove): PlayerSymbol {
-    return replayMatch.value !== null && move.player_id === replayMatch.value.player1_id ? 1 : 2
-  }
 
   const replayBoard = computed<CellValue[][]>(() => {
     const board = createEmptyBoard()
@@ -75,7 +73,7 @@ export const useHistoryStore = defineStore('history', () => {
       }
       const column = board[move.x]
       if (column !== undefined && move.y >= 0 && move.y < column.length) {
-        column[move.y] = symbolFor(move)
+        column[move.y] = move.symbol as CellValue
       }
     }
     return board
@@ -93,7 +91,7 @@ export const useHistoryStore = defineStore('history', () => {
     moves.value = []
     moveIndex.value = 0
     try {
-      const detail = await fetchMatch(id)
+      const detail = await fetchReplay(id)
       replayMatch.value = detail.match
       moves.value = detail.moves
     } catch (err) {

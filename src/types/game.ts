@@ -51,26 +51,20 @@ export interface BoardUpdatePayload {
 /**
  * Payload of the `game_over` frame. `winner` is null on a draw.
  *
- * The rating fields describe what each seat gained or lost: black is symbol 1,
- * white is symbol 2, and the two are always opposites. They are zero on a casual
- * match, where `is_ranked` is false. Per BACKEND_CONTRACT.md this is a figure to
- * display only — the authoritative rating comes from `GET /api/profile`, so a
- * delta must never be added to a rating the client already holds.
+ * Per BACKEND_CONTRACT.md the authoritative rating comes from
+ * `GET /api/profile`, so clients must refresh their profile to see
+ * the new rating after a ranked match.
  */
 export interface GameOverPayload {
   winner: string | null
   reason: string
   is_ranked: boolean
-  delta_black: number
-  delta_white: number
 }
 
 /** Result of a finished game, from the local player's perspective. */
 export interface GameResult {
   outcome: 'win' | 'loss' | 'draw'
   reason: string
-  /** This player's rating change, or null when no rating was at stake. */
-  ratingDelta: number | null
 }
 
 /**

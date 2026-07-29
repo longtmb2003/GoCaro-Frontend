@@ -23,6 +23,7 @@ const SPEEDS: { label: string; interval: number }[] = [
   { label: '0.5×', interval: 1400 },
   { label: '1×', interval: 700 },
   { label: '2×', interval: 350 },
+  { label: '4×', interval: 175 },
 ]
 
 const buttonClass =

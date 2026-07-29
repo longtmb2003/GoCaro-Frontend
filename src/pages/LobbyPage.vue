@@ -19,6 +19,7 @@ import MatchmakingModal from '@/components/MatchmakingModal.vue'
 import PlayPanel from '@/components/PlayPanel.vue'
 import ProfileCard from '@/components/ProfileCard.vue'
 import OnlineUsersModal from '@/components/OnlineUsersModal.vue'
+import FriendsModal from '@/components/FriendsModal.vue'
 import UpgradeAccountModal from '@/components/UpgradeAccountModal.vue'
 import AppLayout from '@/layouts/AppLayout.vue'
 import { useAuthStore } from '@/stores/auth'
@@ -58,6 +59,7 @@ const upgradeLoading = ref(false)
 const upgradeError = ref('')
 const guestLogoutOpen = ref(false)
 const leaderboardModalOpen = ref(false)
+const friendsModalOpen = ref(false)
 
 onMounted(() => {
   void leaderboard.load()
@@ -205,6 +207,14 @@ const recentMatch = computed(() => {
       <span v-if="auth.user" class="text-white/80 hidden text-sm sm:inline font-medium">
         {{ auth.displayName }}
       </span>
+      <BaseButton
+        v-if="auth.isAuthenticated && !auth.isGuest"
+        variant="secondary"
+        @click="friendsModalOpen = true"
+      >
+        Friends
+        <span v-if="lobby.onlineUsers" class="ml-1 text-xs"></span>
+      </BaseButton>
       <BaseButton
         variant="secondary"
         @click="handleLogout"
@@ -607,5 +617,7 @@ const recentMatch = computed(() => {
     <OnlineUsersModal v-if="onlineModalOpen" @close="onlineModalOpen = false" />
 
     <LeaderboardModal v-if="leaderboardModalOpen" @close="leaderboardModalOpen = false" />
+    
+    <FriendsModal v-if="friendsModalOpen" @close="friendsModalOpen = false" />
   </AppLayout>
 </template>

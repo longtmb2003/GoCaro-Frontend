@@ -5,43 +5,18 @@ import { Handshake, HeartCrack, Share2, Trophy } from 'lucide-vue-next'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseModal from '@/components/ui/BaseModal.vue'
 
-const props = withDefaults(
-  defineProps<{
-    heading: string
-    message: string
-    tone: 'win' | 'loss' | 'draw'
-    /** Rating won or lost, or null when nothing was at stake. */
-    ratingDelta?: number | null
-  }>(),
-  { ratingDelta: null },
-)
+const props = defineProps<{
+  heading: string
+  message: string
+  tone: 'win' | 'loss' | 'draw'
+}>()
 
 defineEmits<{ playAgain: []; exit: []; share: [] }>()
 
 const headingClass = computed(() =>
   props.tone === 'win' ? 'text-success' : props.tone === 'loss' ? 'text-error' : 'text-foreground',
 )
-
-// A rating change is shown even when it is zero — that is a real ranked outcome
-// between evenly matched players, and saying so is clearer than silence. Only a
-// casual match, which stakes nothing, shows nothing.
-const ratingLabel = computed(() => {
-  const delta = props.ratingDelta
-  if (delta === null) {
-    return ''
-  }
-  return delta > 0 ? `+${delta.toString()}` : delta.toString()
-})
-
-const ratingClass = computed(() => {
-  const delta = props.ratingDelta
-  if (delta === null || delta === 0) {
-    return 'bg-glass-light text-foreground-muted'
-  }
-  return delta > 0 ? 'bg-success/15 text-success' : 'bg-error/15 text-error'
-})
 </script>
-
 <template>
   <!-- Not dismissible: the player must choose play again or exit. -->
   <BaseModal
@@ -58,12 +33,6 @@ const ratingClass = computed(() => {
       </h2>
       <p class="text-foreground-muted text-body mt-2">{{ message }}</p>
 
-      <p v-if="ratingDelta !== null" class="mt-4">
-        <span class="gap-1 px-3 py-1 rounded-sm inline-flex items-baseline" :class="ratingClass">
-          <span class="text-card tabular-nums">{{ ratingLabel }}</span>
-          <span class="text-body font-medium opacity-80">rating</span>
-        </span>
-      </p>
     </div>
 
     <template #footer>

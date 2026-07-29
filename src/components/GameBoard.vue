@@ -32,7 +32,7 @@ const cells = computed<Cell[]>(() => {
 const fourInRowCells = computed<Set<string>>(() => {
   const set = new Set<string>()
   const b = props.board
-  const dirs = [[1, 0], [0, 1], [1, 1], [1, -1]]
+  const dirs = [[1, 0], [0, 1], [1, 1], [1, -1]] as const
   
   for (let y = 0; y < BOARD_SIZE; y++) {
     for (let x = 0; x < BOARD_SIZE; x++) {
