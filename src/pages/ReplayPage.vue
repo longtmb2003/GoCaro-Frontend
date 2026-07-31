@@ -159,6 +159,7 @@ const summary = computed(() => {
           :board="history.replayBoard"
           :interactive="false"
           :last-move="history.replayLastMove"
+          :your-symbol="null"
           class="w-full max-w-2xl"
         />
         

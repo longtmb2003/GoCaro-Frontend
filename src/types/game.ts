@@ -109,3 +109,12 @@ export interface LobbyStatePayload {
 export interface OpponentReconnectingPayload {
   remaining_seconds: number
 }
+
+/**
+ * Payload of `chat`, sent by either player.
+ */
+export interface ChatPayload {
+  sender_id: string
+  username: string
+  content: string
+}

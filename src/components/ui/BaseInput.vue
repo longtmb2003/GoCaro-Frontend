@@ -13,6 +13,11 @@ const props = withDefaults(
     required?: boolean
     disabled?: boolean
     placeholder?: string
+    /**
+     * Declared rather than left to fall through: the root here is the wrapper,
+     * so an undeclared maxlength would land on the <div> and cap nothing.
+     */
+    maxlength?: number
     /** Keeps the label for screen readers when the field is visually obvious. */
     labelHidden?: boolean
   }>(),
@@ -23,6 +28,7 @@ const props = withDefaults(
     required: false,
     disabled: false,
     placeholder: undefined,
+    maxlength: undefined,
     labelHidden: false,
   },
 )
@@ -41,10 +47,21 @@ const computedType = computed(() => {
   return props.type
 })
 
+const inputRef = ref<HTMLInputElement | null>(null)
+
 function handleInput(event: Event): void {
   const target = event.target as HTMLInputElement
   emit('update:modelValue', target.value)
 }
+
+function focus(): void {
+  inputRef.value?.focus()
+}
+
+defineExpose({
+  focus,
+  inputRef,
+})
 </script>
 
 <template>
@@ -62,6 +79,7 @@ function handleInput(event: Event): void {
     <div class="relative">
       <input
         :id="inputId"
+        ref="inputRef"
         :name="name"
         :type="computedType"
         :value="modelValue"
@@ -69,6 +87,7 @@ function handleInput(event: Event): void {
         :required="required"
         :disabled="disabled"
         :placeholder="placeholder"
+        :maxlength="maxlength"
         :aria-invalid="hasError"
         :aria-describedby="hasError ? errorId : undefined"
         class="border-border bg-glass-light text-foreground placeholder:text-foreground-disabled focus-visible:border-accent px-4 text-body duration-fast h-12 w-full rounded-button border backdrop-blur-md transition disabled:cursor-not-allowed disabled:opacity-60"

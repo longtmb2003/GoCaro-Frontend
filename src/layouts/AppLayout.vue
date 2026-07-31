@@ -4,6 +4,8 @@ import { Github, Info } from 'lucide-vue-next'
 import { RouterLink } from 'vue-router'
 import ToastContainer from '@/components/ToastContainer.vue'
 import RankRulesModal from '@/components/RankRulesModal.vue'
+import ChallengeModal from '@/components/ChallengeModal.vue'
+import OutgoingChallengeCard from '@/components/OutgoingChallengeCard.vue'
 
 defineProps<{
   title: string
@@ -21,7 +23,7 @@ const showRankRules = ref(false)
     <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-primary-600/30 blur-[120px] animate-pulse pointer-events-none z-0" style="animation-duration: 8s;"></div>
     <div class="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-secondary-600/20 blur-[150px] animate-pulse pointer-events-none z-0" style="animation-duration: 10s; animation-delay: 2s;"></div>
     
-    <!-- Separation comes from the bottom border; the header carries no elevation. -->
+    <!-- Header -->
     <header class="bg-black/60 backdrop-blur-3xl border-b border-white/10 sticky top-0 z-50">
       <div class="mx-auto flex w-full max-w-7xl items-center justify-between px-4 h-16 sm:px-6">
         <div class="flex items-center gap-6">
@@ -58,25 +60,30 @@ const showRankRules = ref(false)
           </nav>
         </div>
         
+        <!-- Header Actions Slot -->
         <div class="flex items-center gap-3">
-          <button class="cursor-pointer text-xs font-bold text-primary-300 hover:text-white transition-colors bg-primary-500/20 hover:bg-primary-500/30 px-3 py-1.5 rounded-lg border border-primary-500/30 mr-2 flex items-center gap-2" @click="showRankRules = true">
-            <!-- The label is hidden below sm, so the button needs its own name. -->
-            <span class="sr-only">Rank Info</span>
-            <Info :size="16" aria-hidden="true" /> <span class="hidden sm:inline">Rank Info</span>
+          <button
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/5 border border-white/10 hover:bg-white/10 transition-colors text-foreground-secondary hover:text-foreground"
+            @click="showRankRules = true"
+          >
+            <Info :size="14" aria-hidden="true" />
+            <span>Rank Info</span>
           </button>
           <slot name="actions" />
         </div>
       </div>
     </header>
 
-    <main class="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 relative z-10">
+    <!-- Main Content -->
+    <main class="flex-1 w-full max-w-7xl mx-auto px-4 py-6 sm:px-6 relative z-10">
       <slot />
     </main>
 
-    <footer class="border-border-subtle bg-surface/40 backdrop-blur-md border-t py-6 relative z-10 mt-auto">
-      <div class="mx-auto flex w-full max-w-7xl flex-col items-center justify-between px-4 sm:flex-row sm:px-6 gap-4">
-        <div class="flex items-center gap-4 text-xs text-foreground-muted">
-          <span>&copy; {{ new Date().getFullYear() }} GoCaro</span>
+    <!-- Footer -->
+    <footer class="bg-black/40 border-t border-white/5 py-6 mt-auto relative z-10">
+      <div class="mx-auto flex w-full max-w-7xl flex-col sm:flex-row items-center justify-between gap-4 px-4 sm:px-6">
+        <div class="flex items-center gap-2 text-xs font-mono text-foreground-muted">
+          <span>GoCaro Platform</span>
           <span class="w-1 h-1 rounded-full bg-border-subtle"></span>
           <span class="font-mono text-primary-400">v1.0.0-beta</span>
         </div>
@@ -106,6 +113,8 @@ const showRankRules = ref(false)
     </footer>
 
     <ToastContainer />
+    <ChallengeModal />
+    <OutgoingChallengeCard />
     <RankRulesModal v-if="showRankRules" @close="showRankRules = false" />
   </div>
 </template>

@@ -30,6 +30,7 @@ const { addToast } = useToast()
 const scrollContainer = ref<HTMLElement | null>(null)
 const inputMessage = ref('')
 const isSending = ref(false)
+const chatInputRef = ref<InstanceType<typeof BaseInput> | null>(null)
 const showNewMsgPill = ref(false)
 const isLoadingMore = ref(false)
 
@@ -106,6 +107,17 @@ watch(() => chatStore.lobbyMessages.length, () => {
 
 watch(() => currentTab.value, () => {
   scrollToBottom(true)
+  nextTick(() => {
+    chatInputRef.value?.focus()
+  })
+})
+
+watch(() => props.open, (isOpen) => {
+  if (isOpen) {
+    nextTick(() => {
+      chatInputRef.value?.focus()
+    })
+  }
 })
 
 const activeFriend = computed(() => {
@@ -262,21 +274,24 @@ const friendsWithUnread = computed(() => {
         </div>
         <form v-else class="flex gap-2" @submit.prevent="sendMessage">
           <BaseInput
+            ref="chatInputRef"
             name="chat_message"
             label="Message"
+            :labelHidden="true"
             v-model="inputMessage"
             placeholder="Type a message..."
             class="flex-1"
             :disabled="isSending"
-            maxlength="200"
+            :maxlength="200"
           />
           <BaseButton 
             type="submit" 
             variant="primary" 
+            size="lg"
             :disabled="!inputMessage.trim() || isSending"
-            class="w-10 px-0 flex justify-center items-center shrink-0"
+            class="w-12 px-0 flex justify-center items-center shrink-0"
           >
-            <Send :size="16" />
+            <Send :size="18" />
           </BaseButton>
         </form>
       </div>

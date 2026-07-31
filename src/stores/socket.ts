@@ -13,6 +13,7 @@ import type {
   PlayerSymbol,
   QueueSearchingPayload,
   SyncStatePayload,
+  ChatPayload,
 } from '@/types/game'
 
 /**
@@ -72,6 +73,11 @@ export const useSocketStore = defineStore('socket', () => {
   const waitingForDrawResponse = ref(false)
   /** Number of draw offers remaining for this match (max 2). */
   const drawOffersLeft = ref(2)
+
+  /** The list of in-game chat messages. Ephemeral, cleared on unmount/teardown. */
+  const chatHistory = ref<ChatPayload[]>([])
+  /** Whether the local user has muted the opponent's messages. */
+  const isMuted = ref(false)
 
   /** Per-turn budget from match_found, reused to reset the clock each turn. */
   const turnBudgetSeconds = ref(0)
@@ -149,6 +155,10 @@ export const useSocketStore = defineStore('socket', () => {
       waitingForDrawResponse.value = true
       manager.send({ type: 'offer_draw' })
     }
+  }
+
+  function sendGameChat(content: string): void {
+    manager.send({ type: 'chat', payload: { content } })
   }
 
   function sendRespondDraw(accept: boolean): void {
@@ -232,6 +242,11 @@ export const useSocketStore = defineStore('socket', () => {
             outcome,
             reason,
           })
+        }
+        break
+      case 'chat':
+        if (isChatPayload(message.payload) && !isMuted.value) {
+          chatHistory.value.push(message.payload)
         }
         break
       case 'error':
@@ -438,6 +453,8 @@ export const useSocketStore = defineStore('socket', () => {
     drawOfferPending.value = false
     waitingForDrawResponse.value = false
     drawOffersLeft.value = 2
+    chatHistory.value = []
+    isMuted.value = false
     if (searchTimer !== null) {
       clearInterval(searchTimer)
       searchTimer = null
@@ -468,12 +485,15 @@ export const useSocketStore = defineStore('socket', () => {
     drawOfferPending,
     waitingForDrawResponse,
     drawOffersLeft,
+    chatHistory,
+    isMuted,
     startMatchmaking,
     cancelMatchmaking,
     sendMove,
     sendResign,
     sendOfferDraw,
     sendRespondDraw,
+    sendGameChat,
     leaveGame,
   }
 })
@@ -562,4 +582,16 @@ function isErrorPayload(payload: unknown): payload is { code: string; message: s
   }
   const record = payload as Record<string, unknown>
   return typeof record.code === 'string' && typeof record.message === 'string'
+}
+
+function isChatPayload(payload: unknown): payload is ChatPayload {
+  if (typeof payload !== 'object' || payload === null) {
+    return false
+  }
+  const record = payload as Record<string, unknown>
+  return (
+    typeof record.sender_id === 'string' &&
+    typeof record.username === 'string' &&
+    typeof record.content === 'string'
+  )
 }

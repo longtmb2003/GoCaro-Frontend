@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import { Handshake, HeartCrack, Share2, Trophy } from 'lucide-vue-next'
+import { Handshake, HeartCrack, Share2, Trophy, RotateCw, Home } from 'lucide-vue-next'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseModal from '@/components/ui/BaseModal.vue'
 
@@ -40,9 +40,11 @@ const headingClass = computed(() =>
         <BaseButton v-if="tone === 'win'" variant="success" class="w-full" @click="$emit('share')">
           <Share2 :size="16" aria-hidden="true" /> Share Achievement (+50 Coins)
         </BaseButton>
-        <BaseButton class="w-full" @click="$emit('playAgain')">Play again</BaseButton>
+        <BaseButton class="w-full font-bold shadow-glow" @click="$emit('playAgain')">
+          <RotateCw :size="18" class="mr-2" aria-hidden="true" /> Play again
+        </BaseButton>
         <BaseButton variant="secondary" class="w-full" @click="$emit('exit')">
-          Back to lobby
+          <Home :size="18" class="mr-2" aria-hidden="true" /> Back to lobby
         </BaseButton>
       </div>
     </template>

@@ -71,3 +71,9 @@ export async function declineChallenge(senderId: string): Promise<Challenge> {
   const response = await http.post('/api/challenges/decline', { sender_id: senderId })
   return response.data as Challenge
 }
+
+/** Withdraws an invitation we sent. Only the sender may cancel. */
+export async function cancelChallenge(receiverId: string): Promise<Challenge> {
+  const response = await http.post('/api/challenges/cancel', { receiver_id: receiverId })
+  return response.data as Challenge
+}

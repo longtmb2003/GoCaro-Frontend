@@ -219,12 +219,11 @@ const recentMatch = computed(() => {
         {{ auth.displayName }}
       </span>
       <BaseButton
-        v-if="auth.isAuthenticated && !auth.isGuest"
+        v-if="auth.isAuthenticated"
         variant="secondary"
         @click="friendsModalOpen = true"
       >
         Friends
-        <span v-if="lobby.onlineUsers" class="ml-1 text-xs"></span>
       </BaseButton>
       <BaseButton
         v-if="auth.isAuthenticated"

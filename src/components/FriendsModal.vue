@@ -10,6 +10,7 @@ import { useSocialStore } from '@/stores/social'
 import { useChatStore } from '@/stores/chat'
 import { searchUsers, type UserSearch } from '@/api/user'
 import { sendFriendRequest, acceptFriendRequest, declineFriendRequest, removeFriend } from '@/api/friend'
+import { useToast } from '@/composables/useToast'
 
 const emit = defineEmits<{
   (e: 'close'): void
@@ -18,6 +19,7 @@ const emit = defineEmits<{
 
 const social = useSocialStore()
 const chatStore = useChatStore()
+const toast = useToast()
 
 const activeTab = ref<'friends' | 'requests' | 'search'>('friends')
 
@@ -26,7 +28,7 @@ const searchQuery = ref('')
 const searchResults = ref<UserSearch[]>([])
 const isSearching = ref(false)
 
-const handleSearch = async () => {
+async function handleSearch() {
   if (!searchQuery.value.trim()) {
     searchResults.value = []
     return
@@ -41,15 +43,28 @@ const handleSearch = async () => {
   }
 }
 
-const sendRequest = async (id: string) => {
+async function sendRequest(id: string) {
   try {
     await sendFriendRequest(id)
+    toast.addToast('Sent friend request!', 'success')
   } catch (e) {
     console.error(e)
   }
 }
 
-const acceptReq = async (id: string) => {
+async function issueChallenge(friendId: string, friendName: string) {
+  try {
+    // Joining the queue happens on `challenge_accepted` (see stores/social.ts).
+    // Queueing here would leave us in the public casual queue for the whole
+    // invitation window, where a stranger can take the match first.
+    await social.issueChallenge(friendId, friendName)
+    emit('close')
+  } catch (e: any) {
+    toast.addToast(e?.message || 'Failed to send challenge', 'error')
+  }
+}
+
+async function acceptReq(id: string) {
   try {
     await acceptFriendRequest(id)
     await social.fetchInitialData()
@@ -58,7 +73,7 @@ const acceptReq = async (id: string) => {
   }
 }
 
-const declineReq = async (id: string) => {
+async function declineReq(id: string) {
   try {
     await declineFriendRequest(id)
     await social.fetchInitialData()
@@ -67,7 +82,7 @@ const declineReq = async (id: string) => {
   }
 }
 
-const unfriend = async (id: string) => {
+async function unfriend(id: string) {
   try {
     await removeFriend(id)
     await social.fetchInitialData()
@@ -82,7 +97,7 @@ onMounted(() => {
   }
 })
 
-const openChat = (id: string) => {
+function openChat(id: string) {
   emit('openChat', id)
 }
 </script>
@@ -161,7 +176,7 @@ const openChat = (id: string) => {
                 <MessageSquare :size="16" />
               </BaseButton>
               <!-- Invite to challenge (casual) -->
-              <BaseButton variant="primary" size="sm" class="px-2" title="Challenge">
+              <BaseButton variant="primary" size="sm" class="px-2" title="Challenge" @click="issueChallenge(friend.user.id, friend.user.username)">
                 <Swords :size="16" />
               </BaseButton>
               <BaseButton variant="danger" size="sm" class="px-2" title="Unfriend" @click="unfriend(friend.friendship_id)">
