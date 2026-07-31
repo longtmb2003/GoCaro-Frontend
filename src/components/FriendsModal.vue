@@ -1,19 +1,23 @@
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue'
-import { X, Search, UserPlus, Users, Swords, Check, XCircle } from 'lucide-vue-next'
+import { ref, onMounted } from 'vue'
+import { X, Search, UserPlus, Users, Swords, Check, MessageSquare } from 'lucide-vue-next'
 import BaseButton from './ui/BaseButton.vue'
 import BaseAvatar from './ui/BaseAvatar.vue'
+import BaseBadge from './ui/BaseBadge.vue'
 import BaseInput from './ui/BaseInput.vue'
 import GlassCard from './ui/GlassCard.vue'
 import { useSocialStore } from '@/stores/social'
+import { useChatStore } from '@/stores/chat'
 import { searchUsers, type UserSearch } from '@/api/user'
 import { sendFriendRequest, acceptFriendRequest, declineFriendRequest, removeFriend } from '@/api/friend'
 
 const emit = defineEmits<{
   (e: 'close'): void
+  (e: 'openChat', friendId: string): void
 }>()
 
 const social = useSocialStore()
+const chatStore = useChatStore()
 
 const activeTab = ref<'friends' | 'requests' | 'search'>('friends')
 
@@ -77,6 +81,10 @@ onMounted(() => {
     social.fetchInitialData()
   }
 })
+
+const openChat = (id: string) => {
+  emit('openChat', id)
+}
 </script>
 
 <template>
@@ -139,11 +147,19 @@ onMounted(() => {
             <div class="flex items-center gap-3">
               <BaseAvatar :name="friend.user.username" size="sm" :online="friend.is_online" />
               <div>
-                <p class="font-semibold text-foreground">{{ friend.user.username }}</p>
+                <p class="font-semibold text-foreground flex items-center gap-2">
+                  {{ friend.user.username }}
+                  <BaseBadge v-if="(chatStore.unreadCounts[friend.user.id] ?? 0) > 0" variant="danger">
+                    {{ chatStore.unreadCounts[friend.user.id] }}
+                  </BaseBadge>
+                </p>
                 <p class="text-caption text-foreground-muted">Elo: {{ friend.user.elo }}</p>
               </div>
             </div>
             <div class="flex items-center gap-2">
+              <BaseButton variant="secondary" size="sm" class="px-2" title="Chat" @click="openChat(friend.user.id)">
+                <MessageSquare :size="16" />
+              </BaseButton>
               <!-- Invite to challenge (casual) -->
               <BaseButton variant="primary" size="sm" class="px-2" title="Challenge">
                 <Swords :size="16" />
@@ -182,7 +198,7 @@ onMounted(() => {
         <!-- Search -->
         <div v-if="activeTab === 'search'" class="flex flex-col gap-4">
           <div class="flex items-center gap-2">
-            <BaseInput v-model="searchQuery" placeholder="Search username..." @keydown.enter="handleSearch" class="flex-1" />
+            <BaseInput name="search_user" label="Search User" v-model="searchQuery" placeholder="Search username..." @keydown.enter="handleSearch" class="flex-1" />
             <BaseButton variant="primary" @click="handleSearch" :loading="isSearching">
               <Search :size="18" />
             </BaseButton>

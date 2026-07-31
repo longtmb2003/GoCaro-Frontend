@@ -20,6 +20,7 @@ import PlayPanel from '@/components/PlayPanel.vue'
 import ProfileCard from '@/components/ProfileCard.vue'
 import OnlineUsersModal from '@/components/OnlineUsersModal.vue'
 import FriendsModal from '@/components/FriendsModal.vue'
+import ChatDrawer from '@/components/ChatDrawer.vue'
 import UpgradeAccountModal from '@/components/UpgradeAccountModal.vue'
 import AppLayout from '@/layouts/AppLayout.vue'
 import { useAuthStore } from '@/stores/auth'
@@ -27,6 +28,7 @@ import { useHistoryStore } from '@/stores/history'
 import { useLeaderboardStore } from '@/stores/leaderboard'
 import { useLobbyStore } from '@/stores/lobby'
 import { useSocketStore } from '@/stores/socket'
+import { useChatStore } from '@/stores/chat'
 import { useToast } from '@/composables/useToast'
 import { useCountUp } from '@/composables/useCountUp'
 import type { Credentials } from '@/types/auth'
@@ -60,6 +62,7 @@ const upgradeError = ref('')
 const guestLogoutOpen = ref(false)
 const leaderboardModalOpen = ref(false)
 const friendsModalOpen = ref(false)
+const chatDrawerOpen = ref(false)
 
 onMounted(() => {
   void leaderboard.load()
@@ -108,6 +111,14 @@ function openUpgrade(): void {
   upgradeError.value = ''
   guestLogoutOpen.value = false
   upgradeOpen.value = true
+}
+
+const chatStore = useChatStore()
+
+function handleOpenChat(friendId: string): void {
+  friendsModalOpen.value = false
+  chatStore.setActiveChat(friendId)
+  chatDrawerOpen.value = true
 }
 
 async function handleUpgrade(credentials: Credentials): Promise<void> {
@@ -214,6 +225,13 @@ const recentMatch = computed(() => {
       >
         Friends
         <span v-if="lobby.onlineUsers" class="ml-1 text-xs"></span>
+      </BaseButton>
+      <BaseButton
+        v-if="auth.isAuthenticated"
+        variant="secondary"
+        @click="chatDrawerOpen = true"
+      >
+        Chat
       </BaseButton>
       <BaseButton
         variant="secondary"
@@ -618,6 +636,12 @@ const recentMatch = computed(() => {
 
     <LeaderboardModal v-if="leaderboardModalOpen" @close="leaderboardModalOpen = false" />
     
-    <FriendsModal v-if="friendsModalOpen" @close="friendsModalOpen = false" />
+    <FriendsModal v-if="friendsModalOpen" @close="friendsModalOpen = false" @open-chat="handleOpenChat" />
+    
+    <ChatDrawer 
+      :open="chatDrawerOpen" 
+      @close="chatDrawerOpen = false" 
+      @upgrade="openUpgrade" 
+    />
   </AppLayout>
 </template>

@@ -10,7 +10,7 @@ const social = useSocialStore()
 watch(
   () => auth.token,
   (newToken) => {
-    if (newToken && !auth.isGuest) {
+    if (newToken) {
       social.connect(newToken)
     } else {
       social.disconnect()
