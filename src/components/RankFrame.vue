@@ -22,10 +22,9 @@ const sizeClasses = computed(() => {
   }
 })
 
-const frameClasses = computed(() => {
-  // The border uses the rank color
-  return `${tier.value.border.replace('border-', 'ring-')} ${tier.value.shadow.replace('shadow-', 'shadow-[0_0_15px_')} drop-shadow-md`
-})
+// The ring and glow classes are read verbatim from RANK_TIERS. Do not rewrite
+// them here: Tailwind cannot generate a class name that only exists at runtime.
+const frameClasses = computed(() => `${tier.value.ring} ${tier.value.glow} drop-shadow-md`)
 
 const innerClasses = computed(() => {
   return 'bg-gradient-to-br from-neutral-800 to-neutral-950 shadow-[inset_0_0_10px_rgba(255,255,255,0.1)]'
@@ -35,7 +34,7 @@ const innerClasses = computed(() => {
 <template>
   <div class="relative flex items-center justify-center shrink-0">
     <div
-      class="flex items-center justify-center rounded-full font-bold text-white transition-transform group-hover:scale-105"
+      class="flex items-center justify-center rounded-full font-bold text-white"
       :class="[sizeClasses, frameClasses, innerClasses]"
       aria-hidden="true"
     >

@@ -13,6 +13,7 @@ import type {
   PlayerSymbol,
   QueueSearchingPayload,
   SyncStatePayload,
+  ChatPayload,
 } from '@/types/game'
 
 /**
@@ -72,6 +73,11 @@ export const useSocketStore = defineStore('socket', () => {
   const waitingForDrawResponse = ref(false)
   /** Number of draw offers remaining for this match (max 2). */
   const drawOffersLeft = ref(2)
+
+  /** The list of in-game chat messages. Ephemeral, cleared on unmount/teardown. */
+  const chatHistory = ref<ChatPayload[]>([])
+  /** Whether the local user has muted the opponent's messages. */
+  const isMuted = ref(false)
 
   /** Per-turn budget from match_found, reused to reset the clock each turn. */
   const turnBudgetSeconds = ref(0)
@@ -149,6 +155,10 @@ export const useSocketStore = defineStore('socket', () => {
       waitingForDrawResponse.value = true
       manager.send({ type: 'offer_draw' })
     }
+  }
+
+  function sendGameChat(content: string): void {
+    manager.send({ type: 'chat', payload: { content } })
   }
 
   function sendRespondDraw(accept: boolean): void {
@@ -231,8 +241,12 @@ export const useSocketStore = defineStore('socket', () => {
           game.finish({
             outcome,
             reason,
-            ratingDelta: ratingDeltaFor(message.payload, game.yourSymbol),
           })
+        }
+        break
+      case 'chat':
+        if (isChatPayload(message.payload) && !isMuted.value) {
+          chatHistory.value.push(message.payload)
         }
         break
       case 'error':
@@ -439,6 +453,8 @@ export const useSocketStore = defineStore('socket', () => {
     drawOfferPending.value = false
     waitingForDrawResponse.value = false
     drawOffersLeft.value = 2
+    chatHistory.value = []
+    isMuted.value = false
     if (searchTimer !== null) {
       clearInterval(searchTimer)
       searchTimer = null
@@ -469,12 +485,15 @@ export const useSocketStore = defineStore('socket', () => {
     drawOfferPending,
     waitingForDrawResponse,
     drawOffersLeft,
+    chatHistory,
+    isMuted,
     startMatchmaking,
     cancelMatchmaking,
     sendMove,
     sendResign,
     sendOfferDraw,
     sendRespondDraw,
+    sendGameChat,
     leaveGame,
   }
 })
@@ -496,25 +515,6 @@ function isMatchFoundPayload(payload: unknown): payload is MatchFoundPayload {
   )
 }
 
-/**
- * Picks this player's side of a ranked result: black is symbol 1, white is 2.
- *
- * Returns null whenever no rating was at stake, so the UI can stay silent rather
- * than show a misleading zero. It reads the raw frame instead of the narrowed
- * payload on purpose: a `game_over` that arrives without rating fields must
- * still end the match, since the result matters far more than the number.
- */
-function ratingDeltaFor(payload: unknown, symbol: PlayerSymbol | null): number | null {
-  if (typeof payload !== 'object' || payload === null || symbol === null) {
-    return null
-  }
-  const record = payload as Record<string, unknown>
-  if (record.is_ranked !== true) {
-    return null
-  }
-  const delta = symbol === 1 ? record.delta_black : record.delta_white
-  return typeof delta === 'number' ? delta : null
-}
 
 function isQueueSearchingPayload(payload: unknown): payload is QueueSearchingPayload {
   if (typeof payload !== 'object' || payload === null) {
@@ -582,4 +582,16 @@ function isErrorPayload(payload: unknown): payload is { code: string; message: s
   }
   const record = payload as Record<string, unknown>
   return typeof record.code === 'string' && typeof record.message === 'string'
+}
+
+function isChatPayload(payload: unknown): payload is ChatPayload {
+  if (typeof payload !== 'object' || payload === null) {
+    return false
+  }
+  const record = payload as Record<string, unknown>
+  return (
+    typeof record.sender_id === 'string' &&
+    typeof record.username === 'string' &&
+    typeof record.content === 'string'
+  )
 }

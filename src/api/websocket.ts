@@ -8,9 +8,11 @@ import type { MatchmakingMode } from '@/types/game'
 export interface SocketMessage {
   type: string
   payload?: unknown
+  [key: string]: unknown
 }
 
 export interface SocketCallbacks {
+  onOpen?: () => void
   onMessage: (message: SocketMessage) => void
   /** Fired once when the connection ends, whether cleanly or on failure. */
   onClose: () => void
@@ -67,6 +69,12 @@ export class SocketManager {
 
     const socket = new WebSocket(url)
     this.socket = socket
+
+    socket.onopen = () => {
+      if (callbacks.onOpen) {
+        callbacks.onOpen()
+      }
+    }
 
     socket.onmessage = (event: MessageEvent<string>) => {
       const message = parseMessage(event.data)

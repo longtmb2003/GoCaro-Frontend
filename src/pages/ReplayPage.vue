@@ -2,7 +2,9 @@
 import { computed, onUnmounted, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 
-import BaseButton from '@/components/BaseButton.vue'
+import { Circle, Scroll } from 'lucide-vue-next'
+import BaseButton from '@/components/ui/BaseButton.vue'
+import GlassCard from '@/components/ui/GlassCard.vue'
 import GameBoard from '@/components/GameBoard.vue'
 import ReplayControls from '@/components/ReplayControls.vue'
 import AppLayout from '@/layouts/AppLayout.vue'
@@ -125,6 +127,11 @@ const summary = computed(() => {
 
 <template>
   <AppLayout title="Replay">
+    <!-- Match Specific Background Wallpaper -->
+    <div class="fixed inset-0 z-[-1]" style="background-image: url('/match_bg.webp'); background-size: cover; background-position: center;">
+      <div class="absolute inset-0 bg-black/30 backdrop-blur-sm"></div>
+    </div>
+
     <template #actions>
       <RouterLink
         to="/history"
@@ -145,13 +152,14 @@ const summary = computed(() => {
       </RouterLink>
     </div>
 
-    <div v-else-if="summary" class="grid gap-8 lg:grid-cols-[1fr_16rem] xl:grid-cols-[1fr_20rem] items-start">
+    <div v-else-if="summary" class="grid gap-6 lg:grid-cols-[1fr_16rem] xl:grid-cols-[1fr_20rem] items-start">
       <!-- Left side: Board & Controls -->
       <div class="flex flex-col items-center gap-6 w-full">
         <GameBoard
           :board="history.replayBoard"
           :interactive="false"
           :last-move="history.replayLastMove"
+          :your-symbol="null"
           class="w-full max-w-2xl"
         />
         
@@ -174,35 +182,37 @@ const summary = computed(() => {
       </div>
 
       <!-- Right side: Match Summary -->
-      <div class="space-y-5">
-        <div
-          class="bg-black/40 backdrop-blur-2xl rounded-2xl border border-white/10 p-5 text-center shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] relative overflow-hidden group"
-        >
-          <div
-            class="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 pointer-events-none group-hover:from-indigo-500/20 group-hover:to-purple-500/20 transition-all duration-500"
-          ></div>
-          
-          <h3 class="text-white text-sm font-bold flex justify-center items-center gap-2 mb-4 relative z-10">
-            <span class="text-xl">📜</span> Match Summary
-          </h3>
-          
-          <p class="text-white font-mono text-sm relative z-10 font-bold drop-shadow-sm flex items-center justify-between bg-white/5 rounded-lg p-3 border border-white/5">
-            <span class="text-indigo-400 font-black flex flex-col items-center">
-              <span class="text-xs text-white/50 mb-1 uppercase tracking-widest font-bold">Black</span>
-              <span>● {{ summary.black }}</span>
+      <div class="space-y-6">
+        <GlassCard title="Match Summary" heading-tag="h3">
+          <template #icon><Scroll :size="18" aria-hidden="true" /></template>
+
+          <GlassCard
+            as="p"
+            variant="nested"
+            class="text-foreground text-body flex items-center justify-between font-mono font-bold"
+          >
+            <span class="text-accent flex flex-col items-center font-black">
+              <span class="text-caption text-foreground-muted mb-1 tracking-widest uppercase">
+                Black
+              </span>
+              <span class="gap-2 flex items-center"><Circle :size="16" fill="currentColor" aria-hidden="true" />{{ summary.black }}</span>
             </span>
-            <span class="text-white/50 text-[10px] font-black tracking-widest uppercase">vs</span>
-            <span class="text-rose-400 font-black flex flex-col items-center">
-              <span class="text-xs text-white/50 mb-1 uppercase tracking-widest font-bold">White</span>
-              <span>{{ summary.white }} ○</span>
+            <span class="text-foreground-muted text-caption font-black tracking-widest uppercase">
+              vs
             </span>
-          </p>
-          
-          <div class="mt-4 pt-4 border-t border-white/10 relative z-10">
-            <p class="text-white font-bold text-lg drop-shadow-md">{{ summary.outcome }}</p>
-            <p class="text-white/50 mt-1 text-xs font-semibold tracking-wide">{{ summary.date }}</p>
+            <span class="text-error flex flex-col items-center font-black">
+              <span class="text-caption text-foreground-muted mb-1 tracking-widest uppercase">
+                White
+              </span>
+              <span class="gap-2 flex items-center">{{ summary.white }}<Circle :size="16" aria-hidden="true" /></span>
+            </span>
+          </GlassCard>
+
+          <div class="border-border-subtle mt-4 pt-4 border-t text-center">
+            <p class="text-foreground text-card">{{ summary.outcome }}</p>
+            <p class="text-foreground-muted text-small mt-1 font-semibold">{{ summary.date }}</p>
           </div>
-        </div>
+        </GlassCard>
       </div>
     </div>
   </AppLayout>

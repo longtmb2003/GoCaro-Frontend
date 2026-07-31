@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 
+import BaseBadge from '@/components/ui/BaseBadge.vue'
 import type { MatchSummary } from '@/types/match'
 import { formatDate, shortId } from '@/utils/format'
 
@@ -84,17 +85,10 @@ const toneClass: Record<Tone, string> = {
           <p class="text-white truncate font-bold drop-shadow-sm">
             <span class="font-mono text-sm">{{ row.players }}</span>
           </p>
-          <p class="text-white/60 mt-1 flex items-center gap-2 text-xs font-medium">
-            <span
-              class="rounded px-1.5 py-0.5 text-[0.65rem] font-black tracking-widest uppercase"
-              :class="
-                row.ranked
-                  ? 'bg-primary-500/20 text-primary-300 shadow-inner'
-                  : 'bg-white/10 text-white/70 shadow-inner'
-              "
-            >
+          <p class="text-foreground-muted text-small gap-2 mt-1 flex items-center">
+            <BaseBadge :variant="row.ranked ? 'primary' : 'neutral'" shape="tag">
               {{ row.ranked ? 'Ranked' : 'Casual' }}
-            </span>
+            </BaseBadge>
             <span>{{ row.date }} · {{ row.moves }} moves</span>
           </p>
         </div>

@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { Gamepad2, Lock, Swords } from 'lucide-vue-next'
+import BaseBadge from '@/components/ui/BaseBadge.vue'
+import GlassCard from '@/components/ui/GlassCard.vue'
 import type { MatchmakingMode } from '@/types/game'
 
 withDefaults(defineProps<{ isGuest?: boolean }>(), { isGuest: false })
@@ -10,40 +13,42 @@ const emit = defineEmits<{ play: [mode: MatchmakingMode]; upgrade: [] }>()
   <section aria-label="Play">
     <div class="mb-4 flex items-center gap-2">
       <h2 class="text-foreground text-lg font-bold flex items-center gap-2">
-        <span class="text-2xl animate-pulse">⚔️</span> Ready for Battle?
+        <Swords :size="24" class="animate-pulse" aria-hidden="true" /> Ready for Battle?
       </h2>
       <div class="h-px flex-1 bg-gradient-to-r from-border-subtle to-transparent ml-2"></div>
     </div>
-    
+
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <!-- Ranked Card -->
-      <button
-        class="cursor-pointer relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary-600 via-primary-500 to-secondary-500 p-5 text-left shadow-lg ring-1 ring-white/20 transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-primary-500/30 group"
+      <!-- Ranked: the primary action, marked out by the accent fill. -->
+      <GlassCard
+        as="button"
+        type="button"
+        variant="interactive"
+        class="from-primary-600 via-primary-500 to-secondary-500 cursor-pointer bg-gradient-to-br text-left"
         :aria-describedby="isGuest ? 'ranked-locked' : undefined"
         @click="isGuest ? emit('upgrade') : emit('play', 'ranked')"
       >
-        <div class="absolute -right-4 -top-4 text-6xl opacity-20 transition-transform group-hover:scale-110 group-hover:rotate-12">🏆</div>
-        <h3 class="text-xl font-bold text-white drop-shadow-sm">Ranked</h3>
-        <p class="mt-1 text-xs font-medium text-white/90">Play for ELO rating</p>
-        
-        <div v-if="isGuest" id="ranked-locked" class="mt-3 inline-flex items-center gap-1 rounded-full bg-black/30 px-2.5 py-1 text-[10px] font-bold text-white backdrop-blur-sm">
-          <span>🔒 Sign in required</span>
-        </div>
-      </button>
+        <h3 class="text-card text-white">Ranked</h3>
+        <p class="text-small mt-1 text-white/90">Play for ELO rating</p>
 
-      <!-- Casual Card -->
-      <button
-        class="cursor-pointer relative overflow-hidden rounded-2xl bg-surface-elevated p-5 text-left shadow-lg ring-1 ring-border-subtle transition-all hover:-translate-y-1 hover:shadow-xl hover:bg-surface/80 group"
+        <BaseBadge v-if="isGuest" id="ranked-locked" variant="neutral" class="mt-3">
+          <Lock :size="16" aria-hidden="true" /> Sign in required
+        </BaseBadge>
+      </GlassCard>
+
+      <!-- Casual: the secondary action, on the plain card surface. -->
+      <GlassCard
+        as="button"
+        type="button"
+        variant="interactive"
+        class="cursor-pointer text-left"
         @click="emit('play', 'casual')"
       >
-        <div class="absolute -right-4 -top-4 text-6xl opacity-10 transition-transform group-hover:scale-110 group-hover:-rotate-12">😊</div>
-        <h3 class="text-xl font-bold text-foreground drop-shadow-sm">Casual</h3>
-        <p class="mt-1 text-xs font-medium text-foreground-muted">Just for fun, no pressure</p>
-        
-        <div class="mt-3 inline-flex items-center gap-1 rounded-full bg-primary-500/10 px-2.5 py-1 text-[10px] font-bold text-primary-500">
-          <span>🎮 Practice mode</span>
-        </div>
-      </button>
+        <h3 class="text-card text-foreground">Casual</h3>
+        <p class="text-small text-foreground-muted mt-1">Just for fun, no pressure</p>
+
+        <BaseBadge variant="primary" class="mt-3"><Gamepad2 :size="16" aria-hidden="true" /> Practice mode</BaseBadge>
+      </GlassCard>
     </div>
   </section>
 </template>

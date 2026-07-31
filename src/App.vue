@@ -1,5 +1,23 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
+import { watch } from 'vue'
+import { useAuthStore } from '@/stores/auth'
+import { useSocialStore } from '@/stores/social'
+
+const auth = useAuthStore()
+const social = useSocialStore()
+
+watch(
+  () => auth.token,
+  (newToken) => {
+    if (newToken) {
+      social.connect(newToken)
+    } else {
+      social.disconnect()
+    }
+  },
+  { immediate: true }
+)
 </script>
 
 <template>

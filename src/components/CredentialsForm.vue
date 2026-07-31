@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
-import BaseButton from '@/components/BaseButton.vue'
-import BaseInput from '@/components/BaseInput.vue'
+import BaseButton from '@/components/ui/BaseButton.vue'
+import BaseInput from '@/components/ui/BaseInput.vue'
 import type { Credentials } from '@/types/auth'
 
 const props = withDefaults(
@@ -23,7 +23,6 @@ const emit = defineEmits<{ submit: [credentials: Credentials] }>()
 
 const username = ref('')
 const password = ref('')
-const rememberMe = ref(false)
 const usernameError = ref('')
 const passwordError = ref('')
 
@@ -62,7 +61,7 @@ function handleSubmit(): void {
 </script>
 
 <template>
-  <form class="space-y-5" novalidate @submit.prevent="handleSubmit">
+  <form class="space-y-4" novalidate @submit.prevent="handleSubmit">
     <BaseInput
       v-model="username"
       name="username"
@@ -82,16 +81,8 @@ function handleSubmit(): void {
       :disabled="loading"
       required
     />
-    <div class="flex items-center justify-between">
-      <label class="flex items-center gap-2 cursor-pointer">
-        <input v-model="rememberMe" type="checkbox" class="w-4 h-4 rounded border-border-subtle text-primary-500 focus:ring-primary-500 bg-background" />
-        <span class="text-sm text-foreground-muted select-none">Remember me</span>
-      </label>
-      <a href="#" class="text-sm font-medium text-primary-400 hover:text-primary-300 transition-colors">Forgot password?</a>
-    </div>
-    
     <p v-if="serverError" class="text-danger-400 text-sm" role="alert">{{ serverError }}</p>
-    <BaseButton type="submit" variant="primary" class="w-full h-12 text-base" :loading="loading">
+    <BaseButton type="submit" variant="primary" size="lg" class="w-full" :loading="loading">
       {{ loading && submitLabel === 'Sign in' ? 'Signing in...' : submitLabel }}
     </BaseButton>
   </form>

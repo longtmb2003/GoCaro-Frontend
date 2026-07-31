@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
+import { X, Circle } from 'lucide-vue-next'
 
 import { BOARD_SIZE, type CellValue } from '@/types/game'
 
@@ -7,6 +8,7 @@ const props = defineProps<{
   board: CellValue[][]
   interactive: boolean
   lastMove: { x: number; y: number } | null
+  yourSymbol: 1 | 2 | null
 }>()
 
 const emit = defineEmits<{ move: [x: number, y: number] }>()
@@ -29,6 +31,72 @@ const cells = computed<Cell[]>(() => {
   return list
 })
 
+const fourInRowCells = computed<Set<string>>(() => {
+  const set = new Set<string>()
+  const b = props.board
+  const dirs = [[1, 0], [0, 1], [1, 1], [1, -1]] as const
+  
+  for (let y = 0; y < BOARD_SIZE; y++) {
+    for (let x = 0; x < BOARD_SIZE; x++) {
+      const val = b[x]?.[y]
+      if (!val) continue
+      
+      for (const [dx, dy] of dirs) {
+        let count = 1
+        let cx = x + dx, cy = y + dy
+        while (cx >= 0 && cx < BOARD_SIZE && cy >= 0 && cy < BOARD_SIZE && b[cx]?.[cy] === val) {
+          count++
+          cx += dx
+          cy += dy
+        }
+        if (count === 4) {
+          for (let i = 0; i < count; i++) {
+            set.add(`${x + i * dx},${y + i * dy}`)
+          }
+        }
+      }
+    }
+  }
+  return set
+})
+
+const fiveInRowCells = computed<Set<string>>(() => {
+  const set = new Set<string>()
+  const b = props.board
+  const dirs = [[1, 0], [0, 1], [1, 1], [1, -1]] as const
+  
+  for (let y = 0; y < BOARD_SIZE; y++) {
+    for (let x = 0; x < BOARD_SIZE; x++) {
+      const val = b[x]?.[y]
+      if (!val) continue
+      
+      for (const [dx, dy] of dirs) {
+        let count = 1
+        let cx = x + dx, cy = y + dy
+        while (cx >= 0 && cx < BOARD_SIZE && cy >= 0 && cy < BOARD_SIZE && b[cx]?.[cy] === val) {
+          count++
+          cx += dx
+          cy += dy
+        }
+        if (count >= 5) {
+          for (let i = 0; i < count; i++) {
+            set.add(`${x + i * dx},${y + i * dy}`)
+          }
+        }
+      }
+    }
+  }
+  return set
+})
+
+function isFourInRow(cell: Cell): boolean {
+  return fourInRowCells.value.has(`${cell.x},${cell.y}`)
+}
+
+function isFiveInRow(cell: Cell): boolean {
+  return fiveInRowCells.value.has(`${cell.x},${cell.y}`)
+}
+
 function isPlayable(cell: Cell): boolean {
   return props.interactive && cell.value === null
 }
@@ -38,9 +106,39 @@ function isLastMove(cell: Cell): boolean {
 }
 
 function label(cell: Cell): string {
-  const occupant = cell.value === 1 ? 'black' : cell.value === 2 ? 'white' : 'empty'
+  const occupant = cell.value === 1 ? 'X' : cell.value === 2 ? 'O' : 'empty'
   return `Row ${(cell.y + 1).toString()}, column ${(cell.x + 1).toString()}, ${occupant}`
 }
+
+function playTick() {
+  try {
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext
+    if (!AudioContextClass) return
+    const audioCtx = new AudioContextClass()
+    const osc = audioCtx.createOscillator()
+    const gain = audioCtx.createGain()
+    osc.connect(gain)
+    gain.connect(audioCtx.destination)
+    
+    osc.type = 'sine'
+    osc.frequency.setValueAtTime(800, audioCtx.currentTime)
+    osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.05)
+    
+    gain.gain.setValueAtTime(0.2, audioCtx.currentTime)
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05)
+    
+    osc.start()
+    osc.stop(audioCtx.currentTime + 0.05)
+  } catch (e) {
+    // Ignore audio errors
+  }
+}
+
+watch(() => props.lastMove, (newVal, oldVal) => {
+  if (newVal && (newVal.x !== oldVal?.x || newVal.y !== oldVal?.y)) {
+    playTick()
+  }
+}, { deep: true })
 
 function onCellClick(cell: Cell): void {
   if (isPlayable(cell)) {
@@ -50,12 +148,10 @@ function onCellClick(cell: Cell): void {
 </script>
 
 <template>
-  <div class="relative bg-black/40 backdrop-blur-2xl rounded-xl p-2 sm:p-3 border border-indigo-500/20 shadow-[0_8px_32px_0_rgba(0,0,0,0.5)] w-full max-w-xl aspect-square flex flex-col">
-    <!-- Outer Glow -->
-    <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 rounded-xl pointer-events-none mix-blend-screen"></div>
+  <div class="relative bg-surface rounded-2xl p-2 sm:p-3 shadow-glow w-full max-w-xl aspect-square flex flex-col group/board overflow-hidden border border-border-strong">
     
     <div
-      class="grid w-full h-full flex-1 gap-[1px] rounded-lg bg-indigo-900/30 overflow-hidden ring-1 ring-indigo-500/30"
+      class="relative grid w-full h-full flex-1 gap-[1px] rounded-xl bg-white/[0.14] overflow-hidden ring-1 ring-border shadow-inner z-10"
       :style="gridStyle"
       role="grid"
       aria-label="Game board"
@@ -64,32 +160,46 @@ function onCellClick(cell: Cell): void {
         v-for="cell in cells"
         :key="cell.y * BOARD_SIZE + cell.x"
         type="button"
-        class="relative aspect-square bg-black/40 transition-colors focus-visible:z-10 group overflow-hidden"
-        :class="isPlayable(cell) ? 'cursor-pointer hover:bg-white/10' : 'cursor-default'"
+        class="relative aspect-square bg-surface-sunken transition-colors focus-visible:z-20 focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none group overflow-hidden"
+        :class="isPlayable(cell) ? 'cursor-pointer hover:bg-surface' : 'cursor-default'"
         :disabled="!isPlayable(cell)"
         :aria-label="label(cell)"
         @click="onCellClick(cell)"
       >
-        <!-- Cell hover effect -->
-        <div v-if="isPlayable(cell)" class="absolute inset-0 bg-white/0 group-hover:bg-white/5 transition-colors duration-300"></div>
+        <!-- Ghost Piece Hover Preview -->
+        <div v-if="isPlayable(cell)" class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-40 transition-opacity duration-150 pointer-events-none">
+          <template v-if="props.yourSymbol === 1">
+            <X class="w-[80%] h-[80%] text-blue-400" stroke-width="4" />
+          </template>
+          <template v-else-if="props.yourSymbol === 2">
+            <Circle class="w-[65%] h-[65%] text-rose-400" stroke-width="4" />
+          </template>
+        </div>
 
-        <!-- Render Stone -->
+        <!-- 4-in-a-row Warning Highlight -->
+        <div v-if="isFourInRow(cell) && !isFiveInRow(cell)" class="absolute inset-0 bg-warning/20 animate-pulse pointer-events-none z-0"></div>
+
+        <!-- 5-in-a-row Winning Line Highlight -->
+        <div v-if="isFiveInRow(cell)" class="absolute inset-0 bg-accent/30 ring-2 ring-accent shadow-[0_0_15px_rgba(46,230,255,0.6)] animate-pulse pointer-events-none z-20 rounded-sm"></div>
+
+        <!-- Render Symbol -->
         <div
           v-if="cell.value !== null"
-          class="stone-enter absolute inset-[12%] rounded-full shadow-[0_4px_10px_rgba(0,0,0,0.5)]"
+          class="stone-enter absolute inset-0 flex items-center justify-center z-10"
           :class="[
             cell.value === 1 
-              ? 'bg-gradient-to-br from-neutral-700 to-black ring-1 ring-white/10 shadow-[inset_2px_2px_4px_rgba(255,255,255,0.2),0_5px_15px_rgba(0,0,0,0.8)]' 
-              : 'bg-gradient-to-br from-white via-indigo-50 to-indigo-200 ring-1 ring-black/10 shadow-[inset_-2px_-2px_6px_rgba(0,0,0,0.1),0_5px_15px_rgba(255,255,255,0.3)]',
+              ? 'text-blue-400 drop-shadow-[0_0_12px_rgba(96,165,250,0.9)]' 
+              : 'text-rose-400 drop-shadow-[0_0_12px_rgba(251,113,133,0.9)]',
           ]"
         >
-          <!-- Reflection -->
-          <div class="absolute inset-[15%] rounded-full bg-gradient-to-br from-white/30 to-transparent opacity-50 blur-[1px]"></div>
+          <X v-if="cell.value === 1" class="w-[80%] h-[80%]" stroke-width="4" />
+          <Circle v-else class="w-[65%] h-[65%]" stroke-width="4" />
         </div>
         
+        <!-- Last Move Persistent Marker -->
+        <div v-if="isLastMove(cell)" class="absolute inset-[20%] rounded-full border-2 border-white/60 z-20 pointer-events-none"></div>
         <!-- Last Move Radar Ping -->
-        <div v-if="isLastMove(cell)" class="absolute inset-[10%] rounded-full ring-2 ring-indigo-400 animate-ping opacity-75"></div>
-        <div v-if="isLastMove(cell)" class="absolute inset-[10%] rounded-full ring-2 ring-indigo-400 shadow-[0_0_15px_rgba(129,140,248,0.8)]"></div>
+        <div v-if="isLastMove(cell)" class="absolute inset-[15%] rounded-full ring-2 ring-accent animate-ping opacity-75 z-0 pointer-events-none"></div>
       </button>
     </div>
   </div>
