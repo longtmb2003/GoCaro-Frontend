@@ -10,7 +10,6 @@ const props = withDefaults(
   defineProps<{
     /** The name currently saved, or '' when the player has never set one. */
     fullName: string
-    phone: string
     /** The handle the player falls back to when they clear their full name. */
     username: string
     /** False while the weekly cooldown from the last rename is still running. */
@@ -34,7 +33,7 @@ const emit = defineEmits<{ submit: [update: ProfileUpdate]; close: [] }>()
 const FULL_NAME_MAX = 50
 
 const fullNameDraft = ref(props.fullName)
-const phoneDraft = ref(props.phone)
+const phoneDraft = ref('')
 const fullNameError = ref('')
 const phoneError = ref('')
 
@@ -95,7 +94,7 @@ function handleSubmit(): void {
   if (name !== props.fullName) {
     update.full_name = name
   }
-  if (phone !== props.phone) {
+  if (phone !== '') {
     update.phone = phone
   }
 
@@ -157,12 +156,12 @@ function requestClose(): void {
         type="tel"
         label="Phone"
         autocomplete="tel"
-        placeholder="Optional"
+        placeholder="Leave empty to keep current"
         :maxlength="20"
         :error="phoneError"
         :disabled="loading"
       />
-      <p class="text-foreground-muted text-small">Your phone number is private to you.</p>
+      <p class="text-foreground-muted text-small">Phone is hidden for security. Leave empty to keep existing.</p>
 
       <p v-if="serverError" class="text-error text-small" role="alert">{{ serverError }}</p>
 

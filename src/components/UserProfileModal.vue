@@ -17,9 +17,8 @@
           <h2 class="text-2xl font-bold text-surface-50 font-display">
             {{ profileData.display_name }}
           </h2>
-          <!-- Full names are not unique, so the handle is shown whenever it is
-               not already the name, to tell two players of the same name apart. -->
-          <p v-if="profileData.full_name" class="text-sm text-surface-400">
+          <!-- Show the handle for all registered users -->
+          <p v-if="profileData.username" class="text-sm text-surface-400">
             @{{ profileData.username }}
           </p>
           <div class="flex items-center gap-2 mt-1">
@@ -34,7 +33,7 @@
         <h3 class="text-sm font-semibold text-surface-400 uppercase tracking-wider">
           Competitive Record
         </h3>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-3 gap-3">
           <GlassCard as="div" variant="nested" class="p-3 text-center">
             <div class="text-surface-400 text-xs">Tournaments</div>
             <div class="text-lg font-bold text-surface-50">{{ profileData.tournament_stats.tournaments_joined }}</div>
@@ -44,18 +43,23 @@
             <div class="text-lg font-bold text-surface-50">{{ profileData.tournament_stats.championships }}</div>
           </GlassCard>
           <GlassCard as="div" variant="nested" class="p-3 text-center">
-            <div class="text-surface-400 text-xs">Win Rate</div>
-            <div class="text-lg font-bold text-surface-50">
-              {{ formatWinRate(profileData.tournament_stats.win_rate) }}
-            </div>
-            <div class="text-xs text-surface-500 mt-0.5">
-              {{ profileData.tournament_stats.matches_won }}W - {{ profileData.tournament_stats.matches_played - profileData.tournament_stats.matches_won }}L
-            </div>
-          </GlassCard>
-          <GlassCard as="div" variant="nested" class="p-3 text-center">
             <div class="text-surface-400 text-xs">Best Finish</div>
             <div class="text-lg font-bold text-surface-50 capitalize">
               {{ formatBestFinish(profileData.tournament_stats.best_finish) }}
+            </div>
+          </GlassCard>
+          <GlassCard as="div" variant="nested" class="p-3 text-center">
+            <div class="text-surface-400 text-xs">Matches Played</div>
+            <div class="text-lg font-bold text-surface-50">{{ profileData.tournament_stats.matches_played }}</div>
+          </GlassCard>
+          <GlassCard as="div" variant="nested" class="p-3 text-center">
+            <div class="text-surface-400 text-xs">Matches Won</div>
+            <div class="text-lg font-bold text-surface-50">{{ profileData.tournament_stats.matches_won }}</div>
+          </GlassCard>
+          <GlassCard as="div" variant="nested" class="p-3 text-center">
+            <div class="text-surface-400 text-xs">Win Rate</div>
+            <div class="text-lg font-bold text-surface-50">
+              {{ formatWinRate(profileData.tournament_stats.win_rate) }}
             </div>
           </GlassCard>
         </div>
@@ -78,6 +82,18 @@
           <div class="bg-surface-800/30 rounded-lg p-2 text-center">
             <div class="text-surface-400 text-xs">Losses</div>
             <div class="font-medium text-danger-400">{{ profileData.global_stats.losses }}</div>
+          </div>
+          <div class="bg-surface-800/30 rounded-lg p-2 text-center">
+            <div class="text-surface-400 text-xs">Win Rate</div>
+            <div class="font-medium text-surface-100">{{ formatGlobalWinRate(profileData.global_stats) }}</div>
+          </div>
+          <div class="bg-surface-800/30 rounded-lg p-2 text-center">
+            <div class="text-surface-400 text-xs">Max Streak</div>
+            <div class="font-medium text-warning-400">{{ profileData.global_stats.max_streak }}</div>
+          </div>
+          <div class="bg-surface-800/30 rounded-lg p-2 text-center">
+            <div class="text-surface-400 text-xs">Coins</div>
+            <div class="font-medium text-warning-400">{{ profileData.global_stats.coins }}</div>
           </div>
         </div>
       </div>
@@ -145,6 +161,11 @@ const formatAchievementName = (id: string) => {
 const formatWinRate = (rate: number) => {
   if (!rate && rate !== 0) return '0%'
   return `${Math.round(rate * 100)}%`
+}
+
+const formatGlobalWinRate = (stats: any) => {
+  if (!stats || stats.matches_played === 0) return '0%'
+  return `${Math.round((stats.wins / stats.matches_played) * 100)}%`
 }
 
 const formatBestFinish = (finish: string) => {

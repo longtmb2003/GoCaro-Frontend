@@ -68,14 +68,14 @@ const { openProfile } = useUserProfile()
             <span v-else>#{{ startIndex + index + 1 }}</span>
           </td>
           <td
-            class="text-foreground whitespace-nowrap font-bold"
+            class="text-foreground font-bold break-all"
             :class="compact ? 'px-3 py-2' : 'px-4 py-3'"
           >
             <button
               @click="openProfile(entry.id)"
-              class="hover:text-primary-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded"
+              class="hover:text-primary-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded text-left"
             >
-              {{ entry.display_name }}
+              @{{ entry.username }}
             </button>
             <span
               v-if="entry.username === currentUsername"
@@ -90,12 +90,6 @@ const { openProfile } = useUserProfile()
           >
             <div class="flex items-center justify-end gap-2">
               <span class="font-mono font-bold">{{ entry.elo }}</span>
-              <span
-                class="text-caption font-black tracking-widest uppercase px-2 py-0.5 rounded bg-surface-sunken border border-border-subtle shadow-sm"
-                :class="getRankTier(entry.elo).color"
-              >
-                {{ getRankTier(entry.elo).name }}
-              </span>
             </div>
           </td>
         </tr>

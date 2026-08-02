@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, nextTick, computed } from 'vue'
-import { Send, ChevronDown, Lock } from 'lucide-vue-next'
+import { Send, ArrowLeft, ChevronDown, Lock } from 'lucide-vue-next'
 import BaseDrawer from './ui/BaseDrawer.vue'
 import BaseButton from './ui/BaseButton.vue'
 import BaseAvatar from './ui/BaseAvatar.vue'
@@ -219,7 +219,9 @@ const friendsWithUnread = computed(() => {
     <!-- Content: Chat Area (Lobby or DM) -->
     <template v-else>
       <div v-if="currentTab === 'dm_chat' && activeFriend" class="flex items-center gap-2 mb-2 pb-2 border-b border-border-subtle">
-        <button class="text-foreground-muted hover:text-foreground mr-1" @click="chatStore.setActiveChat(null)">←</button>
+        <button class="text-foreground-muted hover:text-foreground mr-1 p-1 rounded-sm hover:bg-surface-sunken" title="Back" @click="chatStore.setActiveChat(null)">
+          <ArrowLeft :size="16" />
+        </button>
         <BaseAvatar :name="activeFriend.display_name" size="sm" />
         <span class="text-sm font-semibold">{{ activeFriend.display_name }}</span>
       </div>
@@ -287,11 +289,10 @@ const friendsWithUnread = computed(() => {
           <BaseButton 
             type="submit" 
             variant="primary" 
-            size="lg"
+            class="w-12 h-11 px-0 flex justify-center items-center shrink-0 rounded-button"
             :disabled="!inputMessage.trim() || isSending"
-            class="w-12 px-0 flex justify-center items-center shrink-0"
           >
-            <Send :size="18" />
+            <Send :size="18" class="text-white" />
           </BaseButton>
         </form>
       </div>

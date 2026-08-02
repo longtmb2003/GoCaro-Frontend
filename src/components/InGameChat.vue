@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, nextTick, watch } from 'vue'
-import { Send, Volume2, VolumeX, MessageSquareOff } from 'lucide-vue-next'
+import { SendHorizonal, Volume2, VolumeX, MessageSquareOff } from 'lucide-vue-next'
 
 import BaseButton from '@/components/ui/BaseButton.vue'
 import GlassCard from '@/components/ui/GlassCard.vue'
@@ -127,7 +127,7 @@ function toggleMute() {
         :disabled="!content.trim() || isMuted" 
         aria-label="Send message"
       >
-        <Send :size="20" class="transition-transform" :class="content.trim() && !isMuted ? 'group-hover:-translate-y-0.5 group-hover:translate-x-0.5' : ''" />
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transition-transform" :class="content.trim() && !isMuted ? 'group-hover:-translate-y-0.5 group-hover:translate-x-0.5' : ''"><path d="m3 3 3 9-3 9 19-9Z"/><path d="M6 12h16"/></svg>
       </BaseButton>
     </form>
   </GlassCard>

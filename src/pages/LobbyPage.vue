@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import { Crown, Hand, Link2, Scroll, ShoppingBag, Swords, Target, Zap, MessageSquare, Users } from 'lucide-vue-next'
+import { ChevronDown, Crown, Hand, Link2, Lock, LogOut, Scroll, ShoppingBag, Swords, Target, UserCircle2, Zap, MessageSquare, Users } from 'lucide-vue-next'
 import { RouterLink, useRouter } from 'vue-router'
 
 import { ApiError } from '@/api/ApiError'
@@ -33,6 +33,7 @@ import { useLeaderboardStore } from '@/stores/leaderboard'
 import { useLobbyStore } from '@/stores/lobby'
 import { useSocketStore } from '@/stores/socket'
 import { useChatStore } from '@/stores/chat'
+import { useUserProfile } from '@/composables/useUserProfile'
 import { useToast } from '@/composables/useToast'
 import { useCountUp } from '@/composables/useCountUp'
 import type { Credentials, ProfileUpdate } from '@/types/auth'
@@ -71,8 +72,11 @@ const guestLogoutOpen = ref(false)
 const leaderboardModalOpen = ref(false)
 const friendsModalOpen = ref(false)
 const chatDrawerOpen = ref(false)
+const userMenuOpen = ref(false)
 const inviteModalOpen = ref(false)
 const activeInviteCode = ref('')
+
+const { openProfile } = useUserProfile()
 
 onMounted(() => {
   void leaderboard.load()
@@ -138,6 +142,10 @@ function openUpgrade(): void {
 const chatStore = useChatStore()
 
 function handleOpenChat(friendId: string): void {
+  if (auth.isGuest) {
+    openUpgrade()
+    return
+  }
   friendsModalOpen.value = false
   chatStore.setActiveChat(friendId)
   chatDrawerOpen.value = true
@@ -214,6 +222,15 @@ async function logout(): Promise<void> {
   guestLogoutOpen.value = false
   auth.logout()
   await router.push('/login')
+}
+
+function handleOpenOwnProfile(): void {
+  if (auth.isGuest) {
+    openUpgrade()
+  } else if (auth.user) {
+    userMenuOpen.value = false
+    openProfile(auth.user.id)
+  }
 }
 
 async function shareGame(): Promise<void> {
@@ -300,32 +317,66 @@ function handleJoinCode(code: string) {
 <template>
   <AppLayout title="GoCaro">
     <template #actions>
-      <span v-if="auth.user" class="text-white/80 hidden text-sm sm:inline font-medium">
-        {{ auth.displayName }}
-      </span>
       <BaseButton
-        v-if="auth.isAuthenticated"
         variant="secondary"
         class="relative"
-        @click="friendsModalOpen = true"
+        @click="!auth.isGuest ? friendsModalOpen = true : openUpgrade()"
       >
-        <Users :size="18" /> Friends
+        <div class="flex items-center gap-1.5">
+          <Lock v-if="auth.isGuest" :size="14" class="text-white/50" />
+          <Users :size="18" /> 
+          <span>Friends</span>
+        </div>
         <span v-if="totalPendingFriends > 0" class="absolute -top-1 -right-1 flex h-3 w-3 rounded-full bg-error border border-background shadow-sm"></span>
       </BaseButton>
       <BaseButton
-        v-if="auth.isAuthenticated"
         variant="secondary"
         class="relative"
-        @click="chatDrawerOpen = true"
+        @click="!auth.isGuest ? chatDrawerOpen = true : openUpgrade()"
       >
-        <MessageSquare :size="18" /> Chat
+        <div class="flex items-center gap-1.5">
+          <Lock v-if="auth.isGuest" :size="14" class="text-white/50" />
+          <MessageSquare :size="18" /> 
+          <span>Chat</span>
+        </div>
         <span v-if="totalUnreadMessages > 0" class="absolute -top-1 -right-1 flex h-3 w-3 rounded-full bg-error border border-background shadow-sm"></span>
       </BaseButton>
-      <BaseButton
-        variant="secondary"
-        @click="handleLogout"
-        >Log out</BaseButton
+
+      <div 
+        v-if="auth.user" 
+        class="relative group ml-2"
       >
+        <!-- Click away overlay -->
+        <div v-if="userMenuOpen" class="fixed inset-0 z-40" @click="userMenuOpen = false"></div>
+
+        <button 
+          @click="userMenuOpen = !userMenuOpen"
+          class="relative z-50 text-white text-sm flex items-center gap-1.5 font-bold hover:text-white cursor-pointer px-3 py-1.5 rounded-lg transition-all bg-white/10 hover:bg-white/20 border border-white/20 shadow-sm hover:shadow-md"
+        >
+          <UserCircle2 :size="18" class="text-primary-400" />
+          {{ auth.displayName }}
+          <ChevronDown :size="14" class="opacity-70 transition-transform duration-200" :class="{ 'rotate-180': userMenuOpen }" />
+        </button>
+        
+        <div 
+          v-show="userMenuOpen"
+          class="absolute right-0 top-full mt-2 w-48 bg-slate-900 border border-white/10 rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.8)] overflow-hidden z-50 origin-top-right transition-all"
+        >
+          <div class="px-4 py-3 border-b border-white/5 bg-surface-900/50 hover:bg-surface-800/50 cursor-pointer transition-colors" @click="handleOpenOwnProfile">
+            <p class="text-xs text-foreground-muted font-medium uppercase tracking-wider">Account</p>
+            <p class="text-sm text-white font-bold truncate mt-0.5">{{ auth.displayName }}</p>
+          </div>
+          <div class="p-1">
+            <button 
+              @click="handleLogout"
+              class="w-full text-left px-3 py-2.5 text-sm text-red-400 hover:bg-red-500/20 hover:text-red-300 rounded-lg transition-colors flex items-center gap-2.5 font-bold"
+            >
+              <LogOut :size="16" />
+              Log out
+            </button>
+          </div>
+        </div>
+      </div>
     </template>
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6 items-start">
@@ -339,6 +390,7 @@ function handleJoinCode(code: string) {
             :account-type="auth.user.account_type"
             :stats="auth.user.stats"
             @edit="openEditProfile"
+            @upgrade="openUpgrade"
           />
         </div>
 
@@ -654,8 +706,9 @@ function handleJoinCode(code: string) {
             />
 
             <div class="mt-4 text-center">
-              <BaseButton variant="ghost" size="sm" @click="leaderboardModalOpen = true">
-                View all rankings →
+              <BaseButton variant="ghost" size="sm" @click="!auth.isGuest ? leaderboardModalOpen = true : openUpgrade()">
+                <Lock v-if="auth.isGuest" :size="14" class="mr-1 inline-block opacity-60" />
+                View all rankings ✨
               </BaseButton>
             </div>
           </div>
@@ -728,7 +781,6 @@ function handleJoinCode(code: string) {
     <EditProfileModal
       v-if="editProfileOpen && auth.user"
       :full-name="auth.user.full_name"
-      :phone="auth.user.phone"
       :username="auth.user.username"
       :can-change-name="auth.canChangeFullName"
       :name-available-at="auth.fullNameChangeAvailableAt"

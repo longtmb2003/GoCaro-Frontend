@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import { Check, Coins, Diamond, Flame, Pencil, Trophy } from 'lucide-vue-next'
+import { Check, Coins, Diamond, Flame, Lock, Pencil, Trophy } from 'lucide-vue-next'
 import BaseBadge from '@/components/ui/BaseBadge.vue'
 import BaseProgress from '@/components/ui/BaseProgress.vue'
 import GlassCard from '@/components/ui/GlassCard.vue'
@@ -24,7 +24,7 @@ const props = defineProps<{
   stats?: UserStats
 }>()
 
-const emit = defineEmits<{ edit: [] }>()
+const emit = defineEmits<{ edit: [], upgrade: [] }>()
 
 const initial = computed(() => props.displayName.charAt(0).toUpperCase())
 const isGuest = computed(() => props.accountType === 'anonymous')
@@ -147,10 +147,11 @@ const displayCoins = useCountUp(() => props.stats?.coins || 0)
       <!-- Competitive Profile Button -->
       <div class="mt-4">
         <button
-          @click="openProfile(auth.user?.id || '')"
+          @click="!auth.isGuest ? openProfile(auth.user?.id || '') : emit('upgrade')"
           class="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-surface-800/50 hover:bg-surface-700/50 border border-border-subtle rounded-lg text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
         >
-          <Trophy :size="16" class="text-primary-400" />
+          <Lock v-if="auth.isGuest" :size="16" class="text-white/50" />
+          <Trophy v-else :size="16" class="text-primary-400" />
           View Competitive Profile
         </button>
       </div>
