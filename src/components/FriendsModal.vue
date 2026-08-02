@@ -5,9 +5,11 @@ import BaseButton from './ui/BaseButton.vue'
 import BaseAvatar from './ui/BaseAvatar.vue'
 import BaseBadge from './ui/BaseBadge.vue'
 import BaseInput from './ui/BaseInput.vue'
+import BaseModal from './ui/BaseModal.vue'
 import GlassCard from './ui/GlassCard.vue'
 import { useSocialStore } from '@/stores/social'
 import { useChatStore } from '@/stores/chat'
+import { useAuthStore } from '@/stores/auth'
 import { searchUsers, type UserSearch } from '@/api/user'
 import { sendFriendRequest, acceptFriendRequest, declineFriendRequest, removeFriend } from '@/api/friend'
 import { useToast } from '@/composables/useToast'
@@ -19,9 +21,12 @@ const emit = defineEmits<{
 
 const social = useSocialStore()
 const chatStore = useChatStore()
+const auth = useAuthStore()
 const toast = useToast()
 
 const activeTab = ref<'friends' | 'requests' | 'search'>('friends')
+
+const friendToRemove = ref<string | null>(null)
 
 // Search state
 const searchQuery = ref('')
@@ -82,12 +87,19 @@ async function declineReq(id: string) {
   }
 }
 
-async function unfriend(id: string) {
+function confirmUnfriend(id: string) {
+  friendToRemove.value = id
+}
+
+async function executeUnfriend() {
+  if (!friendToRemove.value) return
   try {
-    await removeFriend(id)
+    await removeFriend(friendToRemove.value)
     await social.fetchInitialData()
   } catch (e) {
     console.error(e)
+  } finally {
+    friendToRemove.value = null
   }
 }
 
@@ -179,7 +191,7 @@ function openChat(id: string) {
               <BaseButton variant="primary" size="sm" class="px-2" title="Challenge" @click="issueChallenge(friend.user.id, friend.user.display_name)">
                 <Swords :size="16" />
               </BaseButton>
-              <BaseButton variant="danger" size="sm" class="px-2" title="Unfriend" @click="unfriend(friend.friendship_id)">
+              <BaseButton variant="danger" size="sm" class="px-2" title="Unfriend" @click="confirmUnfriend(friend.friendship_id)">
                 <X :size="16" />
               </BaseButton>
             </div>
@@ -231,7 +243,7 @@ function openChat(id: string) {
                   <p class="text-caption text-foreground-muted">Elo: {{ user.elo }}</p>
                 </div>
               </div>
-              <BaseButton variant="secondary" size="sm" class="px-2" title="Add Friend" @click="sendRequest(user.id)">
+              <BaseButton v-if="user.id !== auth.user?.id" variant="secondary" size="sm" class="px-2" title="Add Friend" @click="sendRequest(user.id)">
                 <UserPlus :size="16" />
               </BaseButton>
             </GlassCard>
@@ -239,5 +251,20 @@ function openChat(id: string) {
         </div>
       </div>
     </div>
+
+    <!-- Confirm Unfriend Modal -->
+    <BaseModal
+      v-if="friendToRemove"
+      title="Remove Friend"
+      @close="friendToRemove = null"
+    >
+      <p class="text-foreground-muted mb-6">
+        Are you sure you want to remove this friend? You will no longer be able to chat or invite them directly.
+      </p>
+      <div class="flex justify-end gap-3">
+        <BaseButton variant="ghost" @click="friendToRemove = null">Cancel</BaseButton>
+        <BaseButton variant="danger" @click="executeUnfriend">Remove</BaseButton>
+      </div>
+    </BaseModal>
   </div>
 </template>

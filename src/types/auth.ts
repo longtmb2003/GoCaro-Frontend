@@ -39,7 +39,6 @@ export interface AuthUser {
   display_name: string
   /** The chosen name, or '' when the player has never set one. */
   full_name: string
-  phone: string
   elo: number
   account_type: AccountType
   created_at: string

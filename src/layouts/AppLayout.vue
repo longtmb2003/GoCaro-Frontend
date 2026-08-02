@@ -1,17 +1,23 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Github, Info } from 'lucide-vue-next'
+import { Github, Info, Lock } from 'lucide-vue-next'
 import { RouterLink } from 'vue-router'
 import ToastContainer from '@/components/ToastContainer.vue'
 import RankRulesModal from '@/components/RankRulesModal.vue'
 import ChallengeModal from '@/components/ChallengeModal.vue'
 import OutgoingChallengeCard from '@/components/OutgoingChallengeCard.vue'
+import { useAuthStore } from '@/stores/auth'
 
 defineProps<{
   title: string
 }>()
 
+defineEmits<{
+  (e: 'upgrade'): void
+}>()
+
 const showRankRules = ref(false)
+const auth = useAuthStore()
 </script>
 
 <template>
@@ -45,6 +51,7 @@ const showRankRules = ref(false)
               Lobby
             </RouterLink>
             <RouterLink 
+              v-if="!auth.isGuest"
               to="/leaderboard" 
               class="px-4 py-1.5 rounded-lg text-sm font-bold transition-all text-white/60 hover:text-white hover:bg-white/10 border border-transparent"
               active-class="!bg-primary-500 !text-white shadow-[0_0_15px_rgba(45,212,191,0.5)] !border-primary-400/50"
@@ -52,7 +59,15 @@ const showRankRules = ref(false)
             >
               Leaderboard
             </RouterLink>
+            <button 
+              v-else
+              @click="$emit('upgrade')"
+              class="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-bold transition-all text-white/40 hover:text-white/60 hover:bg-white/5 border border-transparent cursor-pointer"
+            >
+              <Lock :size="14" /> Leaderboard
+            </button>
             <RouterLink
+              v-if="!auth.isGuest"
               to="/tournaments"
               class="px-4 py-1.5 rounded-lg text-sm font-bold transition-all text-white/60 hover:text-white hover:bg-white/10 border border-transparent"
               active-class="!bg-primary-500 !text-white shadow-[0_0_15px_rgba(45,212,191,0.5)] !border-primary-400/50"
@@ -60,6 +75,13 @@ const showRankRules = ref(false)
             >
               Tournaments
             </RouterLink>
+            <button 
+              v-else
+              @click="$emit('upgrade')"
+              class="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-bold transition-all text-white/40 hover:text-white/60 hover:bg-white/5 border border-transparent cursor-pointer"
+            >
+              <Lock :size="14" /> Tournaments
+            </button>
             <RouterLink
               to="/history"
               class="px-4 py-1.5 rounded-lg text-sm font-bold transition-all text-white/60 hover:text-white hover:bg-white/10 border border-transparent"
