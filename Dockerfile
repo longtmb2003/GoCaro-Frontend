@@ -13,6 +13,8 @@ COPY . .
 RUN npm run build
 
 FROM nginx:alpine
+# Override default config with SPA fallback + cache policy
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 # Copy built static files to Nginx
 COPY --from=builder /app/dist /usr/share/nginx/html
 
