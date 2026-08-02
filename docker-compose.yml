@@ -1,0 +1,12 @@
+services:
+  frontend:
+    build: .
+    container_name: gocaro-frontend
+    restart: always
+    networks:
+      - gocaro_net
+
+# Xin gia nhập vào mạng lưới do Backend tạo ra
+networks:
+  gocaro_net:
+    external: true
