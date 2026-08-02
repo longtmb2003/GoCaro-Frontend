@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { Medal } from 'lucide-vue-next'
 import type { LeaderboardEntry } from '@/types/leaderboard'
-import { getRankTier } from '@/config/ranks'
 import { useUserProfile } from '@/composables/useUserProfile'
 
 withDefaults(
