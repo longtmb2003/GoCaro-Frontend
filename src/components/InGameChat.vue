@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, nextTick, watch } from 'vue'
-import { SendHorizonal, Volume2, VolumeX, MessageSquareOff } from 'lucide-vue-next'
+import { Volume2, VolumeX, MessageSquareOff } from 'lucide-vue-next'
 
 import BaseButton from '@/components/ui/BaseButton.vue'
 import GlassCard from '@/components/ui/GlassCard.vue'
