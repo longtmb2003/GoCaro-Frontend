@@ -15,6 +15,7 @@ import {
 import { useToast } from '@/composables/useToast'
 import { useChatStore } from './chat'
 import { useSocketStore } from './socket'
+import { useTournamentStore } from './tournament'
 
 export interface IncomingChallenge {
   challenge_id: string
@@ -133,7 +134,7 @@ export const useSocialStore = defineStore('social', () => {
         incomingChallenge.value = {
           challenge_id: payload.id,
           sender_id: payload.sender_id,
-          sender_name: payload.sender_name || sender?.user.username || 'A player',
+          sender_name: payload.sender_name || sender?.user.display_name || 'A player',
           expires_at: payload.expires_at,
         }
         toast.addToast('You received a match challenge!', 'info')
@@ -165,6 +166,81 @@ export const useSocialStore = defineStore('social', () => {
           incomingChallenge.value = null
           toast.addToast('The challenger withdrew the invitation', 'info')
         }
+        break
+      }
+      case 'tournament_started': {
+        const payload = msg.payload as { tournament_id: string; name?: string; round?: number }
+        const name = payload.name ?? 'Tournament'
+        const round = payload.round ? `Round ${payload.round} has started!` : 'Tournament has started!'
+        toast.addToast(`${name}: ${round}`, 'info')
+        
+        const tStore = useTournamentStore()
+        tStore.invalidate(payload.tournament_id)
+        void tStore.loadTournament(payload.tournament_id)
+        break
+      }
+      case 'tournament_match_ready': {
+        const payload = msg.payload as { opponent_display_name?: string }
+        const opponent = payload.opponent_display_name ? ` You are facing ${payload.opponent_display_name}.` : ''
+        toast.addToast(`Match Ready!${opponent}`, 'info')
+        
+        if (socketStore.status !== 'searching' && socketStore.status !== 'matched') {
+          socketStore.startMatchmaking('casual')
+        }
+        break
+      }
+      case 'tournament_rematch': {
+        const payload = msg.payload as { rematch_count?: number; max_rematches?: number }
+        const progress = payload.rematch_count && payload.max_rematches 
+          ? ` (Rematch ${payload.rematch_count}/${payload.max_rematches})` 
+          : ''
+        toast.addToast(`Match drawn. Replaying${progress}...`, 'info')
+        
+        if (socketStore.status !== 'searching' && socketStore.status !== 'matched') {
+          socketStore.startMatchmaking('casual')
+        }
+        break
+      }
+      case 'tournament_walkover': {
+        const payload = msg.payload as { tournament_id: string }
+        toast.addToast('Match decided by walkover.', 'info')
+        
+        const tStore = useTournamentStore()
+        tStore.invalidate(payload.tournament_id)
+        void tStore.loadTournament(payload.tournament_id)
+        break
+      }
+      case 'tournament_round_finished': {
+        const payload = msg.payload as { tournament_id: string; round?: number; next_round?: number }
+        const msgText = payload.round && payload.next_round 
+          ? `Round ${payload.round} completed! Advancing to Round ${payload.next_round}.`
+          : 'Tournament round completed!'
+        toast.addToast(msgText, 'info')
+        
+        const tStore = useTournamentStore()
+        tStore.invalidate(payload.tournament_id)
+        void tStore.loadTournament(payload.tournament_id)
+        break
+      }
+      case 'tournament_finished': {
+        const payload = msg.payload as { tournament_id: string; winner_display_name?: string }
+        const winner = payload.winner_display_name ? ` ${payload.winner_display_name} is the champion!` : ''
+        toast.addToast(`Tournament complete!${winner}`, 'success')
+        
+        const tStore = useTournamentStore()
+        tStore.invalidate(payload.tournament_id)
+        void tStore.loadTournament(payload.tournament_id)
+        break
+      }
+      case 'achievement_unlocked': {
+        const payload = msg.payload as { achievement_id: string }
+        const name = payload.achievement_id.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+        toast.addToast(`Achievement Unlocked: ${name}!`, 'success')
+        break
+      }
+      case 'activity_feed_event': {
+        // We trigger a global event here. The ActivityFeed component can listen to it.
+        window.dispatchEvent(new CustomEvent('gocaro:activity_feed_updated'))
         break
       }
     }
@@ -209,8 +285,12 @@ export const useSocialStore = defineStore('social', () => {
     try {
       await acceptChallenge(senderId)
       socketStore.startMatchmaking('casual')
-    } catch (err: any) {
-      toast.addToast(err?.message || 'Failed to accept challenge', 'error')
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        toast.addToast(err.message || 'Failed to accept challenge', 'error')
+      } else {
+        toast.addToast('Failed to accept challenge', 'error')
+      }
     }
   }
 

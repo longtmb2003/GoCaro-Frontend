@@ -210,8 +210,8 @@ const friendsWithUnread = computed(() => {
         class="flex items-center gap-3 p-2 rounded-sm hover:bg-glass-light transition text-left"
         @click="chatStore.setActiveChat(friend.user.id)"
       >
-        <BaseAvatar :name="friend.user.username" size="sm" :online="friend.is_online" />
-        <span class="flex-1 text-sm font-medium text-foreground">{{ friend.user.username }}</span>
+        <BaseAvatar :name="friend.user.display_name" size="sm" :online="friend.is_online" />
+        <span class="flex-1 text-sm font-medium text-foreground">{{ friend.user.display_name }}</span>
         <BaseBadge v-if="friend.unread > 0" variant="danger">{{ friend.unread }}</BaseBadge>
       </button>
     </div>
@@ -220,8 +220,8 @@ const friendsWithUnread = computed(() => {
     <template v-else>
       <div v-if="currentTab === 'dm_chat' && activeFriend" class="flex items-center gap-2 mb-2 pb-2 border-b border-border-subtle">
         <button class="text-foreground-muted hover:text-foreground mr-1" @click="chatStore.setActiveChat(null)">←</button>
-        <BaseAvatar :name="activeFriend.username" size="sm" />
-        <span class="text-sm font-semibold">{{ activeFriend.username }}</span>
+        <BaseAvatar :name="activeFriend.display_name" size="sm" />
+        <span class="text-sm font-semibold">{{ activeFriend.display_name }}</span>
       </div>
 
       <div 
@@ -238,7 +238,7 @@ const friendsWithUnread = computed(() => {
           :class="msg.sender_id === authStore.user?.id ? 'self-end items-end' : 'self-start items-start'"
         >
           <div class="text-[10px] text-foreground-muted mb-0.5 flex gap-1 mx-1">
-            <span v-if="currentTab === 'lobby' && msg.sender_id !== authStore.user?.id" class="font-bold">{{ (msg as LobbyMessage).username }}</span>
+            <span v-if="currentTab === 'lobby' && msg.sender_id !== authStore.user?.id" class="font-bold">{{ (msg as LobbyMessage).display_name }}</span>
             <span>{{ new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }}</span>
           </div>
           <div 
@@ -275,10 +275,10 @@ const friendsWithUnread = computed(() => {
         <form v-else class="flex gap-2" @submit.prevent="sendMessage">
           <BaseInput
             ref="chatInputRef"
+            v-model="inputMessage"
             name="chat_message"
             label="Message"
-            :labelHidden="true"
-            v-model="inputMessage"
+            :label-hidden="true"
             placeholder="Type a message..."
             class="flex-1"
             :disabled="isSending"

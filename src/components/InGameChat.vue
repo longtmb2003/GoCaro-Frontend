@@ -64,9 +64,9 @@ function toggleMute() {
         <span class="w-2 h-2 rounded-full bg-accent animate-pulse"></span> Chat
       </h3>
       <button 
-        @click="toggleMute"
         class="text-foreground-muted hover:text-foreground transition-colors outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-full p-1"
         :title="isMuted ? 'Unmute opponent' : 'Mute opponent'"
+        @click="toggleMute"
       >
         <VolumeX v-if="isMuted" :size="16" />
         <Volume2 v-else :size="16" />
@@ -108,7 +108,7 @@ function toggleMute() {
     </div>
 
     <!-- Input Area -->
-    <form @submit.prevent="send" class="mt-3 shrink-0 flex items-center gap-2">
+    <form class="mt-3 shrink-0 flex items-center gap-2" @submit.prevent="send">
       <input
         v-model="content"
         type="text"

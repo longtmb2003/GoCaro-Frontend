@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import { Check, Coins, Diamond, Flame, Trophy } from 'lucide-vue-next'
+import { Check, Coins, Diamond, Flame, Pencil, Trophy } from 'lucide-vue-next'
 import BaseBadge from '@/components/ui/BaseBadge.vue'
 import BaseProgress from '@/components/ui/BaseProgress.vue'
 import GlassCard from '@/components/ui/GlassCard.vue'
@@ -11,15 +11,22 @@ import { useCountUp } from '@/composables/useCountUp'
 import RankFrame from './RankFrame.vue'
 import { getRankTier, getRankSubTier } from '@/config/ranks'
 import type { UserStats } from '@/types/auth'
+import { useUserProfile } from '@/composables/useUserProfile'
+import { useAuthStore } from '@/stores/auth'
+
+const auth = useAuthStore()
+const { openProfile } = useUserProfile()
 
 const props = defineProps<{
-  username: string
+  displayName: string
   elo: number
   accountType: AccountType
   stats?: UserStats
 }>()
 
-const initial = computed(() => props.username.charAt(0).toUpperCase())
+const emit = defineEmits<{ edit: [] }>()
+
+const initial = computed(() => props.displayName.charAt(0).toUpperCase())
 const isGuest = computed(() => props.accountType === 'anonymous')
 
 const rankTier = computed(() => {
@@ -50,8 +57,19 @@ const displayCoins = useCountUp(() => props.stats?.coins || 0)
       <RankFrame :elo="elo" :initial="initial" />
       <div class="min-w-0 flex-1">
         <div class="flex items-center gap-2">
-          <p class="text-foreground text-card truncate">{{ username }}</p>
+          <p class="text-foreground text-card truncate">{{ displayName }}</p>
           <BaseBadge v-if="isGuest" variant="warning" shape="tag" class="shrink-0">Guest</BaseBadge>
+          <!-- A guest has no profile to edit: nothing about them outlives the
+               session, and they have no handle to fall back to. -->
+          <button
+            v-else
+            type="button"
+            class="text-foreground-muted hover:text-foreground duration-fast shrink-0 p-1 transition"
+            aria-label="Edit profile"
+            @click="emit('edit')"
+          >
+            <Pencil :size="16" aria-hidden="true" />
+          </button>
         </div>
         <p class="text-foreground-muted text-small mt-1 flex items-center gap-2">
           <span class="bg-success size-1.5 rounded-pill" aria-hidden="true" />
@@ -70,7 +88,7 @@ const displayCoins = useCountUp(() => props.stats?.coins || 0)
         >
           {{ elo }}
         </div>
-        <div class="mt-2 text-small font-bold flex items-center gap-2" :class="rankColor">
+        <div class="mt-2 text-small font-bold flex items-center gap-2 px-3 py-1 rounded bg-surface-sunken border border-border-subtle shadow-inner" :class="rankColor">
           <Diamond :size="16" class="opacity-80" aria-hidden="true" /> {{ rankTier }}
         </div>
       </div>
@@ -118,12 +136,23 @@ const displayCoins = useCountUp(() => props.stats?.coins || 0)
       <!-- Rank Progress Bar -->
       <div class="border-border-subtle mt-3 sm:mt-4 pt-3 sm:pt-4 border-t">
         <div class="flex justify-between items-end text-caption text-foreground font-medium mb-2">
-          <span :class="rankColor" class="font-bold tracking-wide">{{ rankTier }}</span>
+          <span :class="rankColor" class="font-bold tracking-wide px-2 py-0.5 rounded bg-surface-sunken border border-border-subtle">{{ rankTier }}</span>
           <span class="text-caption text-foreground-muted tabular-nums font-bold tracking-wider">
             {{ elo }} / {{ nextLevelMax }}
           </span>
         </div>
         <BaseProgress :value="progressPercent" :label="`Progress to ${nextLevelMax.toString()} rating`" />
+      </div>
+      
+      <!-- Competitive Profile Button -->
+      <div class="mt-4">
+        <button
+          @click="openProfile(auth.user?.id || '')"
+          class="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-surface-800/50 hover:bg-surface-700/50 border border-border-subtle rounded-lg text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+        >
+          <Trophy :size="16" class="text-primary-400" />
+          View Competitive Profile
+        </button>
       </div>
 
       <!-- Customization Teasers -->

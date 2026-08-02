@@ -4,6 +4,7 @@ import { RouterLink, useRoute } from 'vue-router'
 
 import { Circle, Scroll } from 'lucide-vue-next'
 import BaseButton from '@/components/ui/BaseButton.vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
 import GlassCard from '@/components/ui/GlassCard.vue'
 import GameBoard from '@/components/GameBoard.vue'
 import ReplayControls from '@/components/ReplayControls.vue'
@@ -143,6 +144,16 @@ const summary = computed(() => {
 
     <div v-if="history.replayLoading" class="text-foreground-muted py-16 text-center text-sm">
       Loading replay…
+    </div>
+
+    <div v-else-if="history.replayErrorCode === 'REPLAY_EXPIRED'" class="py-16 text-center">
+      <EmptyState
+        title="Replay Expired"
+        description="Replays are kept for 3 days after a match ends."
+      />
+      <RouterLink to="/history">
+        <BaseButton variant="secondary" class="mt-4">Back to history</BaseButton>
+      </RouterLink>
     </div>
 
     <div v-else-if="history.replayError" class="py-16 text-center">

@@ -3,6 +3,7 @@ import { http } from './http'
 export interface FriendUser {
   id: string
   username: string
+  display_name: string
   elo: number
 }
 

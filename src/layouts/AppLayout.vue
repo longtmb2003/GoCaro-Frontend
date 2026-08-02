@@ -40,6 +40,7 @@ const showRankRules = ref(false)
               to="/" 
               class="px-4 py-1.5 rounded-lg text-sm font-bold transition-all text-white/60 hover:text-white hover:bg-white/10 border border-transparent"
               exact-active-class="!bg-primary-500 !text-white shadow-[0_0_15px_rgba(45,212,191,0.5)] !border-primary-400/50"
+              :aria-current="$route.path === '/' ? 'page' : undefined"
             >
               Lobby
             </RouterLink>
@@ -47,13 +48,23 @@ const showRankRules = ref(false)
               to="/leaderboard" 
               class="px-4 py-1.5 rounded-lg text-sm font-bold transition-all text-white/60 hover:text-white hover:bg-white/10 border border-transparent"
               active-class="!bg-primary-500 !text-white shadow-[0_0_15px_rgba(45,212,191,0.5)] !border-primary-400/50"
+              :aria-current="$route.path.startsWith('/leaderboard') ? 'page' : undefined"
             >
               Leaderboard
             </RouterLink>
-            <RouterLink 
-              to="/history" 
+            <RouterLink
+              to="/tournaments"
               class="px-4 py-1.5 rounded-lg text-sm font-bold transition-all text-white/60 hover:text-white hover:bg-white/10 border border-transparent"
               active-class="!bg-primary-500 !text-white shadow-[0_0_15px_rgba(45,212,191,0.5)] !border-primary-400/50"
+              :aria-current="$route.path.startsWith('/tournaments') ? 'page' : undefined"
+            >
+              Tournaments
+            </RouterLink>
+            <RouterLink
+              to="/history"
+              class="px-4 py-1.5 rounded-lg text-sm font-bold transition-all text-white/60 hover:text-white hover:bg-white/10 border border-transparent"
+              active-class="!bg-primary-500 !text-white shadow-[0_0_15px_rgba(45,212,191,0.5)] !border-primary-400/50"
+              :aria-current="$route.path.startsWith('/history') ? 'page' : undefined"
             >
               History
             </RouterLink>

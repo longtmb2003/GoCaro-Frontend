@@ -94,7 +94,7 @@ export interface SyncStatePayload {
 
 export interface LobbyUser {
   id: string
-  username: string
+  display_name: string
 }
 
 export interface LobbyStatePayload {
@@ -115,6 +115,6 @@ export interface OpponentReconnectingPayload {
  */
 export interface ChatPayload {
   sender_id: string
-  username: string
+  display_name: string
   content: string
 }

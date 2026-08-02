@@ -13,7 +13,7 @@ export interface DirectMessage {
 export interface LobbyMessage {
   id: string
   sender_id: string
-  username: string
+  display_name: string
   content: string
   created_at: string
 }

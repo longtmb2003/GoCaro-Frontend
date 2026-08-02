@@ -8,10 +8,11 @@ import {
   login as loginRequest,
   register as registerRequest,
   shareAchievement as shareAchievementRequest,
+  updateProfile as updateProfileRequest,
   upgradeAccount as upgradeRequest,
 } from '@/api/auth'
 import { setAuthToken } from '@/api/http'
-import type { AuthUser, Credentials } from '@/types/auth'
+import type { AuthUser, Credentials, ProfileUpdate } from '@/types/auth'
 
 const TOKEN_STORAGE_KEY = 'gocaro.token'
 
@@ -39,20 +40,46 @@ export const useAuthStore = defineStore('auth', () => {
   const isGuest = computed(() => user.value?.account_type === 'anonymous')
 
   /**
-   * The name to show anywhere a player is named. The backend derives a guest's
-   * name from their id rather than storing one, so this repeats that derivation
-   * as a fallback: should any endpoint answer with an empty username, the guest
-   * keeps a stable name instead of rendering blank.
+   * The name to show anywhere a player is named.
+   *
+   * The backend already resolves this and sends it as `display_name`, so that
+   * is what wins. The rest repeats the server's own fallback chain — full name,
+   * then handle, then a name derived from the id — so that a payload from
+   * before this field existed, or a guest whose name is never stored, still
+   * renders a stable name instead of a blank.
    */
   const displayName = computed(() => {
     const current = user.value
     if (current === null) {
       return ''
     }
+    if (current.display_name) {
+      return current.display_name
+    }
+    if (current.full_name) {
+      return current.full_name
+    }
     if (current.username !== '') {
       return current.username
     }
     return `Guest-${current.id.slice(0, GUEST_NAME_ID_LENGTH)}`
+  })
+
+  /**
+   * When the player may next change their full name, or null when they may now.
+   * A guest never can, because they have no profile.
+   */
+  const fullNameChangeAvailableAt = computed(() => {
+    const at = user.value?.full_name_change_available_at
+    return at ? new Date(at) : null
+  })
+
+  const canChangeFullName = computed(() => {
+    if (user.value === null || isGuest.value) {
+      return false
+    }
+    const at = fullNameChangeAvailableAt.value
+    return at === null || at.getTime() <= Date.now()
   })
 
   function persistToken(value: string | null): void {
@@ -153,6 +180,20 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = result.user
   }
 
+  /**
+   * Saves the player's identity fields.
+   *
+   * The token is replaced, not just the user: the backend puts the display name
+   * in the token claims, and the lobby list, lobby chat and opponent banner all
+   * read it from there. App.vue watches the token and reconnects the social
+   * socket, so swapping it here is what makes the new name appear in realtime.
+   */
+  async function updateProfile(update: ProfileUpdate): Promise<void> {
+    const result = await updateProfileRequest(update)
+    persistToken(result.token)
+    user.value = result.user
+  }
+
   async function shareAchievement(): Promise<boolean> {
     const granted = await shareAchievementRequest()
     if (granted && user.value) {
@@ -168,6 +209,9 @@ export const useAuthStore = defineStore('auth', () => {
     isAuthenticated,
     isGuest,
     displayName,
+    canChangeFullName,
+    fullNameChangeAvailableAt,
+    updateProfile,
     initialize,
     refreshProfile,
     login,

@@ -12,7 +12,6 @@ import AppLayout from '@/layouts/AppLayout.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useLeaderboardStore } from '@/stores/leaderboard'
 
-const FULL_LEADERBOARD_LIMIT = 100
 const PAGE_SIZE = 20
 
 const auth = useAuthStore()
@@ -23,26 +22,29 @@ const currentPage = ref(1)
 
 function handleSearch() {
   currentPage.value = 1
-  void leaderboard.load(FULL_LEADERBOARD_LIMIT, searchQuery.value)
+  void leaderboard.load(1, PAGE_SIZE, searchQuery.value)
 }
 
-const paginatedEntries = computed(() => {
-  const start = (currentPage.value - 1) * PAGE_SIZE
-  return leaderboard.entries.slice(start, start + PAGE_SIZE)
-})
+const startIndex = computed(() => (currentPage.value - 1) * PAGE_SIZE)
 
-const totalPages = computed(() => Math.ceil(leaderboard.entries.length / PAGE_SIZE) || 1)
+const totalPages = computed(() => Math.ceil(leaderboard.total / PAGE_SIZE) || 1)
 
 function nextPage() {
-  if (currentPage.value < totalPages.value) currentPage.value++
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++
+    void leaderboard.load(currentPage.value, PAGE_SIZE, searchQuery.value)
+  }
 }
 
 function prevPage() {
-  if (currentPage.value > 1) currentPage.value--
+  if (currentPage.value > 1) {
+    currentPage.value--
+    void leaderboard.load(currentPage.value, PAGE_SIZE, searchQuery.value)
+  }
 }
 
 onMounted(() => {
-  void leaderboard.load(FULL_LEADERBOARD_LIMIT, '')
+  void leaderboard.load(1, PAGE_SIZE, '')
 })
 </script>
 
@@ -80,7 +82,7 @@ onMounted(() => {
 
       <ErrorState v-else-if="leaderboard.error" :message="leaderboard.error">
         <template #action>
-          <BaseButton variant="secondary" @click="leaderboard.load(FULL_LEADERBOARD_LIMIT)">
+          <BaseButton variant="secondary" @click="leaderboard.load(currentPage, PAGE_SIZE, searchQuery)">
             Try again
           </BaseButton>
         </template>
@@ -88,8 +90,9 @@ onMounted(() => {
 
       <template v-else>
         <LeaderboardTable
-          :entries="paginatedEntries"
+          :entries="leaderboard.entries"
           :current-username="auth.user?.username ?? ''"
+          :start-index="startIndex"
         />
 
         <div

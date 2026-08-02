@@ -59,6 +59,7 @@ export const useHistoryStore = defineStore('history', () => {
   const moveIndex = ref(0)
   const replayLoading = ref(false)
   const replayError = ref<string | null>(null)
+  const replayErrorCode = ref<string | null>(null)
 
   const totalMoves = computed(() => moves.value.length)
   const atStart = computed(() => moveIndex.value === 0)
@@ -95,7 +96,13 @@ export const useHistoryStore = defineStore('history', () => {
       replayMatch.value = detail.match
       moves.value = detail.moves
     } catch (err) {
-      replayError.value = err instanceof ApiError ? err.message : 'Unable to load the replay.'
+      if (err instanceof ApiError) {
+        replayError.value = err.message
+        replayErrorCode.value = err.code
+      } else {
+        replayError.value = 'Unable to load the replay.'
+        replayErrorCode.value = 'UNKNOWN'
+      }
     } finally {
       replayLoading.value = false
     }
@@ -137,6 +144,7 @@ export const useHistoryStore = defineStore('history', () => {
     moveIndex,
     replayLoading,
     replayError,
+    replayErrorCode,
     totalMoves,
     atStart,
     atEnd,

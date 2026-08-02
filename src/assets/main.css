@@ -284,6 +284,14 @@
   :focus-visible {
     @apply outline-accent outline-2 outline-offset-2;
   }
+
+  button, [role="button"], a, input[type="button"], input[type="submit"] {
+    cursor: pointer;
+  }
+  
+  button:disabled, [role="button"][disabled], input:disabled {
+    cursor: not-allowed;
+  }
 }
 
 /*

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import { Crown, Hand, Link2, Scroll, ShoppingBag, Swords, Target, Zap } from 'lucide-vue-next'
+import { Crown, Hand, Link2, Scroll, ShoppingBag, Swords, Target, Zap, MessageSquare, Users } from 'lucide-vue-next'
 import { RouterLink, useRouter } from 'vue-router'
 
 import { ApiError } from '@/api/ApiError'
@@ -22,8 +22,12 @@ import OnlineUsersModal from '@/components/OnlineUsersModal.vue'
 import FriendsModal from '@/components/FriendsModal.vue'
 import ChatDrawer from '@/components/ChatDrawer.vue'
 import UpgradeAccountModal from '@/components/UpgradeAccountModal.vue'
+import EditProfileModal from '@/components/EditProfileModal.vue'
+import InviteModal from '@/components/InviteModal.vue'
+import ActivityFeed from '@/components/ActivityFeed.vue'
 import AppLayout from '@/layouts/AppLayout.vue'
 import { useAuthStore } from '@/stores/auth'
+import { useSocialStore } from '@/stores/social'
 import { useHistoryStore } from '@/stores/history'
 import { useLeaderboardStore } from '@/stores/leaderboard'
 import { useLobbyStore } from '@/stores/lobby'
@@ -31,13 +35,14 @@ import { useSocketStore } from '@/stores/socket'
 import { useChatStore } from '@/stores/chat'
 import { useToast } from '@/composables/useToast'
 import { useCountUp } from '@/composables/useCountUp'
-import type { Credentials } from '@/types/auth'
+import type { Credentials, ProfileUpdate } from '@/types/auth'
 
 const auth = useAuthStore()
 const historyStore = useHistoryStore()
 const leaderboard = useLeaderboardStore()
 const socket = useSocketStore()
 const lobby = useLobbyStore()
+const socialStore = useSocialStore()
 const { addToast } = useToast()
 const router = useRouter()
 
@@ -59,15 +64,26 @@ const cosmeticPreviews = [
 const upgradeOpen = ref(false)
 const upgradeLoading = ref(false)
 const upgradeError = ref('')
+const editProfileOpen = ref(false)
+const editProfileLoading = ref(false)
+const editProfileError = ref('')
 const guestLogoutOpen = ref(false)
 const leaderboardModalOpen = ref(false)
 const friendsModalOpen = ref(false)
 const chatDrawerOpen = ref(false)
+const inviteModalOpen = ref(false)
+const activeInviteCode = ref('')
 
 onMounted(() => {
   void leaderboard.load()
   void historyStore.load(1)
   lobby.connect()
+  
+  const savedCode = sessionStorage.getItem('gocaro_invite_code')
+  if (savedCode) {
+    activeInviteCode.value = savedCode
+    inviteModalOpen.value = true
+  }
 })
 
 onUnmounted(() => {
@@ -101,6 +117,12 @@ const isMatchmaking = computed(
 watch(
   () => socket.status,
   (status) => {
+    if (status !== 'idle' && inviteModalOpen.value) {
+      inviteModalOpen.value = false
+      activeInviteCode.value = ''
+      sessionStorage.removeItem('gocaro_invite_code')
+    }
+    
     if (status === 'matched') {
       void router.push('/game')
     }
@@ -121,6 +143,14 @@ function handleOpenChat(friendId: string): void {
   chatDrawerOpen.value = true
 }
 
+const totalUnreadMessages = computed(() => {
+  return Object.values(chatStore.unreadCounts).reduce((a, b) => a + b, 0)
+})
+
+const totalPendingFriends = computed(() => {
+  return socialStore.incomingRequests.length
+})
+
 async function handleUpgrade(credentials: Credentials): Promise<void> {
   upgradeLoading.value = true
   upgradeError.value = ''
@@ -137,6 +167,34 @@ async function handleUpgrade(credentials: Credentials): Promise<void> {
     upgradeError.value = error.message
   } finally {
     upgradeLoading.value = false
+  }
+}
+
+function openEditProfile(): void {
+  editProfileError.value = ''
+  editProfileOpen.value = true
+}
+
+/**
+ * Saving swaps the token as well as the user, which App.vue picks up to
+ * reconnect the social socket — that is what makes the new name reach the
+ * lobby list and lobby chat rather than only this page.
+ */
+async function handleEditProfile(update: ProfileUpdate): Promise<void> {
+  editProfileLoading.value = true
+  editProfileError.value = ''
+  try {
+    await auth.updateProfile(update)
+    editProfileOpen.value = false
+    // The board names players, so a rename makes the loaded page stale.
+    void leaderboard.load()
+  } catch (error) {
+    if (!(error instanceof ApiError)) {
+      throw error
+    }
+    editProfileError.value = error.message
+  } finally {
+    editProfileLoading.value = false
   }
 }
 
@@ -210,6 +268,33 @@ const recentMatch = computed(() => {
     (m) => m.player1_id === auth.user?.id || m.player2_id === auth.user?.id,
   )
 })
+
+import { createOpenChallenge } from '@/api/challenge'
+
+async function handleCreateRoom() {
+  try {
+    const { code } = await createOpenChallenge()
+    activeInviteCode.value = code
+    sessionStorage.setItem('gocaro_invite_code', code)
+    inviteModalOpen.value = true
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      addToast(err.message || 'Failed to create room', 'error')
+    } else {
+      addToast('Failed to create room', 'error')
+    }
+  }
+}
+
+function handleCancelInvite() {
+  inviteModalOpen.value = false
+  activeInviteCode.value = ''
+  sessionStorage.removeItem('gocaro_invite_code')
+}
+
+function handleJoinCode(code: string) {
+  void router.push(`/join/${code}`)
+}
 </script>
 
 <template>
@@ -221,16 +306,20 @@ const recentMatch = computed(() => {
       <BaseButton
         v-if="auth.isAuthenticated"
         variant="secondary"
+        class="relative"
         @click="friendsModalOpen = true"
       >
-        Friends
+        <Users :size="18" /> Friends
+        <span v-if="totalPendingFriends > 0" class="absolute -top-1 -right-1 flex h-3 w-3 rounded-full bg-error border border-background shadow-sm"></span>
       </BaseButton>
       <BaseButton
         v-if="auth.isAuthenticated"
         variant="secondary"
+        class="relative"
         @click="chatDrawerOpen = true"
       >
-        Chat
+        <MessageSquare :size="18" /> Chat
+        <span v-if="totalUnreadMessages > 0" class="absolute -top-1 -right-1 flex h-3 w-3 rounded-full bg-error border border-background shadow-sm"></span>
       </BaseButton>
       <BaseButton
         variant="secondary"
@@ -245,10 +334,11 @@ const recentMatch = computed(() => {
         <div class="order-3 md:order-3 md:col-span-1 lg:order-none">
           <ProfileCard
             v-if="auth.user"
-            :username="auth.displayName"
+            :display-name="auth.displayName"
             :elo="auth.user.elo"
             :account-type="auth.user.account_type"
             :stats="auth.user.stats"
+            @edit="openEditProfile"
           />
         </div>
 
@@ -397,6 +487,8 @@ const recentMatch = computed(() => {
           :is-guest="auth.isGuest"
           @play="socket.startMatchmaking($event)"
           @upgrade="openUpgrade"
+          @create-room="handleCreateRoom"
+          @join-code="handleJoinCode"
         />
 
         <div class="order-5 md:order-6 md:col-span-1 lg:order-none flex flex-col gap-4">
@@ -520,9 +612,9 @@ const recentMatch = computed(() => {
               variant="nested"
               class="gap-3 flex items-center"
             >
-              <BaseAvatar :name="user.username" size="sm" online />
+              <BaseAvatar :name="user.display_name" size="sm" online />
               <span class="text-body text-foreground truncate font-semibold">
-                {{ user.username }}
+                {{ user.display_name }}
               </span>
             </GlassCard>
           </ul>
@@ -567,6 +659,15 @@ const recentMatch = computed(() => {
               </BaseButton>
             </div>
           </div>
+        </GlassCard>
+        
+        <!-- Activity Feed -->
+        <GlassCard
+          v-if="auth.isAuthenticated"
+          as="section"
+          class="order-5 md:order-5 md:col-span-1 lg:order-none"
+        >
+          <ActivityFeed />
         </GlassCard>
 
         <!-- Server Status -->
@@ -624,6 +725,19 @@ const recentMatch = computed(() => {
       @close="upgradeOpen = false"
     />
 
+    <EditProfileModal
+      v-if="editProfileOpen && auth.user"
+      :full-name="auth.user.full_name"
+      :phone="auth.user.phone"
+      :username="auth.user.username"
+      :can-change-name="auth.canChangeFullName"
+      :name-available-at="auth.fullNameChangeAvailableAt"
+      :loading="editProfileLoading"
+      :server-error="editProfileError"
+      @submit="handleEditProfile"
+      @close="editProfileOpen = false"
+    />
+
     <GuestLogoutDialog
       v-if="guestLogoutOpen"
       @save="openUpgrade"
@@ -635,6 +749,8 @@ const recentMatch = computed(() => {
 
     <LeaderboardModal v-if="leaderboardModalOpen" @close="leaderboardModalOpen = false" />
     
+    <InviteModal v-if="inviteModalOpen" :code="activeInviteCode" @cancel="handleCancelInvite" />
+
     <FriendsModal v-if="friendsModalOpen" @close="friendsModalOpen = false" @open-chat="handleOpenChat" />
     
     <ChatDrawer 
