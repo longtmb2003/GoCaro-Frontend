@@ -76,8 +76,8 @@ function prevOnlinePage() {
           variant="nested"
           class="gap-3 flex items-center"
         >
-          <BaseAvatar :name="user.username" size="sm" online />
-          <span class="text-body text-foreground truncate font-medium">{{ user.username }}</span>
+          <BaseAvatar :name="user.display_name" size="sm" online />
+          <span class="text-body text-foreground truncate font-medium">{{ user.display_name }}</span>
         </GlassCard>
       </ul>
     </div>

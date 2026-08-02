@@ -28,9 +28,10 @@ function toRow(match: MatchSummary): HistoryRow {
   const isPlayer1 = match.player1_id === props.currentUserId
   const mine = isPlayer1 || match.player2_id === props.currentUserId
   const opponentId = isPlayer1 ? match.player2_id : match.player1_id
+  const opponentName = isPlayer1 ? match.player2_name : match.player1_name
   const players = mine
-    ? `You vs ${shortId(opponentId)}`
-    : `${shortId(match.player1_id)} vs ${shortId(match.player2_id)}`
+    ? `You vs ${opponentName || shortId(opponentId)}`
+    : `${match.player1_name || shortId(match.player1_id)} vs ${match.player2_name || shortId(match.player2_id)}`
 
   const { outcome, tone } = describeOutcome(match, mine)
 
@@ -61,7 +62,8 @@ function describeOutcome(match: MatchSummary, mine: boolean): { outcome: string;
       ? { outcome: 'Win', tone: 'win' }
       : { outcome: 'Loss', tone: 'loss' }
   }
-  return { outcome: `${shortId(match.winner_id)} won`, tone: 'neutral' }
+  const winnerName = match.winner_id === match.player1_id ? match.player1_name : match.player2_name
+  return { outcome: `${winnerName || shortId(match.winner_id)} won`, tone: 'neutral' }
 }
 
 const rows = computed<HistoryRow[]>(() => props.matches.map(toRow))

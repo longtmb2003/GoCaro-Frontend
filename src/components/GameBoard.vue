@@ -151,7 +151,7 @@ function onCellClick(cell: Cell): void {
   <div class="relative bg-surface rounded-2xl p-2 sm:p-3 shadow-glow w-full max-w-xl aspect-square flex flex-col group/board overflow-hidden border border-border-strong">
     
     <div
-      class="relative grid w-full h-full flex-1 gap-[1px] rounded-xl bg-white/[0.14] overflow-hidden ring-1 ring-border shadow-inner z-10"
+      class="relative grid w-full h-full flex-1 gap-[1px] rounded-xl bg-border-strong overflow-hidden ring-1 ring-border shadow-inner z-10"
       :style="gridStyle"
       role="grid"
       aria-label="Game board"
@@ -160,7 +160,7 @@ function onCellClick(cell: Cell): void {
         v-for="cell in cells"
         :key="cell.y * BOARD_SIZE + cell.x"
         type="button"
-        class="relative aspect-square bg-surface-sunken transition-colors focus-visible:z-20 focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none group overflow-hidden"
+        class="relative aspect-square bg-surface-2 transition-colors focus-visible:z-20 focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none group overflow-hidden"
         :class="isPlayable(cell) ? 'cursor-pointer hover:bg-surface' : 'cursor-default'"
         :disabled="!isPlayable(cell)"
         :aria-label="label(cell)"
@@ -197,9 +197,9 @@ function onCellClick(cell: Cell): void {
         </div>
         
         <!-- Last Move Persistent Marker -->
-        <div v-if="isLastMove(cell)" class="absolute inset-[20%] rounded-full border-2 border-white/60 z-20 pointer-events-none"></div>
+        <div v-if="isLastMove(cell)" class="absolute top-1.5 right-1.5 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-accent shadow-[0_0_8px_rgba(46,230,255,1)] z-20 pointer-events-none"></div>
         <!-- Last Move Radar Ping -->
-        <div v-if="isLastMove(cell)" class="absolute inset-[15%] rounded-full ring-2 ring-accent animate-ping opacity-75 z-0 pointer-events-none"></div>
+        <div v-if="isLastMove(cell)" class="absolute inset-[30%] rounded-full ring-2 ring-accent animate-ping opacity-50 z-0 pointer-events-none"></div>
       </button>
     </div>
   </div>

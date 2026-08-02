@@ -591,7 +591,7 @@ function isChatPayload(payload: unknown): payload is ChatPayload {
   const record = payload as Record<string, unknown>
   return (
     typeof record.sender_id === 'string' &&
-    typeof record.username === 'string' &&
+    typeof record.display_name === 'string' &&
     typeof record.content === 'string'
   )
 }

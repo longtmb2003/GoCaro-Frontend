@@ -160,10 +160,10 @@ function openChat(id: string) {
           </p>
           <GlassCard v-for="friend in social.friends" :key="friend.friendship_id" as="div" variant="nested" class="flex items-center justify-between">
             <div class="flex items-center gap-3">
-              <BaseAvatar :name="friend.user.username" size="sm" :online="friend.is_online" />
+              <BaseAvatar :name="friend.user.display_name" size="sm" :online="friend.is_online" />
               <div>
                 <p class="font-semibold text-foreground flex items-center gap-2">
-                  {{ friend.user.username }}
+                  {{ friend.user.display_name }}
                   <BaseBadge v-if="(chatStore.unreadCounts[friend.user.id] ?? 0) > 0" variant="danger">
                     {{ chatStore.unreadCounts[friend.user.id] }}
                   </BaseBadge>
@@ -176,7 +176,7 @@ function openChat(id: string) {
                 <MessageSquare :size="16" />
               </BaseButton>
               <!-- Invite to challenge (casual) -->
-              <BaseButton variant="primary" size="sm" class="px-2" title="Challenge" @click="issueChallenge(friend.user.id, friend.user.username)">
+              <BaseButton variant="primary" size="sm" class="px-2" title="Challenge" @click="issueChallenge(friend.user.id, friend.user.display_name)">
                 <Swords :size="16" />
               </BaseButton>
               <BaseButton variant="danger" size="sm" class="px-2" title="Unfriend" @click="unfriend(friend.friendship_id)">
@@ -193,9 +193,9 @@ function openChat(id: string) {
           </p>
           <GlassCard v-for="req in social.incomingRequests" :key="req.friendship_id" as="div" variant="nested" class="flex items-center justify-between">
             <div class="flex items-center gap-3">
-              <BaseAvatar :name="req.user.username" size="sm" />
+              <BaseAvatar :name="req.user.display_name" size="sm" />
               <div>
-                <p class="font-semibold text-foreground">{{ req.user.username }}</p>
+                <p class="font-semibold text-foreground">{{ req.user.display_name }}</p>
                 <p class="text-caption text-foreground-muted">Elo: {{ req.user.elo }}</p>
               </div>
             </div>
@@ -213,8 +213,8 @@ function openChat(id: string) {
         <!-- Search -->
         <div v-if="activeTab === 'search'" class="flex flex-col gap-4">
           <div class="flex items-center gap-2">
-            <BaseInput name="search_user" label="Search User" v-model="searchQuery" placeholder="Search username..." @keydown.enter="handleSearch" class="flex-1" />
-            <BaseButton variant="primary" @click="handleSearch" :loading="isSearching">
+            <BaseInput v-model="searchQuery" name="search_user" label="Search User" placeholder="Search username..." class="flex-1" @keydown.enter="handleSearch" />
+            <BaseButton variant="primary" :loading="isSearching" @click="handleSearch">
               <Search :size="18" />
             </BaseButton>
           </div>
@@ -225,9 +225,9 @@ function openChat(id: string) {
             </p>
             <GlassCard v-for="user in searchResults" :key="user.id" as="div" variant="nested" class="flex items-center justify-between">
               <div class="flex items-center gap-3">
-                <BaseAvatar :name="user.username" size="sm" />
+                <BaseAvatar :name="user.display_name" size="sm" />
                 <div>
-                  <p class="font-semibold text-foreground">{{ user.username }}</p>
+                  <p class="font-semibold text-foreground">{{ user.display_name }}</p>
                   <p class="text-caption text-foreground-muted">Elo: {{ user.elo }}</p>
                 </div>
               </div>

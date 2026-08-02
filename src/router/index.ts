@@ -40,6 +40,18 @@ const router = createRouter({
       meta: { requiresAuth: true, title: 'Match history' },
     },
     {
+      path: '/tournaments',
+      name: 'tournaments',
+      component: () => import('@/pages/TournamentsPage.vue'),
+      meta: { requiresAuth: true, title: 'Tournaments' },
+    },
+    {
+      path: '/tournaments/:id',
+      name: 'tournament-detail',
+      component: () => import('@/pages/TournamentDetailPage.vue'),
+      meta: { requiresAuth: true, title: 'Tournament' },
+    },
+    {
       path: '/replay/:id',
       name: 'replay',
       component: () => import('@/pages/ReplayPage.vue'),
@@ -56,6 +68,12 @@ const router = createRouter({
       name: 'register',
       component: () => import('@/pages/RegisterPage.vue'),
       meta: { guestOnly: true, title: 'Create account' },
+    },
+    {
+      path: '/join/:code',
+      name: 'join-invite',
+      component: () => import('@/pages/JoinPage.vue'),
+      meta: { requiresAuth: true, title: 'Join Match' },
     },
     {
       path: '/:pathMatch(.*)*',

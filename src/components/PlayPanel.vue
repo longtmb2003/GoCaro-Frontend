@@ -1,12 +1,28 @@
 <script setup lang="ts">
-import { Gamepad2, Lock, Swords } from 'lucide-vue-next'
+import { Gamepad2, Lock, Swords, Link2, LogIn } from 'lucide-vue-next'
+import { ref } from 'vue'
 import BaseBadge from '@/components/ui/BaseBadge.vue'
 import GlassCard from '@/components/ui/GlassCard.vue'
 import type { MatchmakingMode } from '@/types/game'
 
 withDefaults(defineProps<{ isGuest?: boolean }>(), { isGuest: false })
 
-const emit = defineEmits<{ play: [mode: MatchmakingMode]; upgrade: [] }>()
+const emit = defineEmits<{ 
+  play: [mode: MatchmakingMode]; 
+  upgrade: []; 
+  'create-room': []; 
+  'join-code': [code: string] 
+}>()
+
+const joinCode = ref('')
+
+function submitJoin() {
+  const code = joinCode.value.trim().toUpperCase()
+  if (code.length === 6) {
+    emit('join-code', code)
+    joinCode.value = ''
+  }
+}
 </script>
 
 <template>
@@ -48,6 +64,46 @@ const emit = defineEmits<{ play: [mode: MatchmakingMode]; upgrade: [] }>()
         <p class="text-small text-foreground-muted mt-1">Just for fun, no pressure</p>
 
         <BaseBadge variant="primary" class="mt-3"><Gamepad2 :size="16" aria-hidden="true" /> Practice mode</BaseBadge>
+      </GlassCard>
+
+      <!-- Create Room: the social feature -->
+      <GlassCard
+        as="button"
+        type="button"
+        variant="interactive"
+        class="cursor-pointer text-left"
+        @click="isGuest ? emit('upgrade') : emit('create-room')"
+      >
+        <h3 class="text-card text-foreground">Create Room</h3>
+        <p class="text-small text-foreground-muted mt-1">Play with a friend via link</p>
+
+        <BaseBadge v-if="isGuest" variant="neutral" class="mt-3">
+          <Lock :size="16" aria-hidden="true" /> Sign in required
+        </BaseBadge>
+        <BaseBadge v-else variant="primary" class="mt-3">
+          <Link2 :size="16" aria-hidden="true" /> Share link
+        </BaseBadge>
+      </GlassCard>
+
+      <!-- Join with Code -->
+      <GlassCard as="div" variant="nested" class="flex flex-col justify-center">
+        <h3 class="text-small font-semibold text-foreground mb-2">Join with Code</h3>
+        <form class="flex gap-2" @submit.prevent="submitJoin">
+          <input
+            v-model="joinCode"
+            type="text"
+            maxlength="6"
+            placeholder="6-letter code"
+            class="flex-1 bg-background border border-border-subtle rounded px-3 py-2 text-foreground font-mono uppercase focus:outline-none focus:ring-1 focus:ring-accent"
+          />
+          <button
+            type="submit"
+            :disabled="joinCode.trim().length !== 6"
+            class="bg-accent/10 text-accent px-3 py-2 rounded hover:bg-accent/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            <LogIn :size="18" aria-hidden="true" />
+          </button>
+        </form>
       </GlassCard>
     </div>
   </section>

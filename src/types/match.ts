@@ -9,7 +9,9 @@ export type MatchStatus = 'in_progress' | 'finished' | 'abandoned'
 export interface MatchSummary {
   id: string
   player1_id: string
+  player1_name: string
   player2_id: string
+  player2_name: string
   winner_id: string | null
   status: MatchStatus
   /** Whether this result moved both players' ratings. */
