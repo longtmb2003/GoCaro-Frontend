@@ -7,6 +7,7 @@ import BaseBadge from './ui/BaseBadge.vue'
 import BaseInput from './ui/BaseInput.vue'
 import BaseModal from './ui/BaseModal.vue'
 import GlassCard from './ui/GlassCard.vue'
+import FantasySystemIcon from './ui/FantasySystemIcon.vue'
 import { useSocialStore } from '@/stores/social'
 import { useChatStore } from '@/stores/chat'
 import { useAuthStore } from '@/stores/auth'
@@ -127,14 +128,14 @@ function openChat(id: string) {
       <!-- Header -->
       <div class="border-border-subtle flex items-center justify-between border-b p-4">
         <h2 class="text-h4 text-foreground flex items-center gap-2">
-          <Users :size="24" />
+          <FantasySystemIcon><Users :size="24" /></FantasySystemIcon>
           Friends
         </h2>
         <button
           class="text-foreground-muted hover:text-foreground hover:bg-surface-sunken rounded-md p-1 transition-colors"
           @click="emit('close')"
         >
-          <X :size="20" />
+          <FantasySystemIcon compact><X :size="20" /></FantasySystemIcon>
         </button>
       </div>
 
@@ -185,14 +186,14 @@ function openChat(id: string) {
             </div>
             <div class="flex items-center gap-2">
               <BaseButton variant="secondary" size="sm" class="px-2" title="Chat" @click="openChat(friend.user.id)">
-                <MessageSquare :size="16" />
+                <FantasySystemIcon compact><MessageSquare :size="16" /></FantasySystemIcon>
               </BaseButton>
               <!-- Invite to challenge (casual) -->
               <BaseButton variant="primary" size="sm" class="px-2" title="Challenge" @click="issueChallenge(friend.user.id, friend.user.display_name)">
-                <Swords :size="16" />
+                <FantasySystemIcon compact><Swords :size="16" /></FantasySystemIcon>
               </BaseButton>
               <BaseButton variant="danger" size="sm" class="px-2" title="Unfriend" @click="confirmUnfriend(friend.friendship_id)">
-                <X :size="16" />
+                <FantasySystemIcon compact><X :size="16" /></FantasySystemIcon>
               </BaseButton>
             </div>
           </GlassCard>
@@ -213,10 +214,10 @@ function openChat(id: string) {
             </div>
             <div class="flex items-center gap-2">
               <BaseButton variant="success" size="sm" class="px-2" title="Accept" @click="acceptReq(req.friendship_id)">
-                <Check :size="16" />
+                <FantasySystemIcon compact><Check :size="16" /></FantasySystemIcon>
               </BaseButton>
               <BaseButton variant="danger" size="sm" class="px-2" title="Decline" @click="declineReq(req.friendship_id)">
-                <X :size="16" />
+                <FantasySystemIcon compact><X :size="16" /></FantasySystemIcon>
               </BaseButton>
             </div>
           </GlassCard>
@@ -227,7 +228,7 @@ function openChat(id: string) {
           <div class="flex items-center gap-2">
             <BaseInput v-model="searchQuery" name="search_user" label="Search User" placeholder="Search username..." class="flex-1" @keydown.enter="handleSearch" />
             <BaseButton variant="primary" :loading="isSearching" @click="handleSearch">
-              <Search :size="18" />
+              <FantasySystemIcon compact><Search :size="18" /></FantasySystemIcon>
             </BaseButton>
           </div>
           
@@ -244,7 +245,7 @@ function openChat(id: string) {
                 </div>
               </div>
               <BaseButton v-if="user.id !== auth.user?.id" variant="secondary" size="sm" class="px-2" title="Add Friend" @click="sendRequest(user.id)">
-                <UserPlus :size="16" />
+                <FantasySystemIcon compact><UserPlus :size="16" /></FantasySystemIcon>
               </BaseButton>
             </GlassCard>
           </div>

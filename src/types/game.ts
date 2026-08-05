@@ -29,6 +29,8 @@ export interface QueueSearchingPayload {
  */
 export interface MatchFoundPayload {
   room_id: string
+  /** Added for profile/rank hydration; older servers may omit it. */
+  opponent_id?: string
   opponent: string
   your_symbol: PlayerSymbol
   your_turn: boolean
@@ -66,6 +68,22 @@ export interface GameResult {
   outcome: 'win' | 'loss' | 'draw'
   reason: string
 }
+
+export interface WinningCell {
+  row: number
+  col: number
+}
+
+export type WinDirection = 'horizontal' | 'vertical' | 'diagonal-down' | 'diagonal-up'
+
+/** Exact board-space result derived only after the authoritative game_over frame. */
+export interface WinResult {
+  winnerId: string
+  winningCells: WinningCell[]
+  direction: WinDirection
+}
+
+export type MatchPhase = 'playing' | 'finishing' | 'result' | 'connection-lost'
 
 /**
  * One move in a `sync_state` frame. Unlike a stored `MatchMove`, the symbol is

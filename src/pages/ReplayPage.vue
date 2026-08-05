@@ -6,7 +6,7 @@ import { Circle, Scroll } from 'lucide-vue-next'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import GlassCard from '@/components/ui/GlassCard.vue'
-import GameBoard from '@/components/GameBoard.vue'
+import BoardRenderer from '@/components/board-renderer/BoardRenderer.vue'
 import ReplayControls from '@/components/ReplayControls.vue'
 import AppLayout from '@/layouts/AppLayout.vue'
 import { useAuthStore } from '@/stores/auth'
@@ -166,7 +166,7 @@ const summary = computed(() => {
     <div v-else-if="summary" class="grid gap-6 lg:grid-cols-[1fr_16rem] xl:grid-cols-[1fr_20rem] items-start">
       <!-- Left side: Board & Controls -->
       <div class="flex flex-col items-center gap-6 w-full">
-        <GameBoard
+        <BoardRenderer
           :board="history.replayBoard"
           :interactive="false"
           :last-move="history.replayLastMove"

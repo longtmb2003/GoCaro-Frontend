@@ -6,6 +6,7 @@ import BaseButton from './ui/BaseButton.vue'
 import BaseAvatar from './ui/BaseAvatar.vue'
 import BaseInput from './ui/BaseInput.vue'
 import BaseBadge from './ui/BaseBadge.vue'
+import FantasySystemIcon from './ui/FantasySystemIcon.vue'
 import { useChatStore } from '@/stores/chat'
 import { useAuthStore } from '@/stores/auth'
 import { useSocialStore } from '@/stores/social'
@@ -220,7 +221,7 @@ const friendsWithUnread = computed(() => {
     <template v-else>
       <div v-if="currentTab === 'dm_chat' && activeFriend" class="flex items-center gap-2 mb-2 pb-2 border-b border-border-subtle">
         <button class="text-foreground-muted hover:text-foreground mr-1 p-1 rounded-sm hover:bg-surface-sunken" title="Back" @click="chatStore.setActiveChat(null)">
-          <ArrowLeft :size="16" />
+          <FantasySystemIcon compact><ArrowLeft :size="16" /></FantasySystemIcon>
         </button>
         <BaseAvatar :name="activeFriend.display_name" size="sm" />
         <span class="text-sm font-semibold">{{ activeFriend.display_name }}</span>
@@ -262,14 +263,15 @@ const friendsWithUnread = computed(() => {
         class="absolute bottom-16 left-1/2 -translate-x-1/2 bg-surface-3 border border-border-strong shadow-floating text-xs px-3 py-1 rounded-pill flex items-center gap-1 z-10 animate-fade-in"
         @click="scrollToBottom(true)"
       >
-        New messages <ChevronDown :size="12" />
+        New messages
+        <FantasySystemIcon compact><ChevronDown :size="12" /></FantasySystemIcon>
       </button>
 
       <!-- Input Area -->
       <div class="mt-3 pt-3 border-t border-border-strong">
         <div v-if="authStore.isGuest" class="flex flex-col items-center justify-center p-3 bg-surface-sunken rounded-sm border border-border-subtle gap-2">
           <div class="flex items-center gap-2 text-warning text-sm">
-            <Lock :size="14" />
+            <FantasySystemIcon compact><Lock :size="14" /></FantasySystemIcon>
             <span>Guests cannot chat</span>
           </div>
           <BaseButton size="sm" variant="primary" @click="emit('upgrade')">Upgrade Account</BaseButton>
@@ -292,7 +294,7 @@ const friendsWithUnread = computed(() => {
             class="w-12 h-11 px-0 flex justify-center items-center shrink-0 rounded-button"
             :disabled="!inputMessage.trim() || isSending"
           >
-            <Send :size="18" class="text-white" />
+            <FantasySystemIcon compact><Send :size="18" /></FantasySystemIcon>
           </BaseButton>
         </form>
       </div>

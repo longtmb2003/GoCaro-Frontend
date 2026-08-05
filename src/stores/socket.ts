@@ -4,6 +4,7 @@ import { defineStore } from 'pinia'
 import { matchmakeUrl, reconnectUrl, SocketManager, type SocketMessage } from '@/api/websocket'
 import { useAuthStore } from '@/stores/auth'
 import { useGameStore } from '@/stores/game'
+import { useMatchAudio } from '@/composables/useMatchAudio'
 import type {
   BoardUpdatePayload,
   GameOverPayload,
@@ -15,6 +16,12 @@ import type {
   SyncStatePayload,
   ChatPayload,
 } from '@/types/game'
+import { deriveWinResult } from '@/utils/board'
+import {
+  clearMatchRecovery,
+  loadMatchRecovery,
+  saveMatchRecovery,
+} from '@/utils/matchRecovery'
 
 /**
  * How long the client keeps trying to rejoin a match after its own socket drops.
@@ -36,6 +43,7 @@ const RECONNECT_RETRY_DELAY_MS = 2_000
  * - `error`: the attempt failed or the connection dropped while searching.
  */
 export type MatchmakingStatus = 'idle' | 'connecting' | 'searching' | 'matched' | 'error'
+export type GameConnectionStatus = 'live' | 'reconnecting' | 'failed'
 
 /**
  * Wording for the queue refusals a player can actually cause, which the backend
@@ -44,7 +52,8 @@ export type MatchmakingStatus = 'idle' | 'connecting' | 'searching' | 'matched' 
  * code falls back to the server's message.
  */
 const QUEUE_ERROR_MESSAGES: Record<string, string> = {
-  ALREADY_IN_MATCH: 'You are already in a match, probably in another tab. Finish it before starting another.',
+  ALREADY_IN_MATCH:
+    'You are already in a match, probably in another tab. Finish it before starting another.',
   ALREADY_QUEUED: 'You are already searching for a match, probably in another tab.',
 }
 
@@ -61,7 +70,7 @@ export const useSocketStore = defineStore('socket', () => {
    * Health of the in-game connection: `reconnecting` while the client is trying
    * to rejoin after its own socket dropped mid-match.
    */
-  const connection = ref<'live' | 'reconnecting'>('live')
+  const connection = ref<GameConnectionStatus>('live')
   /** Seconds left in the reconnect window, counted down for the overlay. */
   const reconnectSecondsLeft = ref(0)
   /** Seconds until the opponent forfeits, or null while they are connected. */
@@ -90,6 +99,7 @@ export const useSocketStore = defineStore('socket', () => {
 
   const auth = useAuthStore()
   const game = useGameStore()
+  const matchAudio = useMatchAudio()
 
   const manager = new SocketManager()
 
@@ -119,6 +129,7 @@ export const useSocketStore = defineStore('socket', () => {
     }
 
     mode.value = searchMode
+    matchAudio.playMatchmakingLoop()
     searchProgress.value = { elapsed_seconds: 0 }
     status.value = 'connecting'
     errorMessage.value = null
@@ -137,20 +148,22 @@ export const useSocketStore = defineStore('socket', () => {
   }
 
   function cancelMatchmaking(): void {
-    teardown()
+    teardown('cancelled')
   }
 
   /** Sends a move; the server validates it and answers with a board_update. */
   function sendMove(x: number, y: number): void {
+    if (!game.canPlay || connection.value !== 'live') return
     manager.send({ type: 'move', payload: { x, y } })
   }
 
   function sendResign(): void {
+    if (game.phase !== 'playing' || connection.value !== 'live') return
     manager.send({ type: 'resign' })
   }
 
   function sendOfferDraw(): void {
-    if (drawOffersLeft.value > 0) {
+    if (game.phase === 'playing' && connection.value === 'live' && drawOffersLeft.value > 0) {
       drawOffersLeft.value--
       waitingForDrawResponse.value = true
       manager.send({ type: 'offer_draw' })
@@ -162,6 +175,7 @@ export const useSocketStore = defineStore('socket', () => {
   }
 
   function sendRespondDraw(accept: boolean): void {
+    if (game.phase !== 'playing' || connection.value !== 'live') return
     drawOfferPending.value = false
     manager.send({ type: 'respond_draw', payload: { accept } })
   }
@@ -189,7 +203,11 @@ export const useSocketStore = defineStore('socket', () => {
       case 'match_found':
         if (isMatchFoundPayload(message.payload)) {
           game.startMatch(message.payload)
+          if (auth.user !== null) {
+            saveMatchRecovery({ match: message.payload, mode: mode.value, playerId: auth.user.id })
+          }
           status.value = 'matched'
+          matchAudio.playMatchFound()
           turnBudgetSeconds.value = message.payload.turn_seconds
           drawOffersLeft.value = 2
           startTurnClock(message.payload.turn_seconds)
@@ -197,7 +215,7 @@ export const useSocketStore = defineStore('socket', () => {
         }
         break
       case 'board_update':
-        if (isBoardUpdatePayload(message.payload)) {
+        if (game.phase === 'playing' && isBoardUpdatePayload(message.payload)) {
           const yourTurnNext = message.payload.next_turn === auth.user?.id
           game.applyMove(message.payload.x, message.payload.y, message.payload.symbol, yourTurnNext)
           // A new turn has begun; the budget is constant, so reset to it.
@@ -232,16 +250,28 @@ export const useSocketStore = defineStore('socket', () => {
         break
       case 'game_over':
         if (isGameOverPayload(message.payload)) {
+          if (game.phase === 'finishing' || game.phase === 'result') break
           // The match is settled: no reconnect can help either side now.
+          clearMatchRecovery()
           clearReconnectState()
           clearOpponentCountdown()
           clearTurnClock()
           const { winner, reason } = message.payload
           const outcome = winner === null ? 'draw' : winner === auth.user?.id ? 'win' : 'loss'
-          game.finish({
-            outcome,
-            reason,
-          })
+          matchAudio.finishMatch()
+          const confirmedWin =
+            reason === 'five_in_row' && winner !== null
+              ? deriveWinResult(game.board, game.lastMove, winner)
+              : null
+          drawOfferPending.value = false
+          waitingForDrawResponse.value = false
+          game.finish(
+            {
+              outcome,
+              reason,
+            },
+            confirmedWin,
+          )
         }
         break
       case 'chat':
@@ -277,6 +307,7 @@ export const useSocketStore = defineStore('socket', () => {
       return
     }
     status.value = 'error'
+    matchAudio.cancelMatchmakingAudio()
     if (!isErrorPayload(payload)) {
       errorMessage.value = 'Matchmaking failed. Please try again.'
       return
@@ -286,11 +317,12 @@ export const useSocketStore = defineStore('socket', () => {
 
   function handleClose(): void {
     if (status.value === 'connecting' || status.value === 'searching') {
+      matchAudio.cancelMatchmakingAudio()
       status.value = 'error'
       errorMessage.value = 'Connection lost. Please try again.'
       return
     }
-    if (game.phase !== 'playing') {
+    if (game.phase !== 'playing' && connection.value !== 'reconnecting') {
       // A clean end: game_over already ran, or the match was left on purpose.
       return
     }
@@ -299,13 +331,33 @@ export const useSocketStore = defineStore('socket', () => {
     // until the window closes.
     if (connection.value === 'live') {
       beginReconnect()
-    } else {
+    } else if (connection.value === 'reconnecting') {
       scheduleReconnectAttempt()
     }
   }
 
+  /**
+   * Rehydrates the minimum match identity lost by a browser refresh, then asks
+   * the server for the authoritative board through its reconnect endpoint.
+   */
+  function recoverMatchAfterRefresh(): boolean {
+    if (game.isInMatch) return true
+
+    const snapshot = loadMatchRecovery(auth.user?.id)
+    if (snapshot === null || auth.token === null) return false
+
+    mode.value = snapshot.mode
+    status.value = 'matched'
+    game.startMatch(snapshot.match)
+    turnBudgetSeconds.value = snapshot.match.turn_seconds
+    drawOffersLeft.value = 2
+    beginReconnect()
+    return true
+  }
+
   /** Opens the reconnect window and makes the first attempt straight away. */
   function beginReconnect(): void {
+    stopReconnectTimers()
     connection.value = 'reconnecting'
     reconnectDeadline = Date.now() + RECONNECT_BUDGET_MS
     reconnectSecondsLeft.value = Math.ceil(RECONNECT_BUDGET_MS / 1000)
@@ -351,13 +403,27 @@ export const useSocketStore = defineStore('socket', () => {
    * connection-lost state a drop showed before this feature.
    */
   function giveUpReconnect(): void {
-    clearReconnectState()
+    stopReconnectTimers()
     manager.close()
+    reconnectSecondsLeft.value = 0
+    connection.value = 'failed'
     game.markConnectionLost()
+  }
+
+  /** Gives the player another explicit reconnect window after an attempt failed. */
+  function retryReconnect(): void {
+    if (!game.isInMatch || auth.token === null) return
+    beginReconnect()
   }
 
   /** Stops every reconnect timer and returns the connection to a live baseline. */
   function clearReconnectState(): void {
+    stopReconnectTimers()
+    reconnectSecondsLeft.value = 0
+    connection.value = 'live'
+  }
+
+  function stopReconnectTimers(): void {
     if (countdownTimer !== null) {
       clearInterval(countdownTimer)
       countdownTimer = null
@@ -367,8 +433,6 @@ export const useSocketStore = defineStore('socket', () => {
       retryTimer = null
     }
     reconnectDeadline = null
-    reconnectSecondsLeft.value = 0
-    connection.value = 'live'
   }
 
   /** Ticks the opponent's grace down locally from the single figure the server sends. */
@@ -442,7 +506,7 @@ export const useSocketStore = defineStore('socket', () => {
     turnSecondsLeft.value = 0
   }
 
-  function teardown(): void {
+  function teardown(audioExit: 'idle' | 'cancelled' = 'idle'): void {
     status.value = 'idle'
     errorMessage.value = null
     searchProgress.value = null
@@ -455,11 +519,14 @@ export const useSocketStore = defineStore('socket', () => {
     drawOffersLeft.value = 2
     chatHistory.value = []
     isMuted.value = false
+    clearMatchRecovery()
     if (searchTimer !== null) {
       clearInterval(searchTimer)
       searchTimer = null
     }
     manager.close()
+    if (audioExit === 'cancelled') matchAudio.cancelMatchmakingAudio()
+    else matchAudio.stopAll()
     game.reset()
   }
 
@@ -495,6 +562,8 @@ export const useSocketStore = defineStore('socket', () => {
     sendRespondDraw,
     sendGameChat,
     leaveGame,
+    recoverMatchAfterRefresh,
+    retryReconnect,
   }
 })
 
@@ -509,12 +578,12 @@ function isMatchFoundPayload(payload: unknown): payload is MatchFoundPayload {
   const record = payload as Record<string, unknown>
   return (
     typeof record.room_id === 'string' &&
+    (record.opponent_id === undefined || typeof record.opponent_id === 'string') &&
     typeof record.opponent === 'string' &&
     isPlayerSymbol(record.your_symbol) &&
     typeof record.your_turn === 'boolean'
   )
 }
-
 
 function isQueueSearchingPayload(payload: unknown): payload is QueueSearchingPayload {
   if (typeof payload !== 'object' || payload === null) {
@@ -549,9 +618,7 @@ function isSyncStatePayload(payload: unknown): payload is SyncStatePayload {
   )
 }
 
-function isOpponentReconnectingPayload(
-  payload: unknown,
-): payload is OpponentReconnectingPayload {
+function isOpponentReconnectingPayload(payload: unknown): payload is OpponentReconnectingPayload {
   if (typeof payload !== 'object' || payload === null) {
     return false
   }

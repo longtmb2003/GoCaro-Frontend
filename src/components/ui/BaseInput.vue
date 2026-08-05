@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, useId, ref } from 'vue'
+import { computed, useId, ref, useSlots } from 'vue'
 import { Eye, EyeOff } from 'lucide-vue-next'
 
 const props = withDefaults(
@@ -34,6 +34,7 @@ const props = withDefaults(
 )
 
 const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
+const slots = useSlots()
 
 const inputId = useId()
 const errorId = computed(() => `${inputId}-error`)
@@ -91,9 +92,20 @@ defineExpose({
         :aria-invalid="hasError"
         :aria-describedby="hasError ? errorId : undefined"
         class="border-border bg-glass-light text-foreground placeholder:text-foreground-disabled focus-visible:border-accent px-4 text-body duration-fast h-12 w-full rounded-button border backdrop-blur-md transition disabled:cursor-not-allowed disabled:opacity-60"
-        :class="[hasError ? 'border-error' : '', type === 'password' ? 'pr-10' : '']"
+        :class="[
+          hasError ? 'border-error' : '',
+          type === 'password' ? 'pr-10' : '',
+          slots.prefix ? 'pl-11' : '',
+        ]"
         @input="handleInput"
       />
+      <span
+        v-if="slots.prefix"
+        class="text-foreground-muted pointer-events-none absolute top-1/2 left-4 -translate-y-1/2"
+        aria-hidden="true"
+      >
+        <slot name="prefix" />
+      </span>
       <button
         v-if="type === 'password'"
         type="button"

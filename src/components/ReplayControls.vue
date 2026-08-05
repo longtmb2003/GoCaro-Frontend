@@ -54,7 +54,7 @@ const buttonClass =
       <button
         type="button"
         :class="buttonClass"
-        class="!size-12 !text-xl bg-primary-500/20 border-primary-500/30 text-primary-300 hover:bg-primary-500/30 hover:border-primary-500/50 hover:shadow-[0_0_20px_rgba(45,212,191,0.4)]"
+        class="!size-12 !text-xl bg-primary-500/20 border-primary-500/30 text-primary-300 hover:bg-primary-500/30 hover:border-primary-500/50 hover:shadow-glow"
         :disabled="totalMoves === 0"
         :aria-label="playing ? 'Pause' : 'Play'"
         @click="emit('togglePlay')"
@@ -94,7 +94,7 @@ const buttonClass =
         class="rounded-lg px-4 py-1.5 text-xs font-bold uppercase tracking-wider transition-all"
         :class="
           speed === option.interval
-            ? 'bg-primary-500 text-white shadow-[0_0_15px_rgba(45,212,191,0.4)] border border-primary-400/50'
+            ? 'bg-primary-500 text-white shadow-glow border border-primary-400/50'
             : 'text-white/50 hover:text-white hover:bg-white/5 border border-transparent'
         "
         :aria-pressed="speed === option.interval"
