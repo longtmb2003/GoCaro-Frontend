@@ -29,7 +29,7 @@ withDefaults(defineProps<{ title: string; subtitle?: string }>(), { subtitle: ''
         </div>
 
         <div
-          class="bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 p-6 shadow-card sm:p-8 hover:border-primary-500/50 hover:shadow-[0_0_20px_rgba(45,212,191,0.2)] transition-all duration-300"
+          class="bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 p-6 shadow-card sm:p-8 hover:border-primary-500/50 hover:shadow-glow transition-all duration-300"
         >
           <slot />
         </div>

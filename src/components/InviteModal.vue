@@ -6,6 +6,7 @@ import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseModal from '@/components/ui/BaseModal.vue'
 import BaseSpinner from '@/components/ui/BaseSpinner.vue'
 import { useToast } from '@/composables/useToast'
+import FantasySystemIcon from '@/components/ui/FantasySystemIcon.vue'
 import { useCountdown } from '@/composables/useCountdown'
 
 const props = defineProps<{
@@ -72,10 +73,16 @@ async function shareLink() {
         
         <div class="flex gap-2 w-full">
           <BaseButton variant="secondary" class="flex-1 text-sm" @click="copyCode">
-            <Copy :size="16" class="mr-2 inline" aria-hidden="true" /> Code
+            <FantasySystemIcon compact class="mr-2 inline-grid">
+              <Copy :size="16" aria-hidden="true" />
+            </FantasySystemIcon>
+            Code
           </BaseButton>
           <BaseButton variant="primary" class="flex-1 text-sm" @click="shareLink">
-            <Share :size="16" class="mr-2 inline" aria-hidden="true" /> Share
+            <FantasySystemIcon compact class="mr-2 inline-grid">
+              <Share :size="16" aria-hidden="true" />
+            </FantasySystemIcon>
+            Share
           </BaseButton>
         </div>
       </div>

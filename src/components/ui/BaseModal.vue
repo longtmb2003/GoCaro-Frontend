@@ -3,9 +3,11 @@ import { onBeforeUnmount, onMounted, ref, useId } from 'vue'
 import { X } from 'lucide-vue-next'
 
 import BaseDivider from './BaseDivider.vue'
+import FantasySystemIcon from './FantasySystemIcon.vue'
 import { useFocusTrap } from '@/composables/useFocusTrap'
 
 type Size = 'sm' | 'md' | 'lg'
+type Variant = 'default' | 'fantasy'
 
 const props = withDefaults(
   defineProps<{
@@ -13,6 +15,8 @@ const props = withDefaults(
      *  that supply their own heading and `aria-labelledby`. */
     title?: string
     size?: Size
+    /** Selects the visual shell without changing modal behaviour. */
+    variant?: Variant
     /** ESC and overlay click dismiss the dialog. Set false for dialogs the
      *  user must answer (reconnecting, match result, draw offer). */
     dismissible?: boolean
@@ -20,7 +24,7 @@ const props = withDefaults(
      *  focusable element, which for a form dialog is the close button. */
     initialFocus?: string
   }>(),
-  { title: '', size: 'sm', dismissible: true, initialFocus: undefined },
+  { title: '', size: 'sm', variant: 'default', dismissible: true, initialFocus: undefined },
 )
 
 const emit = defineEmits<{ close: [] }>()
@@ -78,10 +82,7 @@ function onKeydown(event: KeyboardEvent): void {
 
 <template>
   <Teleport to="body">
-    <div
-      class="p-4 z-modal fixed inset-0 flex items-center justify-center"
-      @keydown="onKeydown"
-    >
+    <div class="p-4 z-modal fixed inset-0 flex items-center justify-center" @keydown="onKeydown">
       <div
         class="bg-background/80 absolute inset-0 backdrop-blur-sm"
         aria-hidden="true"
@@ -99,26 +100,69 @@ function onKeydown(event: KeyboardEvent): void {
           ref="panel"
           class="bg-surface-3 border-border-strong rounded-modal shadow-modal backdrop-blur-glass p-6 modal-panel custom-scrollbar relative w-full overflow-y-auto border"
           :class="SIZES[size]"
+          :data-modal-variant="variant"
           role="dialog"
           aria-modal="true"
           :aria-labelledby="title === '' ? undefined : headingId"
           tabindex="-1"
           v-bind="$attrs"
         >
+          <template v-if="variant === 'fantasy'">
+            <span class="fantasy-modal__aura" aria-hidden="true" />
+            <span class="fantasy-modal__engraving" aria-hidden="true" />
+            <span
+              class="fantasy-modal__corner fantasy-modal__corner--top-left"
+              aria-hidden="true"
+            />
+            <span
+              class="fantasy-modal__corner fantasy-modal__corner--top-right"
+              aria-hidden="true"
+            />
+            <span
+              class="fantasy-modal__corner fantasy-modal__corner--bottom-left"
+              aria-hidden="true"
+            />
+            <span
+              class="fantasy-modal__corner fantasy-modal__corner--bottom-right"
+              aria-hidden="true"
+            />
+            <span class="fantasy-modal__crystal" aria-hidden="true" />
+          </template>
+
           <template v-if="title !== ''">
-            <div class="gap-3 mb-4 flex items-center justify-between">
-              <h2 :id="headingId" class="text-card text-foreground">{{ title }}</h2>
+            <div
+              class="gap-3 mb-4 flex items-center justify-between"
+              :class="{ 'fantasy-modal__header': variant === 'fantasy' }"
+            >
+              <span
+                v-if="variant === 'fantasy'"
+                class="fantasy-modal__divider"
+                aria-hidden="true"
+              />
+              <h2
+                :id="headingId"
+                class="text-card text-foreground"
+                :class="{ 'fantasy-modal__title': variant === 'fantasy' }"
+              >
+                {{ title }}
+              </h2>
+              <span
+                v-if="variant === 'fantasy'"
+                class="fantasy-modal__divider"
+                aria-hidden="true"
+              />
               <button
                 v-if="dismissible"
                 type="button"
                 class="text-foreground-muted hover:text-foreground hover:bg-glass-light rounded-sm duration-fast -mr-2 flex size-11 shrink-0 items-center justify-center transition"
+                :class="{ 'fantasy-modal__close': variant === 'fantasy' }"
                 @click="emit('close')"
               >
                 <span class="sr-only">Close</span>
-                <X :size="20" aria-hidden="true" />
+                <FantasySystemIcon compact><X :size="20" aria-hidden="true" /></FantasySystemIcon>
               </button>
             </div>
-            <BaseDivider class="mb-4" />
+            <BaseDivider v-if="variant !== 'fantasy'" class="mb-4" />
           </template>
 
           <slot />
@@ -145,9 +189,302 @@ function onKeydown(event: KeyboardEvent): void {
   transform: scale(0.96);
 }
 
+.modal-panel[data-modal-variant='fantasy'] {
+  isolation: isolate;
+  overflow-x: hidden;
+  color: var(--color-fantasy-stone);
+  border-color: color-mix(in srgb, var(--color-rank-gold) 54%, transparent);
+  border-radius: var(--radius-modal);
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      color-mix(in srgb, var(--color-rank-diamond) 13%, transparent),
+      transparent 34%
+    ),
+    radial-gradient(circle at 50% 50%, transparent 48%, rgb(0 4 14 / 0.38) 100%),
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--color-rank-panel) 94%, white),
+      var(--color-rank-panel-deep)
+    );
+  box-shadow:
+    0 0 2rem color-mix(in srgb, var(--color-rank-diamond) 15%, transparent),
+    var(--shadow-modal),
+    inset 0 1px 0 color-mix(in srgb, var(--color-rank-gold-warm) 22%, transparent),
+    inset 0 0 3rem rgb(0 4 14 / 0.44);
+  clip-path: polygon(
+    0 var(--radius-modal),
+    var(--radius-modal) 0,
+    calc(100% - var(--radius-modal)) 0,
+    100% var(--radius-modal),
+    100% calc(100% - var(--radius-modal)),
+    calc(100% - var(--radius-modal)) 100%,
+    var(--radius-modal) 100%,
+    0 calc(100% - var(--radius-modal))
+  );
+  scrollbar-color: var(--color-rank-gold)
+    color-mix(in srgb, var(--color-rank-panel-deep) 86%, transparent);
+}
+
+.modal-panel[data-modal-variant='fantasy']::before {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background-image:
+    repeating-radial-gradient(
+      circle at 17% 31%,
+      rgb(255 255 255 / 0.035) 0 1px,
+      transparent 1px 4px
+    ),
+    linear-gradient(112deg, transparent 20%, rgb(255 255 255 / 0.035) 47%, transparent 70%);
+  background-size:
+    7rem 6rem,
+    100% 100%;
+  content: '';
+  opacity: 0.34;
+  pointer-events: none;
+}
+
+.modal-panel[data-modal-variant='fantasy']::-webkit-scrollbar {
+  width: 0.375rem;
+}
+
+.modal-panel[data-modal-variant='fantasy']::-webkit-scrollbar-track {
+  background: color-mix(in srgb, var(--color-rank-panel-deep) 86%, transparent);
+  border-radius: var(--radius-pill);
+}
+
+.modal-panel[data-modal-variant='fantasy']::-webkit-scrollbar-thumb {
+  border-radius: var(--radius-pill);
+  background: linear-gradient(var(--color-rank-gold-warm), var(--color-rank-gold));
+  box-shadow: 0 0 0.5rem color-mix(in srgb, var(--color-rank-diamond) 34%, transparent);
+}
+
+.modal-panel[data-modal-variant='fantasy']::-webkit-scrollbar-thumb:active {
+  box-shadow: 0 0 0.85rem color-mix(in srgb, var(--color-rank-diamond) 70%, transparent);
+}
+
+.fantasy-modal__aura,
+.fantasy-modal__engraving {
+  position: absolute;
+  pointer-events: none;
+}
+
+.fantasy-modal__aura {
+  inset: 0.25rem;
+  z-index: -1;
+  border: 1px solid color-mix(in srgb, var(--color-rank-gold-warm) 26%, transparent);
+  border-radius: calc(var(--radius-modal) - 0.25rem);
+  box-shadow: inset 0 0 1rem color-mix(in srgb, var(--color-rank-diamond) 8%, transparent);
+}
+
+.fantasy-modal__engraving {
+  inset: 0.5rem;
+  z-index: -1;
+  border: 1px solid color-mix(in srgb, var(--color-rank-gold) 16%, transparent);
+  clip-path: inherit;
+}
+
+.fantasy-modal__corner {
+  position: absolute;
+  z-index: 2;
+  width: 2rem;
+  height: 2rem;
+  border-color: var(--color-rank-gold);
+  filter: drop-shadow(0 0 0.35rem color-mix(in srgb, var(--color-rank-diamond) 28%, transparent));
+  pointer-events: none;
+}
+
+.fantasy-modal__corner::after {
+  position: absolute;
+  width: 0.5rem;
+  height: 0.5rem;
+  border: 1px solid var(--color-rank-gold-warm);
+  background: var(--color-rank-panel-deep);
+  content: '';
+  transform: rotate(45deg);
+}
+
+.fantasy-modal__corner--top-left {
+  top: 0.5rem;
+  left: 0.5rem;
+  border-top: 2px solid;
+  border-left: 2px solid;
+}
+.fantasy-modal__corner--top-left::after {
+  top: -0.25rem;
+  left: -0.25rem;
+}
+.fantasy-modal__corner--top-right {
+  top: 0.5rem;
+  right: 0.5rem;
+  border-top: 2px solid;
+  border-right: 2px solid;
+}
+.fantasy-modal__corner--top-right::after {
+  top: -0.25rem;
+  right: -0.25rem;
+}
+.fantasy-modal__corner--bottom-left {
+  bottom: 0.5rem;
+  left: 0.5rem;
+  border-bottom: 2px solid;
+  border-left: 2px solid;
+}
+.fantasy-modal__corner--bottom-left::after {
+  bottom: -0.25rem;
+  left: -0.25rem;
+}
+.fantasy-modal__corner--bottom-right {
+  right: 0.5rem;
+  bottom: 0.5rem;
+  border-right: 2px solid;
+  border-bottom: 2px solid;
+}
+.fantasy-modal__corner--bottom-right::after {
+  right: -0.25rem;
+  bottom: -0.25rem;
+}
+
+.fantasy-modal__crystal {
+  position: absolute;
+  top: 0.5rem;
+  left: 50%;
+  z-index: 3;
+  width: 0.75rem;
+  height: 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--color-rank-gold-warm) 70%, white);
+  background: linear-gradient(
+    135deg,
+    white,
+    var(--color-rank-diamond) 38%,
+    var(--color-primary-700)
+  );
+  box-shadow: 0 0 0.85rem color-mix(in srgb, var(--color-rank-diamond) 70%, transparent);
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  content: '';
+  transform: translateX(-50%);
+  animation: fantasy-crystal-pulse 3s ease-in-out infinite;
+}
+
+.fantasy-modal__header {
+  position: relative;
+  min-height: 3rem;
+  margin-top: 0.5rem;
+  margin-bottom: 1.5rem;
+  padding-inline: 3rem;
+  justify-content: center;
+}
+
+.fantasy-modal__title {
+  flex: 0 0 auto;
+  color: var(--color-rank-gold-warm);
+  font-family: 'Cinzel', 'Marcellus', Georgia, serif;
+  font-size: var(--text-section);
+  line-height: var(--text-section--line-height);
+  letter-spacing: 0.06em;
+  text-align: center;
+  text-shadow:
+    0 1px 0 rgb(0 0 0 / 0.9),
+    0 -1px 0 color-mix(in srgb, var(--color-rank-gold-warm) 24%, white),
+    0 0 0.8rem color-mix(in srgb, var(--color-rank-gold) 28%, transparent);
+}
+
+.fantasy-modal__divider {
+  width: min(22%, 5rem);
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-rank-gold), transparent);
+  box-shadow: 0 0 0.45rem color-mix(in srgb, var(--color-rank-diamond) 20%, transparent);
+}
+
+.fantasy-modal__divider:first-child {
+  transform: rotate(180deg);
+}
+
+.fantasy-modal__close {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  margin-right: 0;
+  color: var(--color-rank-gold-warm);
+  border: 1px solid var(--color-rank-gold);
+  border-radius: var(--radius-pill);
+  background: radial-gradient(
+    circle at 50% 35%,
+    var(--color-rank-panel),
+    var(--color-rank-panel-deep)
+  );
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--color-rank-gold-warm) 24%, transparent),
+    inset 0 -2px 0 rgb(0 0 0 / 0.35),
+    0 0 0 2px color-mix(in srgb, var(--color-rank-gold) 12%, transparent);
+  transform: translateY(-50%);
+}
+
+.fantasy-modal__close :deep(.fantasy-system-icon) {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  transition: transform var(--transition-duration-normal) ease-out;
+}
+
+.fantasy-modal__close:hover,
+.fantasy-modal__close:focus-visible {
+  color: var(--color-rank-gold-warm);
+  border-color: var(--color-rank-gold-warm);
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--color-rank-diamond) 18%, var(--color-rank-panel)),
+    var(--color-rank-panel-deep)
+  );
+  box-shadow:
+    0 0 1rem color-mix(in srgb, var(--color-rank-diamond) 42%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--color-rank-gold-warm) 32%, transparent);
+}
+
+.fantasy-modal__close:hover :deep(.fantasy-system-icon) {
+  transform: rotate(20deg);
+}
+
+@keyframes fantasy-crystal-pulse {
+  0%,
+  100% {
+    opacity: 0.72;
+    filter: brightness(0.9);
+  }
+  50% {
+    opacity: 1;
+    filter: brightness(1.18);
+  }
+}
+
+@media (max-width: 39.99rem) {
+  .modal-panel[data-modal-variant='fantasy'] {
+    padding: 1rem;
+  }
+  .fantasy-modal__header {
+    padding-inline: 2.5rem;
+  }
+  .fantasy-modal__divider {
+    display: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .modal-enter-active {
     transition: none;
+  }
+
+  .fantasy-modal__crystal {
+    animation: none;
+  }
+
+  .fantasy-modal__close :deep(.fantasy-system-icon) {
+    transition: none;
+  }
+
+  .fantasy-modal__close:hover :deep(.fantasy-system-icon) {
+    transform: none;
   }
 }
 </style>

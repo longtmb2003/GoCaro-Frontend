@@ -7,38 +7,16 @@ const props = defineProps<{
   totalSeconds: number
 }>()
 
-/** Below this many seconds the clock turns red to signal urgency. */
-const LOW_SECONDS = 5
+const tone = computed<'normal' | 'warning' | 'critical'>(() => {
+  if (props.secondsLeft < 5) return 'critical'
+  if (props.secondsLeft <= 10) return 'warning'
+  return 'normal'
+})
 
-const fraction = computed(() =>
-  props.totalSeconds > 0 ? Math.min(1, Math.max(0, props.secondsLeft / props.totalSeconds)) : 0,
-)
-
-const low = computed(() => props.secondsLeft <= LOW_SECONDS)
-
-function playTickSound() {
-  try {
-    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext
-    if (!AudioContextClass) return
-    const audioCtx = new AudioContextClass()
-    const osc = audioCtx.createOscillator()
-    const gain = audioCtx.createGain()
-    osc.connect(gain)
-    gain.connect(audioCtx.destination)
-    
-    osc.type = 'triangle'
-    osc.frequency.setValueAtTime(1200, audioCtx.currentTime)
-    osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.03)
-    
-    const volume = low.value ? 0.15 : 0.02
-    gain.gain.setValueAtTime(volume, audioCtx.currentTime)
-    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.03)
-    
-    osc.start()
-    osc.stop(audioCtx.currentTime + 0.03)
-  } catch (e) {
-    // Ignore audio errors
-  }
+function playTickSound(): void {
+  window.dispatchEvent(new CustomEvent('gocaro:timer-cue', {
+    detail: { secondsLeft: props.secondsLeft, tone: tone.value },
+  }))
 }
 
 watch(() => props.secondsLeft, (newVal, oldVal) => {
@@ -49,34 +27,53 @@ watch(() => props.secondsLeft, (newVal, oldVal) => {
 </script>
 
 <template>
-  <div class="flex items-center gap-3" role="timer" aria-live="off">
-    <Clock 
-      :size="18" 
-      class="shrink-0 transition-colors" 
-      :class="[
-        low ? 'text-danger-500 animate-[shake_0.5s_ease-in-out_infinite]' : 'text-primary-500 animate-[spin_4s_linear_infinite]'
-      ]" 
+  <div
+    class="timer-inline flex items-center justify-end gap-2"
+    :data-tone="tone"
+    role="timer"
+    aria-live="off"
+    :aria-label="`${secondsLeft} seconds remaining`"
+  >
+    <Clock
+      :size="18"
+      class="timer-icon shrink-0"
+      :class="{ 'timer-critical': tone === 'critical' }"
+      aria-hidden="true"
     />
-    <div class="bg-surface-elevated h-2 flex-1 overflow-hidden rounded-full shadow-inner">
-      <div
-        class="h-full rounded-full transition-[width] duration-1000 ease-linear shadow-glow"
-        :class="low ? 'bg-danger-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]' : 'bg-primary-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]'"
-        :style="{ width: `${(fraction * 100).toString()}%` }"
-      />
-    </div>
-    <span
-      class="w-8 text-right text-base font-black tabular-nums"
-      :class="low ? 'text-danger-400' : 'text-foreground-muted'"
-    >
-      {{ secondsLeft }}s
-    </span>
+    <span class="timer-value text-body font-black tabular-nums">{{ secondsLeft }}</span>
+    <span class="text-caption font-semibold uppercase tracking-widest text-foreground-muted">seconds</span>
   </div>
 </template>
 
 <style scoped>
-@keyframes shake {
-  0%, 100% { transform: rotate(0deg); }
-  25% { transform: rotate(-15deg); }
-  75% { transform: rotate(15deg); }
+@keyframes timer-breathe {
+  0%, 100% { opacity: 0.72; transform: scale(0.94); }
+  50% { opacity: 1; transform: scale(1.06); }
+}
+
+.timer-critical {
+  animation: timer-breathe 0.8s ease-in-out infinite;
+}
+
+.timer-icon,
+.timer-value {
+  color: var(--color-accent);
+  transition: color var(--transition-duration-normal) ease-out;
+}
+
+.timer-inline[data-tone='warning'] .timer-icon,
+.timer-inline[data-tone='warning'] .timer-value {
+  color: var(--color-warning);
+}
+
+.timer-inline[data-tone='critical'] .timer-icon,
+.timer-inline[data-tone='critical'] .timer-value {
+  color: var(--color-error);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .timer-critical {
+    animation: none;
+  }
 }
 </style>

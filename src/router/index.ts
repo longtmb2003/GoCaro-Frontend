@@ -1,7 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
+import { useMatchAudio } from '@/composables/useMatchAudio'
 import { useAuthStore } from '@/stores/auth'
 import { useGameStore } from '@/stores/game'
+import { pinia } from '@/pinia'
+import { hasMatchRecovery } from '@/utils/matchRecovery'
 
 declare module 'vue-router' {
   interface RouteMeta {
@@ -25,7 +28,12 @@ const router = createRouter({
       name: 'game',
       component: () => import('@/pages/GamePage.vue'),
       meta: { requiresAuth: true, title: 'Match' },
-      beforeEnter: () => (useGameStore().isInMatch ? true : { name: 'lobby' }),
+      beforeEnter: () => {
+        const auth = useAuthStore(pinia)
+        return useGameStore(pinia).isInMatch || hasMatchRecovery(auth.user?.id)
+          ? true
+          : { name: 'lobby' }
+      },
     },
     {
       path: '/leaderboard',
@@ -66,7 +74,7 @@ const router = createRouter({
     {
       path: '/register',
       name: 'register',
-      component: () => import('@/pages/RegisterPage.vue'),
+      component: () => import('@/pages/LoginPage.vue'),
       meta: { guestOnly: true, title: 'Create account' },
     },
     {
@@ -85,7 +93,7 @@ const router = createRouter({
 })
 
 router.beforeEach((to) => {
-  const auth = useAuthStore()
+  const auth = useAuthStore(pinia)
 
   if (to.meta.requiresAuth && !auth.isAuthenticated) {
     return { name: 'login', query: { redirect: to.fullPath } }
@@ -95,11 +103,22 @@ router.beforeEach((to) => {
     return { name: 'lobby' }
   }
 
+  // Reopening the site at `/` after accidentally closing the match tab should
+  // resume the active room, not strand the player in the lobby. The game route
+  // performs the same check before it mounts and starts the socket reconnect.
+  if (to.name === 'lobby' && auth.isAuthenticated && hasMatchRecovery(auth.user?.id)) {
+    return { name: 'game' }
+  }
+
   return true
 })
 
+const matchAudio = useMatchAudio()
+
 router.afterEach((to) => {
   document.title = to.meta.title ? `${to.meta.title} · GoCaro` : 'GoCaro'
+  if (to.name === 'game') matchAudio.enterMatch()
+  else matchAudio.stopAll()
 })
 
 export default router

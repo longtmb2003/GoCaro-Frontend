@@ -3,6 +3,7 @@ import { onBeforeUnmount, onMounted, ref, useId } from 'vue'
 import { X } from 'lucide-vue-next'
 
 import BaseDivider from './BaseDivider.vue'
+import FantasySystemIcon from './FantasySystemIcon.vue'
 import { useFocusTrap } from '@/composables/useFocusTrap'
 
 const props = withDefaults(
@@ -85,7 +86,7 @@ function onKeydown(event: KeyboardEvent): void {
                 @click="emit('close')"
               >
                 <span class="sr-only">Close</span>
-                <X :size="20" aria-hidden="true" />
+                <FantasySystemIcon compact><X :size="20" aria-hidden="true" /></FantasySystemIcon>
               </button>
             </div>
             <BaseDivider />

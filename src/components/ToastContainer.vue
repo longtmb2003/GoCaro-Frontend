@@ -2,6 +2,7 @@
 import { CircleCheck, Info, TriangleAlert, X } from 'lucide-vue-next'
 
 import { useToast } from '@/composables/useToast'
+import FantasySystemIcon from '@/components/ui/FantasySystemIcon.vue'
 
 const { toasts, removeToast } = useToast()
 </script>
@@ -38,7 +39,7 @@ const { toasts, removeToast } = useToast()
         </div>
         <button class="text-foreground-muted hover:text-foreground">
           <span class="sr-only">Dismiss notification</span>
-          <X :size="20" aria-hidden="true" />
+          <FantasySystemIcon compact><X :size="20" aria-hidden="true" /></FantasySystemIcon>
         </button>
       </div>
     </TransitionGroup>

@@ -43,11 +43,13 @@ export const RANK_TIERS = [
   {
     name: 'Diamond',
     minElo: 2500,
-    color: 'text-cyan-400',
-    ring: 'ring-cyan-400',
-    glow: 'shadow-glow shadow-cyan-400/50',
+    color: 'text-primary-300',
+    ring: 'ring-primary-300',
+    glow: 'shadow-glow shadow-primary-300/50',
   },
 ] as const
+
+export type RankName = (typeof RANK_TIERS)[number]['name']
 
 export function getRankTier(elo: number) {
   for (let i = RANK_TIERS.length - 1; i >= 0; i--) {

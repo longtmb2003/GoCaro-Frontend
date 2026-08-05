@@ -10,6 +10,10 @@ export default defineConfig({
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
+    // Keep SFCs, router slots and optimized dependencies on one Vue runtime.
+    // Without dedupe, a stale optimize-deps graph can mix runtime instances
+    // during HMR and make renderSlot() lose its current component instance.
+    dedupe: ['vue'],
   },
   server: {
     // The backend serves no CORS headers, so in development requests are made

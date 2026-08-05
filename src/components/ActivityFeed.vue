@@ -1,8 +1,8 @@
 <template>
-  <div class="space-y-4">
-    <div class="flex items-center gap-2 mb-2">
-      <Activity class="w-5 h-5 text-primary-400" />
-      <h3 class="text-lg font-display font-semibold text-surface-50">Friend Activity</h3>
+  <div class="activity-feed">
+    <div class="activity-feed__header">
+      <FantasySystemIcon compact><Activity :size="18" /></FantasySystemIcon>
+      <h3>Friend Activity</h3>
     </div>
 
     <div v-if="isLoading" class="flex justify-center py-8">
@@ -13,36 +13,36 @@
       <p class="text-danger-400 text-sm">{{ error }}</p>
     </div>
 
-    <div v-else-if="activities.length === 0" class="text-center py-6 bg-surface-800/20 rounded-lg border border-surface-700/50">
-      <p class="text-surface-400 text-sm">No recent activity from your friends.</p>
+    <div v-else-if="activities.length === 0" class="activity-feed__empty">
+      <p>No recent activity from your friends.</p>
     </div>
 
-    <div v-else class="space-y-3">
-      <GlassCard 
-        v-for="activity in activities" 
-        :key="activity.id"
-        as="div"
-        variant="nested"
-        class="p-3 flex items-start gap-3 transition-colors hover:bg-surface-800/60"
-      >
-        <div class="mt-0.5 shrink-0">
-          <component :is="getIconForActivity(activity)" class="w-5 h-5" :class="getColorForActivity(activity)" />
+    <ul v-else class="activity-feed__list">
+      <li v-for="activity in activities" :key="activity.id">
+        <div class="activity-feed__icon">
+          <FantasySystemIcon compact>
+            <component
+              :is="getIconForActivity(activity)"
+              class="w-5 h-5"
+              :class="getColorForActivity(activity)"
+            />
+          </FantasySystemIcon>
         </div>
-        
+
         <div class="flex-1 min-w-0">
           <p class="text-sm text-surface-200">
-            <span class="font-semibold text-surface-50 hover:text-primary-400 cursor-pointer transition-colors" @click="openProfile(activity.user_id)">
+            <button type="button" @click="openProfile(activity.user_id)">
               {{ activity.display_name }}
-            </span>
+            </button>
             {{ getActivityMessage(activity) }}
           </p>
           <p class="text-xs text-surface-400 mt-1">
             {{ formatTimeAgo(activity.created_at) }}
           </p>
         </div>
-      </GlassCard>
-    </div>
-    
+      </li>
+    </ul>
+
     <UserProfileModal />
   </div>
 </template>
@@ -51,9 +51,9 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { Trophy, Star, Swords, Activity, Flame, Medal, Award, Crown, Users } from 'lucide-vue-next'
 import { fetchActivityFeed, type UserActivity } from '@/api/users'
-import GlassCard from '@/components/ui/GlassCard.vue'
 import BaseSpinner from '@/components/ui/BaseSpinner.vue'
 import UserProfileModal from '@/components/UserProfileModal.vue'
+import FantasySystemIcon from '@/components/ui/FantasySystemIcon.vue'
 import { useUserProfile } from '@/composables/useUserProfile'
 
 const { openProfile } = useUserProfile()
@@ -67,8 +67,7 @@ const loadActivities = async () => {
   error.value = null
   try {
     activities.value = await fetchActivityFeed()
-  } catch (err: any) {
-    console.error('Failed to load activity feed:', err)
+  } catch {
     error.value = 'Could not load activity feed'
   } finally {
     isLoading.value = false
@@ -76,27 +75,40 @@ const loadActivities = async () => {
 }
 
 onMounted(() => {
-  loadActivities()
-  window.addEventListener('gocaro:activity_feed_updated', loadActivities)
+  void loadActivities()
+  window.addEventListener('gocaro:activity_feed_updated', handleActivityUpdate)
 })
 
 onUnmounted(() => {
-  window.removeEventListener('gocaro:activity_feed_updated', loadActivities)
+  window.removeEventListener('gocaro:activity_feed_updated', handleActivityUpdate)
 })
+
+function handleActivityUpdate(): void {
+  void loadActivities()
+}
 
 const getIconForActivity = (activity: UserActivity) => {
   switch (activity.activity_type) {
     case 'achievement_unlocked':
       switch (activity.metadata.achievement_id) {
-        case 'first_win': return Star
-        case 'win_streak_5': return Flame
-        case 'ranked_50_wins': return Award
-        case 'ranked_100_wins': return Crown
-        case 'first_tournament': return Swords
-        case 'first_tournament_win': return Medal
-        case 'tournament_champion': return Trophy
-        case 'first_friend': return Users
-        default: return Star
+        case 'first_win':
+          return Star
+        case 'win_streak_5':
+          return Flame
+        case 'ranked_50_wins':
+          return Award
+        case 'ranked_100_wins':
+          return Crown
+        case 'first_tournament':
+          return Swords
+        case 'first_tournament_win':
+          return Medal
+        case 'tournament_champion':
+          return Trophy
+        case 'first_friend':
+          return Users
+        default:
+          return Star
       }
     case 'tournament_champion':
       return Trophy
@@ -122,9 +134,13 @@ const getColorForActivity = (activity: UserActivity) => {
 
 const getActivityMessage = (activity: UserActivity) => {
   switch (activity.activity_type) {
-    case 'achievement_unlocked':
-      const name = activity.metadata.achievement_id.split('_').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+    case 'achievement_unlocked': {
+      const name = String(activity.metadata.achievement_id)
+        .split('_')
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ')
       return ` unlocked the achievement "${name}"!`
+    }
     case 'tournament_champion':
       return ` won a tournament!`
     case 'tournament_joined':
@@ -138,11 +154,77 @@ const formatTimeAgo = (dateStr: string) => {
   const date = new Date(dateStr)
   const now = new Date()
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
-  
+
   if (diffInSeconds < 60) return 'Just now'
-  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`
-  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`
-  if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 86400)}d ago`
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60).toString()}m ago`
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600).toString()}h ago`
+  if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 86400).toString()}d ago`
   return date.toLocaleDateString()
 }
 </script>
+
+<style scoped>
+.activity-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.activity-feed__header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.activity-feed__header svg {
+  color: var(--color-accent);
+}
+.activity-feed__header h3 {
+  color: var(--text-foreground);
+  font-family: 'Cinzel', 'Marcellus', Georgia, serif;
+  font-size: var(--text-card);
+  font-weight: 700;
+}
+.activity-feed__empty {
+  padding: 1.5rem 0;
+  color: var(--text-muted);
+  font-size: var(--text-small);
+  text-align: center;
+}
+.activity-feed__list {
+  display: flex;
+  flex-direction: column;
+}
+.activity-feed__list li {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.625rem 0;
+}
+.activity-feed__list li + li {
+  border-top: 1px solid var(--surface-border-subtle);
+}
+.activity-feed__icon {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 auto;
+  place-items: center;
+  color: var(--text-muted);
+}
+.activity-feed__list p {
+  color: var(--text-secondary);
+  font-size: var(--text-small);
+  line-height: 1.4;
+}
+.activity-feed__list p + p {
+  margin-top: 0.25rem;
+  color: var(--text-muted);
+  font-size: var(--text-caption);
+}
+.activity-feed__list button {
+  color: var(--text-foreground);
+  font-weight: 700;
+  transition: color var(--transition-duration-fast) ease-out;
+}
+.activity-feed__list button:hover {
+  color: var(--color-accent);
+}
+</style>

@@ -6,6 +6,7 @@ import BaseAvatar from '@/components/ui/BaseAvatar.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseModal from '@/components/ui/BaseModal.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
+import FantasySystemIcon from '@/components/ui/FantasySystemIcon.vue'
 import { useLobbyStore } from '@/stores/lobby'
 
 const emit = defineEmits<{ (e: 'close'): void }>()
@@ -46,7 +47,9 @@ function prevOnlinePage() {
             @click="prevOnlinePage"
           >
             <span class="sr-only">Previous page</span>
-            <ChevronLeft :size="16" aria-hidden="true" />
+            <FantasySystemIcon compact
+              ><ChevronLeft :size="16" aria-hidden="true"
+            /></FantasySystemIcon>
           </BaseButton>
           <span class="text-small text-foreground-muted tabular-nums">
             Page {{ onlinePage + 1 }} of {{ totalOnlinePages }}
@@ -58,7 +61,9 @@ function prevOnlinePage() {
             @click="nextOnlinePage"
           >
             <span class="sr-only">Next page</span>
-            <ChevronRight :size="16" aria-hidden="true" />
+            <FantasySystemIcon compact
+              ><ChevronRight :size="16" aria-hidden="true"
+            /></FantasySystemIcon>
           </BaseButton>
         </div>
       </div>

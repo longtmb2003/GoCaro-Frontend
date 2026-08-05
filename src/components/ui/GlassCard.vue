@@ -13,9 +13,11 @@ withDefaults(
     as?: string
     /** Heading level, so callers keep their existing document outline. */
     headingTag?: 'h2' | 'h3' | 'h4'
+    /** Optional layout classes for the slot body wrapper. */
+    bodyClass?: string
     variant?: Variant
   }>(),
-  { title: '', as: 'section', headingTag: 'h2', variant: 'default' },
+  { title: '', as: 'section', headingTag: 'h2', bodyClass: '', variant: 'default' },
 )
 
 /**
@@ -30,11 +32,11 @@ withDefaults(
  * a tile are never cut off).
  */
 const VARIANTS: Record<Variant, string> = {
-  default: 'rounded-card p-6 overflow-hidden backdrop-blur-glass bg-glass border-border shadow-card',
+  default: 'rounded-card p-4 sm:p-6 overflow-hidden backdrop-blur-glass bg-glass border-border',
   elevated:
-    'rounded-card p-6 overflow-hidden backdrop-blur-glass bg-glass-strong border-border-strong shadow-floating',
+    'rounded-card p-4 sm:p-6 overflow-hidden backdrop-blur-glass bg-glass-strong border-border-strong',
   interactive:
-    'rounded-card p-6 overflow-hidden backdrop-blur-glass bg-glass border-border shadow-card transition duration-normal ease-out hover:-translate-y-0.5 hover:border-border-strong hover:shadow-floating motion-reduce:transition-none motion-reduce:hover:translate-y-0',
+    'rounded-card p-4 sm:p-6 overflow-hidden backdrop-blur-glass bg-glass border-border',
   nested: 'rounded-sm p-3 bg-glass-light border-border-subtle',
 }
 
@@ -45,8 +47,9 @@ const headingId = useId()
 <template>
   <component
     :is="as"
-    class="relative border"
+    class="glass-card relative isolate border"
     :class="VARIANTS[variant]"
+    :data-variant="variant"
     :aria-labelledby="title === '' ? undefined : headingId"
   >
     <!-- Top highlight: cards receive light from above. -->
@@ -57,12 +60,12 @@ const headingId = useId()
     />
 
     <template v-if="title !== '' || $slots.header || $slots.actions">
-      <div class="gap-3 mb-4 relative z-10 flex flex-wrap items-center justify-between">
+      <div class="gap-3 mb-3 relative z-10 flex flex-wrap items-center justify-between">
         <slot name="header">
           <component
             :is="headingTag"
             :id="headingId"
-            class="text-card gap-2 text-foreground flex items-center"
+            class="text-card gap-2 text-foreground flex items-center font-bold tracking-tight"
           >
             <slot name="icon" />
             {{ title }}
@@ -80,7 +83,7 @@ const headingId = useId()
       the children, instead of being swallowed by this wrapper.
     -->
     <slot v-if="variant === 'nested'" />
-    <div v-else class="relative z-10">
+    <div v-else class="relative z-10" :class="bodyClass">
       <slot />
     </div>
 
@@ -89,3 +92,65 @@ const headingId = useId()
     </div>
   </component>
 </template>
+
+<style scoped>
+.glass-card:not([data-variant='nested']) {
+  box-shadow:
+    var(--shadow-card),
+    0 1px 0 rgb(255 255 255 / 0.025),
+    inset 0 1px 0 rgb(255 255 255 / 0.07),
+    inset 0 0 0 1px rgb(255 255 255 / 0.018);
+  -webkit-backdrop-filter: blur(var(--blur-glass)) saturate(1.18);
+  backdrop-filter: blur(var(--blur-glass)) saturate(1.18);
+  transition:
+    transform var(--transition-duration-normal) ease-out,
+    background-color var(--transition-duration-normal) ease-out,
+    border-color var(--transition-duration-normal) ease-out,
+    box-shadow var(--transition-duration-normal) ease-out;
+}
+
+.glass-card:not([data-variant='nested'])::before {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(circle at 18% 0%, var(--color-accent-soft), transparent 38%),
+    linear-gradient(180deg, rgb(255 255 255 / 0.045), transparent 34%),
+    linear-gradient(115deg, transparent 72%, rgb(255 255 255 / 0.018));
+  content: '';
+  opacity: 0.42;
+  pointer-events: none;
+  transition: opacity var(--transition-duration-normal) ease-out;
+}
+
+.glass-card[data-variant='elevated'] {
+  box-shadow: var(--shadow-floating), inset 0 1px 0 rgb(255 255 255 / 0.08);
+}
+
+.glass-card[data-variant='interactive']:hover {
+  border-color: var(--color-border-strong);
+  box-shadow: var(--shadow-floating), var(--shadow-glow), inset 0 1px 0 rgb(255 255 255 / 0.08);
+  transform: translateY(-2px) scale(1.005);
+}
+
+.glass-card[data-variant='interactive']:hover::before,
+.glass-card:not([data-variant='nested']):focus-within::before {
+  opacity: 0.68;
+}
+
+.glass-card:not([data-variant='nested']):focus-within {
+  border-color: var(--color-border-strong);
+  box-shadow: var(--shadow-card), 0 0 0 1px var(--color-accent-soft), inset 0 1px 0 rgb(255 255 255 / 0.08);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glass-card:not([data-variant='nested']),
+  .glass-card:not([data-variant='nested'])::before {
+    transition: none;
+  }
+
+  .glass-card[data-variant='interactive']:hover {
+    transform: none;
+  }
+}
+</style>
