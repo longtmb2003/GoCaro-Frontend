@@ -12,6 +12,11 @@ export type FantasyIconType =
   | 'history'
   | 'ranked-match'
   | 'casual-match'
+  | 'shop'
+  | 'collection'
+  | 'achievements'
+  | 'explore'
+  | 'friends'
 
 type FantasyIconSize = 'small' | 'medium' | 'large' | 'hero'
 
@@ -36,6 +41,11 @@ const ASSET_PATHS: Record<FantasyIconType, string> = {
   history: '/assets/fantasy-icons/history.webp',
   'ranked-match': '/assets/modes/ranked-emblem-v2.webp',
   'casual-match': '/assets/modes/casual-swords-v2.webp',
+  shop: '/assets/fantasy-icons/shop.webp',
+  collection: '/assets/fantasy-icons/collection.webp',
+  achievements: '/assets/fantasy-icons/achievements.webp',
+  explore: '/assets/fantasy-icons/tournament.webp',
+  friends: '/assets/fantasy-icons/friends.webp',
 }
 
 const failed = ref(false)

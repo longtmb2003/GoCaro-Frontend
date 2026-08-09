@@ -39,6 +39,9 @@ export interface PublicProfile {
   display_name: string
   /** The chosen name, or '' when this player has never set one. */
   full_name: string
+  title: string
+  profile_frame: string
+  equipped_spirit: string
   elo: number
   global_stats: UserStats
   tournament_stats?: UserTournamentStats
@@ -50,7 +53,7 @@ export interface UserActivity {
   user_id: string
   display_name: string
   activity_type: string
-  metadata: Record<string, any>
+  metadata: Record<string, unknown>
   created_at: string
 }
 
@@ -73,5 +76,5 @@ export async function fetchUserTournaments(
 
 export async function fetchActivityFeed(): Promise<UserActivity[]> {
   const { data } = await http.get<{ activities: UserActivity[] }>('/api/users/me/activities')
-  return data.activities || []
+  return data.activities
 }

@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue'
 import { Clock } from 'lucide-vue-next'
+import { useAppLanguage } from '@/composables/useAppLanguage'
 
 const props = defineProps<{
   secondsLeft: number
   totalSeconds: number
 }>()
+const { t } = useAppLanguage()
 
 const tone = computed<'normal' | 'warning' | 'critical'>(() => {
   if (props.secondsLeft < 5) return 'critical'
@@ -32,7 +34,7 @@ watch(() => props.secondsLeft, (newVal, oldVal) => {
     :data-tone="tone"
     role="timer"
     aria-live="off"
-    :aria-label="`${secondsLeft} seconds remaining`"
+    :aria-label="`${secondsLeft} ${t('seconds remaining', 'giây còn lại')}`"
   >
     <Clock
       :size="18"
@@ -41,7 +43,7 @@ watch(() => props.secondsLeft, (newVal, oldVal) => {
       aria-hidden="true"
     />
     <span class="timer-value text-body font-black tabular-nums">{{ secondsLeft }}</span>
-    <span class="text-caption font-semibold uppercase tracking-widest text-foreground-muted">seconds</span>
+    <span class="text-caption font-semibold uppercase tracking-widest text-foreground-muted">{{ t('seconds', 'giây') }}</span>
   </div>
 </template>
 

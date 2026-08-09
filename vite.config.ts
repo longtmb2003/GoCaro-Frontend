@@ -20,6 +20,10 @@ export default defineConfig({
     // same-origin and proxied to it. Production points VITE_API_BASE_URL at the
     // real backend origin instead.
     proxy: {
+      '/health': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+      },
       '/api': {
         target: 'http://localhost:8080',
         changeOrigin: true,

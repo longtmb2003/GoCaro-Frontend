@@ -5,6 +5,7 @@ import { X } from 'lucide-vue-next'
 import BaseDivider from './BaseDivider.vue'
 import FantasySystemIcon from './FantasySystemIcon.vue'
 import { useFocusTrap } from '@/composables/useFocusTrap'
+import { useAppLanguage } from '@/composables/useAppLanguage'
 
 type Size = 'sm' | 'md' | 'lg'
 type Variant = 'default' | 'fantasy'
@@ -28,6 +29,7 @@ const props = withDefaults(
 )
 
 const emit = defineEmits<{ close: [] }>()
+const { t } = useAppLanguage()
 
 // Attributes belong on the panel, not the overlay, so `aria-describedby` and
 // `aria-labelledby` from call sites land on the element with role="dialog".
@@ -96,17 +98,18 @@ function onKeydown(event: KeyboardEvent): void {
           `aria-labelledby: undefined` below erase the name that title-less
           dialogs pass in themselves.
         -->
-        <div
-          ref="panel"
-          class="bg-surface-3 border-border-strong rounded-modal shadow-modal backdrop-blur-glass p-6 modal-panel custom-scrollbar relative w-full overflow-y-auto border"
-          :class="SIZES[size]"
-          :data-modal-variant="variant"
-          role="dialog"
-          aria-modal="true"
-          :aria-labelledby="title === '' ? undefined : headingId"
-          tabindex="-1"
-          v-bind="$attrs"
-        >
+        <div class="relative w-full" :class="SIZES[size]">
+          <div
+            ref="panel"
+            class="bg-surface-3 border-border-strong rounded-modal shadow-modal backdrop-blur-glass modal-panel relative w-full border flex flex-col"
+            style="max-height: calc(100vh - 2rem);"
+            :data-modal-variant="variant"
+            role="dialog"
+            aria-modal="true"
+            :aria-labelledby="title === '' ? undefined : headingId"
+            tabindex="-1"
+            v-bind="$attrs"
+          >
           <template v-if="variant === 'fantasy'">
             <span class="fantasy-modal__aura" aria-hidden="true" />
             <span class="fantasy-modal__engraving" aria-hidden="true" />
@@ -130,46 +133,54 @@ function onKeydown(event: KeyboardEvent): void {
           </template>
 
           <template v-if="title !== ''">
-            <div
-              class="gap-3 mb-4 flex items-center justify-between"
-              :class="{ 'fantasy-modal__header': variant === 'fantasy' }"
-            >
-              <span
-                v-if="variant === 'fantasy'"
-                class="fantasy-modal__divider"
-                aria-hidden="true"
-              />
-              <h2
-                :id="headingId"
-                class="text-card text-foreground"
-                :class="{ 'fantasy-modal__title': variant === 'fantasy' }"
-              >
-                {{ title }}
-              </h2>
-              <span
-                v-if="variant === 'fantasy'"
-                class="fantasy-modal__divider"
-                aria-hidden="true"
-              />
-              <button
-                v-if="dismissible"
-                type="button"
-                class="text-foreground-muted hover:text-foreground hover:bg-glass-light rounded-sm duration-fast -mr-2 flex size-11 shrink-0 items-center justify-center transition"
-                :class="{ 'fantasy-modal__close': variant === 'fantasy' }"
-                @click="emit('close')"
-              >
-                <span class="sr-only">Close</span>
-                <FantasySystemIcon compact><X :size="20" aria-hidden="true" /></FantasySystemIcon>
-              </button>
+              <div class="px-4 pt-4 pb-0 sm:px-6 sm:pt-6 shrink-0 relative z-10">
+                <div
+                  class="gap-3 mb-4 flex items-center justify-between"
+                  :class="{ 'fantasy-modal__header': variant === 'fantasy' }"
+                >
+                  <span
+                    v-if="variant === 'fantasy'"
+                    class="fantasy-modal__divider"
+                    aria-hidden="true"
+                  />
+                  <h2
+                    :id="headingId"
+                    class="text-card text-foreground"
+                    :class="{ 'fantasy-modal__title': variant === 'fantasy' }"
+                  >
+                    {{ title }}
+                  </h2>
+                  <span
+                    v-if="variant === 'fantasy'"
+                    class="fantasy-modal__divider"
+                    aria-hidden="true"
+                  />
+                </div>
+                <BaseDivider v-if="variant !== 'fantasy'" class="mb-4" />
+              </div>
+            </template>
+
+            <div class="custom-scrollbar overflow-y-auto w-full flex-1 min-h-0 p-4 sm:p-6" :class="{ 'pt-0 sm:pt-0': title !== '' }" style="isolation: isolate;">
+              <slot />
+
+              <div v-if="$slots.footer" class="mt-6">
+                <slot name="footer" />
+              </div>
             </div>
-            <BaseDivider v-if="variant !== 'fantasy'" class="mb-4" />
-          </template>
-
-          <slot />
-
-          <div v-if="$slots.footer" class="mt-6">
-            <slot name="footer" />
           </div>
+
+          <!-- Out-of-panel Close Button -->
+          <button
+            v-if="dismissible"
+            type="button"
+            class="modal-close-floating flex items-center justify-center transition"
+            :class="variant === 'fantasy' ? 'fantasy-modal__close--floating' : 'default-modal__close--floating'"
+            @click="emit('close')"
+          >
+            <span class="sr-only">{{ t('Close', 'Đóng') }}</span>
+            <FantasySystemIcon v-if="variant === 'fantasy'" compact><X :size="20" aria-hidden="true" /></FantasySystemIcon>
+            <X v-else :size="20" aria-hidden="true" />
+          </button>
         </div>
       </Transition>
     </div>
@@ -401,11 +412,16 @@ function onKeydown(event: KeyboardEvent): void {
   transform: rotate(180deg);
 }
 
-.fantasy-modal__close {
+.modal-close-floating {
   position: absolute;
-  top: 50%;
-  right: 0;
-  margin-right: 0;
+  top: -0.75rem;
+  right: -0.75rem;
+  z-index: 50;
+}
+
+.fantasy-modal__close--floating {
+  width: 2.75rem;
+  height: 2.75rem;
   color: var(--color-rank-gold-warm);
   border: 1px solid var(--color-rank-gold);
   border-radius: var(--radius-pill);
@@ -417,19 +433,20 @@ function onKeydown(event: KeyboardEvent): void {
   box-shadow:
     inset 0 1px 0 color-mix(in srgb, var(--color-rank-gold-warm) 24%, transparent),
     inset 0 -2px 0 rgb(0 0 0 / 0.35),
-    0 0 0 2px color-mix(in srgb, var(--color-rank-gold) 12%, transparent);
-  transform: translateY(-50%);
+    0 0 0 2px color-mix(in srgb, var(--color-rank-gold) 12%, transparent),
+    0 4px 12px rgba(0,0,0,0.5);
 }
 
-.fantasy-modal__close :deep(.fantasy-system-icon) {
+.fantasy-modal__close--floating :deep(.fantasy-system-icon) {
   border: 0;
   background: transparent;
   box-shadow: none;
   transition: transform var(--transition-duration-normal) ease-out;
 }
 
-.fantasy-modal__close:hover,
-.fantasy-modal__close:focus-visible {
+.fantasy-modal__close--floating:hover,
+.fantasy-modal__close--floating:focus-visible {
+  transform: scale(1.05);
   color: var(--color-rank-gold-warm);
   border-color: var(--color-rank-gold-warm);
   background: radial-gradient(
@@ -439,11 +456,27 @@ function onKeydown(event: KeyboardEvent): void {
   );
   box-shadow:
     0 0 1rem color-mix(in srgb, var(--color-rank-diamond) 42%, transparent),
-    inset 0 1px 0 color-mix(in srgb, var(--color-rank-gold-warm) 32%, transparent);
+    inset 0 1px 0 color-mix(in srgb, var(--color-rank-gold-warm) 32%, transparent),
+    0 4px 12px rgba(0,0,0,0.5);
 }
 
-.fantasy-modal__close:hover :deep(.fantasy-system-icon) {
+.fantasy-modal__close--floating:hover :deep(.fantasy-system-icon) {
   transform: rotate(20deg);
+}
+
+.default-modal__close--floating {
+  width: 2.5rem;
+  height: 2.5rem;
+  color: var(--color-foreground-muted);
+  background: var(--surface-glass-strong);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-pill);
+  backdrop-filter: blur(var(--blur-md));
+  box-shadow: var(--shadow-floating);
+}
+.default-modal__close--floating:hover {
+  color: var(--color-foreground);
+  background: var(--surface-sunken);
 }
 
 @keyframes fantasy-crystal-pulse {
@@ -459,9 +492,6 @@ function onKeydown(event: KeyboardEvent): void {
 }
 
 @media (max-width: 39.99rem) {
-  .modal-panel[data-modal-variant='fantasy'] {
-    padding: 1rem;
-  }
   .fantasy-modal__header {
     padding-inline: 2.5rem;
   }
@@ -479,11 +509,11 @@ function onKeydown(event: KeyboardEvent): void {
     animation: none;
   }
 
-  .fantasy-modal__close :deep(.fantasy-system-icon) {
+  .fantasy-modal__close--floating :deep(.fantasy-system-icon) {
     transition: none;
   }
 
-  .fantasy-modal__close:hover :deep(.fantasy-system-icon) {
+  .fantasy-modal__close--floating:hover :deep(.fantasy-system-icon) {
     transform: none;
   }
 }

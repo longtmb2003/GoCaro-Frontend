@@ -1,14 +1,50 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { Github, Info, Lock } from 'lucide-vue-next'
+import { computed, ref, watchEffect } from 'vue'
+import { ChevronDown, Github, Info, Lock, Mail } from 'lucide-vue-next'
 import { RouterLink } from 'vue-router'
 import FantasyIcon from '@/components/ui/FantasyIcon.vue'
 import FantasySystemIcon from '@/components/ui/FantasySystemIcon.vue'
+import AppSettingsMenu from '@/components/AppSettingsMenu.vue'
 import ToastContainer from '@/components/ToastContainer.vue'
 import RankRulesModal from '@/components/RankRulesModal.vue'
 import ChallengeModal from '@/components/ChallengeModal.vue'
 import OutgoingChallengeCard from '@/components/OutgoingChallengeCard.vue'
+import { useAppLanguage } from '@/composables/useAppLanguage'
 import { useAuthStore } from '@/stores/auth'
+import { useSocialStore } from '@/stores/social'
+import { useChatStore } from '@/stores/chat'
+import LobbySocialMenu from '@/components/LobbySocialMenu.vue'
+import FriendsModal from '@/components/FriendsModal.vue'
+import ChatDrawer from '@/components/ChatDrawer.vue'
+
+const HEADER_COPY = {
+  en: {
+    navigation: 'Primary navigation',
+    lobby: 'Lobby',
+    shop: 'Shop',
+    collection: 'Collection',
+    explore: 'Explore',
+    achievements: 'Achievements',
+    leaderboard: 'Leaderboard',
+    tournaments: 'Tournaments',
+    history: 'History',
+    rankInfo: 'Rank information',
+    signInRequired: 'Sign in required',
+  },
+  vi: {
+    navigation: 'Điều hướng chính',
+    lobby: 'Sảnh',
+    shop: 'Cửa hàng',
+    collection: 'Bộ sưu tập',
+    explore: 'Khám phá',
+    achievements: 'Thành tựu',
+    leaderboard: 'Xếp hạng',
+    tournaments: 'Giải đấu',
+    history: 'Lịch sử',
+    rankInfo: 'Thông tin xếp hạng',
+    signInRequired: 'Yêu cầu đăng nhập',
+  },
+} as const
 
 const props = withDefaults(
   defineProps<{
@@ -25,7 +61,26 @@ defineEmits<{
 }>()
 
 const showRankRules = ref(false)
+const exploreMenuOpen = ref(false)
+const showFriendsModal = ref(false)
+const showChatDrawer = ref(false)
+
 const auth = useAuthStore()
+const socialStore = useSocialStore()
+const chatStore = useChatStore()
+const appLanguage = useAppLanguage()
+const headerCopy = computed(() => HEADER_COPY[appLanguage.language.value])
+
+function handleOpenChatFromFriends(userId: string) {
+  showFriendsModal.value = false
+  chatStore.setActiveChat(userId)
+  showChatDrawer.value = true
+}
+
+watchEffect(() => {
+  if (typeof document === 'undefined') return
+  document.title = props.title === 'GoCaro' ? 'GoCaro' : `${props.title} · GoCaro`
+})
 </script>
 
 <template>
@@ -64,8 +119,8 @@ const auth = useAuthStore()
       <div
         class="app-header__inner mx-auto flex w-full max-w-7xl items-center justify-between px-4 h-16 sm:px-6"
       >
-        <div class="flex items-center gap-6">
-          <RouterLink to="/" class="flex items-center gap-2 group">
+        <div class="app-header__brand flex items-center gap-6">
+          <RouterLink to="/" class="flex items-center gap-2 group" aria-label="GoCaro lobby">
             <div
               class="relative w-8 h-8 rounded overflow-hidden ring-1 ring-white/20 group-hover:ring-primary-500/50 transition-all shadow-[0_0_15px_rgba(255,255,255,0.1)] group-hover:shadow-glow"
             >
@@ -80,70 +135,182 @@ const auth = useAuthStore()
 
           <!-- Nav Links -->
           <nav
-            aria-label="Primary navigation"
+            :aria-label="headerCopy.navigation"
             class="hidden md:flex items-center gap-1 ml-4 bg-white/5 rounded-xl p-1 border border-white/5"
           >
+            <!-- Streamlined Nav Links -->
             <RouterLink
               to="/"
               class="px-4 py-1.5 rounded-lg text-sm font-bold transition-all text-white/60 hover:text-white hover:bg-white/10 border border-transparent"
-              exact-active-class="!bg-primary-500 !text-white shadow-glow !border-primary-400/50"
+              :exact-active-class="!props.fantasy ? '!bg-primary-500 !text-white shadow-glow !border-primary-400/50' : ''"
               :aria-current="$route.path === '/' ? 'page' : undefined"
             >
               <FantasyIcon type="create-room" size="small" />
-              <span>Lobby</span>
+              <span>{{ headerCopy.lobby }}</span>
             </RouterLink>
+
             <RouterLink
               v-if="!auth.isGuest"
-              to="/leaderboard"
+              to="/collection"
               class="px-4 py-1.5 rounded-lg text-sm font-bold transition-all text-white/60 hover:text-white hover:bg-white/10 border border-transparent"
-              active-class="!bg-primary-500 !text-white shadow-glow !border-primary-400/50"
-              :aria-current="$route.path.startsWith('/leaderboard') ? 'page' : undefined"
+              :active-class="!props.fantasy ? '!bg-primary-500 !text-white shadow-glow !border-primary-400/50' : ''"
+              :aria-current="$route.path.startsWith('/collection') ? 'page' : undefined"
             >
-              <FantasyIcon type="leaderboard" size="small" />
-              <span>Leaderboard</span>
+              <FantasyIcon type="collection" size="small" />
+              <span>{{ headerCopy.collection }}</span>
             </RouterLink>
             <button
               v-else
               class="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-bold transition-all text-white/40 hover:text-white/60 hover:bg-white/5 border border-transparent cursor-pointer"
+              :aria-label="`${headerCopy.collection} · ${headerCopy.signInRequired}`"
               @click="$emit('upgrade')"
             >
-              <FantasyIcon type="leaderboard" size="small" />
-              <FantasySystemIcon compact><Lock :size="14" /></FantasySystemIcon>
-              <span>Leaderboard</span>
+              <span class="locked-nav-icon" aria-hidden="true">
+                <FantasyIcon type="collection" size="small" />
+                <Lock class="locked-nav-icon__badge" />
+              </span>
+              <span>{{ headerCopy.collection }}</span>
             </button>
+
             <RouterLink
               v-if="!auth.isGuest"
-              to="/tournaments"
+              to="/shop"
               class="px-4 py-1.5 rounded-lg text-sm font-bold transition-all text-white/60 hover:text-white hover:bg-white/10 border border-transparent"
-              active-class="!bg-primary-500 !text-white shadow-glow !border-primary-400/50"
-              :aria-current="$route.path.startsWith('/tournaments') ? 'page' : undefined"
+              :active-class="!props.fantasy ? '!bg-primary-500 !text-white shadow-glow !border-primary-400/50' : ''"
+              :aria-current="$route.path.startsWith('/shop') ? 'page' : undefined"
             >
-              <FantasyIcon type="tournament" size="small" />
-              <span>Tournaments</span>
+              <FantasyIcon type="shop" size="small" />
+              <span>{{ headerCopy.shop }}</span>
             </RouterLink>
             <button
               v-else
               class="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-bold transition-all text-white/40 hover:text-white/60 hover:bg-white/5 border border-transparent cursor-pointer"
+              :aria-label="`${headerCopy.shop} · ${headerCopy.signInRequired}`"
               @click="$emit('upgrade')"
             >
-              <FantasyIcon type="tournament" size="small" />
-              <FantasySystemIcon compact><Lock :size="14" /></FantasySystemIcon>
-              <span>Tournaments</span>
+              <span class="locked-nav-icon" aria-hidden="true">
+                <FantasyIcon type="shop" size="small" />
+                <Lock class="locked-nav-icon__badge" />
+              </span>
+              <span>{{ headerCopy.shop }}</span>
             </button>
-            <RouterLink
-              to="/history"
-              class="px-4 py-1.5 rounded-lg text-sm font-bold transition-all text-white/60 hover:text-white hover:bg-white/10 border border-transparent"
-              active-class="!bg-primary-500 !text-white shadow-glow !border-primary-400/50"
-              :aria-current="$route.path.startsWith('/history') ? 'page' : undefined"
-            >
-              <FantasyIcon type="history" size="small" />
-              <span>History</span>
-            </RouterLink>
+
+            <!-- Explore Dropdown -->
+            <!-- Escape lives on the wrapper, not the trigger: once focus moves
+                 into a menu item the button no longer receives the key, and the
+                 keyboard user loses the one way out. Events from the items
+                 bubble to here. -->
+            <div class="relative" @keydown.escape="exploreMenuOpen = false">
+              <div v-if="exploreMenuOpen" class="fixed inset-0 z-40" @click="exploreMenuOpen = false" />
+              <button
+                type="button"
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-bold transition-all text-white/60 hover:text-white hover:bg-white/10 border border-transparent cursor-pointer"
+                :class="{ '!text-white !bg-white/10': exploreMenuOpen || ['/leaderboard', '/tournaments', '/history', '/achievements'].some(p => $route.path.startsWith(p)) }"
+                :aria-expanded="exploreMenuOpen"
+                aria-haspopup="menu"
+                @click="exploreMenuOpen = !exploreMenuOpen"
+              >
+                <FantasyIcon type="explore" size="small" />
+                <span>{{ headerCopy.explore }}</span>
+                <ChevronDown :size="14" class="transition-transform duration-200" :class="{ 'rotate-180': exploreMenuOpen }" />
+              </button>
+              <div
+                v-show="exploreMenuOpen"
+                class="absolute left-0 top-full mt-2 w-52 p-1.5 rounded-xl bg-slate-950/95 backdrop-blur-2xl border border-[var(--color-fantasy-border-subtle)] shadow-2xl z-50 flex flex-col gap-1"
+                role="menu"
+              >
+                <RouterLink
+                  v-if="!auth.isGuest"
+                  to="/leaderboard"
+                  class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-lg text-xs font-bold text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                  role="menuitem"
+                  @click="exploreMenuOpen = false"
+                >
+                  <FantasyIcon type="leaderboard" size="small" />
+                  <span>{{ headerCopy.leaderboard }}</span>
+                </RouterLink>
+                <button
+                  v-else
+                  type="button"
+                  class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-lg text-xs font-bold text-white/40 hover:bg-white/5 text-left transition-colors cursor-pointer"
+                  role="menuitem"
+                  @click="exploreMenuOpen = false; $emit('upgrade')"
+                >
+                  <FantasyIcon type="leaderboard" size="small" />
+                  <span>{{ headerCopy.leaderboard }}</span>
+                  <Lock :size="12" class="ml-auto text-amber-400" />
+                </button>
+
+                <RouterLink
+                  v-if="!auth.isGuest"
+                  to="/tournaments"
+                  class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-lg text-xs font-bold text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                  role="menuitem"
+                  @click="exploreMenuOpen = false"
+                >
+                  <FantasyIcon type="tournament" size="small" />
+                  <span>{{ headerCopy.tournaments }}</span>
+                </RouterLink>
+                <button
+                  v-else
+                  type="button"
+                  class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-lg text-xs font-bold text-white/40 hover:bg-white/5 text-left transition-colors cursor-pointer"
+                  role="menuitem"
+                  @click="exploreMenuOpen = false; $emit('upgrade')"
+                >
+                  <FantasyIcon type="tournament" size="small" />
+                  <span>{{ headerCopy.tournaments }}</span>
+                  <Lock :size="12" class="ml-auto text-amber-400" />
+                </button>
+
+                <RouterLink
+                  to="/history"
+                  class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-lg text-xs font-bold text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                  role="menuitem"
+                  @click="exploreMenuOpen = false"
+                >
+                  <FantasyIcon type="history" size="small" />
+                  <span>{{ headerCopy.history }}</span>
+                </RouterLink>
+
+                <RouterLink
+                  v-if="!auth.isGuest"
+                  to="/achievements"
+                  class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-lg text-xs font-bold text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                  role="menuitem"
+                  @click="exploreMenuOpen = false"
+                >
+                  <FantasyIcon type="achievements" size="small" />
+                  <span>{{ headerCopy.achievements }}</span>
+                </RouterLink>
+                <button
+                  v-else
+                  type="button"
+                  class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-lg text-xs font-bold text-white/40 hover:bg-white/5 text-left transition-colors cursor-pointer"
+                  role="menuitem"
+                  @click="exploreMenuOpen = false; $emit('upgrade')"
+                >
+                  <FantasyIcon type="achievements" size="small" />
+                  <span>{{ headerCopy.achievements }}</span>
+                  <Lock :size="12" class="ml-auto text-amber-400" />
+                </button>
+              </div>
+            </div>
+
+            <!-- Friends & Chat Nav Link -->
+            <LobbySocialMenu
+              :is-guest="auth.isGuest"
+              :friend-requests="socialStore.incomingRequests.length"
+              :unread-messages="chatStore.totalUnreadMessages"
+              @friends="showFriendsModal = true"
+              @chat="chatStore.setActiveChat('lobby'); showChatDrawer = true"
+              @upgrade="$emit('upgrade')"
+            />
           </nav>
         </div>
 
         <!-- Header Actions Slot -->
-        <div class="flex items-center gap-3">
+        <div class="app-header__actions flex items-center gap-3">
           <button
             v-if="!props.fantasy"
             type="button"
@@ -151,15 +318,16 @@ const auth = useAuthStore()
             @click="showRankRules = true"
           >
             <Info :size="14" aria-hidden="true" />
-            <span>Rank Info</span>
+            <span>{{ headerCopy.rankInfo }}</span>
           </button>
           <slot name="actions" />
+          <AppSettingsMenu />
           <button
             v-if="props.fantasy"
             type="button"
             class="header-rank-button"
-            aria-label="Rank information"
-            title="Rank information"
+            :aria-label="headerCopy.rankInfo"
+            :title="headerCopy.rankInfo"
             @click="showRankRules = true"
           >
             <FantasySystemIcon compact><Info :size="18" aria-hidden="true" /></FantasySystemIcon>
@@ -204,7 +372,18 @@ const auth = useAuthStore()
           <span>PostgreSQL</span>
         </div>
 
-        <div class="flex gap-4">
+        <div class="flex items-center gap-6">
+          <a
+            href="mailto:tranminhbaolong.forwork@gmail.com?subject=Li%C3%AAn%20h%E1%BB%87%20GoCaro&body=Ch%C3%A0o%20Long%2C%0A%0A"
+            class="text-foreground-muted hover:text-primary-400 text-sm font-medium transition-colors flex items-center gap-2"
+            title="tranminhbaolong.forwork@gmail.com"
+          >
+            <Mail :size="16" aria-hidden="true" class="shrink-0" />
+            <span class="flex flex-col items-start leading-tight">
+              <span>Contact</span>
+              <span class="text-[10px] opacity-70 font-normal mt-0.5">tranminhbaolong.forwork@gmail.com</span>
+            </span>
+          </a>
           <a
             href="https://github.com/longtmb2003"
             target="_blank"
@@ -222,6 +401,12 @@ const auth = useAuthStore()
     <ChallengeModal />
     <OutgoingChallengeCard />
     <RankRulesModal v-if="showRankRules" @close="showRankRules = false" />
+    <FriendsModal
+      v-if="showFriendsModal"
+      @close="showFriendsModal = false"
+      @open-chat="handleOpenChatFromFriends"
+    />
+    <ChatDrawer :open="showChatDrawer" @close="showChatDrawer = false" @upgrade="$emit('upgrade')" />
   </div>
 </template>
 
@@ -317,6 +502,44 @@ const auth = useAuthStore()
   transform: translateX(-50%) rotate(45deg);
 }
 
+/* Seven illustrated icons in a row compete with the board art behind them, so
+   the bar keeps them quiet and lets the label carry the meaning. Full strength
+   is reserved for the page you are on and the one under the cursor. The lobby
+   is where these same destinations get advertised at full size. */
+nav :deep(.fantasy-icon) {
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+nav a:hover :deep(.fantasy-icon),
+nav button:hover :deep(.fantasy-icon),
+nav a[aria-current='page'] :deep(.fantasy-icon) {
+  opacity: 1;
+}
+
+.locked-nav-icon {
+  position: relative;
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+}
+
+.locked-nav-icon__badge {
+  position: absolute;
+  right: -0.125rem;
+  bottom: -0.125rem;
+  box-sizing: border-box;
+  width: 1rem;
+  height: 1rem;
+  padding: 0.125rem;
+  color: var(--color-warning);
+  border: 1px solid color-mix(in srgb, var(--color-warning) 42%, var(--color-border));
+  border-radius: var(--radius-pill);
+  background: var(--surface-sunken);
+  box-shadow: 0 0 0.375rem color-mix(in srgb, var(--color-warning) 28%, transparent);
+  stroke-width: 2.25;
+}
+
 .app-layout--fantasy .header-rank-button {
   display: grid;
   width: 2.75rem;
@@ -389,6 +612,21 @@ const auth = useAuthStore()
 }
 
 @media (max-width: 48rem) {
+  .app-header__inner {
+    gap: 0.5rem;
+    padding-inline: 0.75rem;
+  }
+
+  .app-header__brand {
+    min-width: 0;
+    flex: 0 0 auto;
+  }
+
+  .app-header__actions {
+    min-width: 0;
+    gap: 0.25rem;
+  }
+
   .app-layout--fantasy .app-main {
     padding: 1rem;
   }

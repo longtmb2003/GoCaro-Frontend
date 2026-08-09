@@ -1,18 +1,33 @@
 <script setup lang="ts">
 import { CirclePlay, Lock, Sparkles } from 'lucide-vue-next'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 
 import FantasyIcon from '@/components/ui/FantasyIcon.vue'
 import FantasySystemIcon from '@/components/ui/FantasySystemIcon.vue'
+import { useAppLanguage } from '@/composables/useAppLanguage'
 import type { MatchmakingMode } from '@/types/game'
 
 const props = withDefaults(
   defineProps<{
     isGuest?: boolean
+    joinPending?: boolean
     content?: 'all' | 'matches' | 'rooms'
+    /**
+     * Seconds left on a matchmaking lockout, 0 when free to queue. The server
+     * refuses either mode while it runs, so both cards say so and stop
+     * accepting clicks rather than letting the player queue into a refusal.
+     */
+    lockSecondsLeft?: number
   }>(),
-  { isGuest: false, content: 'all' },
+  { isGuest: false, joinPending: false, content: 'all', lockSecondsLeft: 0 },
 )
+
+const isLocked = computed(() => props.lockSecondsLeft > 0)
+const lockLabel = computed(() => {
+  const minutes = Math.floor(props.lockSecondsLeft / 60)
+  const seconds = props.lockSecondsLeft % 60
+  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+})
 
 const emit = defineEmits<{
   play: [mode: MatchmakingMode]
@@ -22,50 +37,68 @@ const emit = defineEmits<{
 }>()
 
 const joinCode = ref('')
+const { t } = useAppLanguage()
 
 function submitJoin() {
+  if (props.joinPending) return
   const code = joinCode.value.trim().toUpperCase()
   if (code.length === 6) {
     emit('join-code', code)
-    joinCode.value = ''
   }
 }
 </script>
 
 <template>
-  <section class="play-panel" aria-label="Play">
+  <section class="play-panel" :aria-label="t('Play', 'Chơi')">
     <div v-if="props.content !== 'rooms'" class="match-mode-grid">
       <button
         type="button"
         class="match-mode-card match-mode-card--ranked group"
-        :aria-describedby="isGuest ? 'ranked-locked' : undefined"
+        :class="{ 'match-mode-card--cooldown': isLocked }"
+        :disabled="isLocked"
+        :aria-describedby="isGuest ? 'ranked-locked' : isLocked ? 'queue-cooldown' : undefined"
         @click="isGuest ? emit('upgrade') : emit('play', 'ranked')"
       >
+        <small v-if="isLocked" id="queue-cooldown" class="match-mode-card__cooldown">
+          <Lock :size="11" aria-hidden="true" />
+          {{ lockLabel }}
+        </small>
         <span class="match-mode-card__glow" aria-hidden="true" />
         <span class="match-mode-card__artwork" aria-hidden="true">
           <FantasyIcon type="ranked-match" size="hero" eager />
         </span>
         <span class="match-mode-card__copy">
-          <strong>RANKED MATCH</strong>
-          <small>Play competitively for ELO rating</small>
+          <strong>{{ t('RANKED MATCH', 'ĐẤU XẾP HẠNG') }}</strong>
+          <small class="match-mode-card__reward">
+            {{ t('Ranked ELO · coins · quests', 'Điểm ELO · coin · nhiệm vụ') }}
+          </small>
         </span>
         <small v-if="isGuest" id="ranked-locked" class="match-mode-card__locked-copy">
-          Sign in required
+          {{ t('Sign in required', 'Cần đăng nhập') }}
         </small>
       </button>
 
       <button
         type="button"
         class="match-mode-card match-mode-card--casual group"
+        :class="{ 'match-mode-card--cooldown': isLocked }"
+        :disabled="isLocked"
+        :aria-describedby="isLocked ? 'queue-cooldown-casual' : undefined"
         @click="emit('play', 'casual')"
       >
+        <small v-if="isLocked" id="queue-cooldown-casual" class="match-mode-card__cooldown">
+          <Lock :size="11" aria-hidden="true" />
+          {{ lockLabel }}
+        </small>
         <span class="match-mode-card__glow" aria-hidden="true" />
         <span class="match-mode-card__artwork" aria-hidden="true">
           <FantasyIcon type="casual-match" size="hero" eager />
         </span>
         <span class="match-mode-card__copy">
-          <strong>CASUAL MATCH</strong>
-          <small>Just for fun, no pressure</small>
+          <strong>{{ t('CASUAL MATCH', 'ĐẤU THƯỜNG') }}</strong>
+          <small class="match-mode-card__reward match-mode-card__reward--none">
+            {{ t('Just for fun · no rewards', 'Chơi vui · không phần thưởng') }}
+          </small>
         </span>
       </button>
     </div>
@@ -78,8 +111,8 @@ function submitJoin() {
       >
         <FantasyIcon type="create-room" size="large" />
         <span class="min-w-0">
-          <strong>Create Room</strong>
-          <small>{{ isGuest ? 'Sign in required' : 'Invite a friend to play' }}</small>
+          <strong>{{ t('Create Room', 'Tạo phòng') }}</strong>
+          <small>{{ isGuest ? t('Sign in required', 'Cần đăng nhập') : t('Invite a friend to play', 'Mời bạn bè cùng chơi') }}</small>
         </span>
         <FantasySystemIcon v-if="isGuest" compact class="ml-auto opacity-60">
           <Lock :size="18" aria-hidden="true" />
@@ -89,22 +122,31 @@ function submitJoin() {
         </FantasySystemIcon>
       </button>
 
-      <form class="launcher-action launcher-action--join" @submit.prevent="submitJoin">
+      <form
+        class="launcher-action launcher-action--join"
+        :aria-busy="props.joinPending"
+        @submit.prevent="submitJoin"
+      >
         <FantasyIcon type="join-code" size="large" />
         <label class="min-w-0 flex-1" for="lobby-join-code">
-          <strong>Join Code</strong>
+          <strong>{{ t('Join Code', 'Mã tham gia') }}</strong>
           <span class="join-code-row">
             <input
               id="lobby-join-code"
               v-model="joinCode"
               type="text"
               maxlength="6"
+              :disabled="props.joinPending"
               autocomplete="off"
               spellcheck="false"
-              aria-label="Six-letter room code"
-              placeholder="ENTER CODE"
+              :aria-label="t('Six-letter room code', 'Mã phòng gồm sáu ký tự')"
+              :placeholder="t('ENTER CODE', 'NHẬP MÃ')"
             />
-            <button type="submit" :disabled="joinCode.trim().length !== 6" aria-label="Join room">
+            <button
+              type="submit"
+              :disabled="props.joinPending || joinCode.trim().length !== 6"
+              :aria-label="t('Join room', 'Vào phòng')"
+            >
               <FantasySystemIcon compact><CirclePlay :size="20" aria-hidden="true" /></FantasySystemIcon>
             </button>
           </span>
@@ -123,21 +165,22 @@ function submitJoin() {
 }
 
 .match-mode-grid {
-  grid-template-columns: repeat(2, minmax(9.25rem, 10.25rem));
+  gap: 0.75rem;
+  grid-template-columns: repeat(2, minmax(9.5rem, 11rem));
   justify-content: start;
 }
 
 .match-mode-card {
   position: relative;
   display: flex;
-  height: 10.75rem;
+  height: 11.25rem;
   min-width: 0;
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
   gap: 0.25rem;
   overflow: hidden;
-  padding: 0.45rem 0.65rem 0.7rem;
+  padding: 0.45rem 0.65rem 0.65rem;
   color: var(--text-foreground);
   text-align: center;
   border: 1px solid rgb(214 181 106 / 0.48);
@@ -198,6 +241,22 @@ function submitJoin() {
     rgb(8 22 50 / 0.96) 68%,
     rgb(31 25 43 / 0.94)
   );
+  animation: ranked-card-aura 5s ease-in-out infinite alternate;
+}
+
+@keyframes ranked-card-aura {
+  0% {
+    box-shadow:
+      0 1rem 1.8rem rgb(0 3 12 / 0.38),
+      0 0 0.8rem rgb(211 168 84 / 0.12),
+      inset 0 1px 0 rgb(229 222 210 / 0.16);
+  }
+  100% {
+    box-shadow:
+      0 1.2rem 2.2rem rgb(0 3 12 / 0.45),
+      0 0 1.4rem rgb(211 168 84 / 0.28),
+      inset 0 1px 0 rgb(229 222 210 / 0.26);
+  }
 }
 
 .match-mode-card--casual {
@@ -261,9 +320,9 @@ function submitJoin() {
   position: relative;
   z-index: 2;
   display: block;
-  width: 7.2rem;
-  height: 7.2rem;
-  flex: 0 0 7.2rem;
+  width: 7.6rem;
+  height: 7.6rem;
+  flex: 0 0 7.6rem;
   margin-bottom: -0.25rem;
   transition: transform 240ms ease-out;
 }
@@ -275,9 +334,9 @@ function submitJoin() {
 }
 
 .match-mode-card--ranked .match-mode-card__artwork {
-  width: 7.55rem;
-  height: 7.55rem;
-  flex-basis: 7.55rem;
+  width: 7.95rem;
+  height: 7.95rem;
+  flex-basis: 7.95rem;
 }
 
 .match-mode-card:hover .match-mode-card__artwork,
@@ -309,6 +368,52 @@ function submitJoin() {
   color: var(--text-secondary);
   font-size: 0.66rem;
   line-height: 1.25;
+}
+
+/* Rewards are ranked-only by design: the anti-farm rules in RewardService skip
+   casual matches entirely, so both cards say plainly what a match is worth.
+   Deliberately no figures — the coin amounts are environment-tunable, and a
+   number printed here would drift out of date the first time they are retuned.
+
+   One line per card, and both lines kept to a similar length on purpose: the
+   card is a fixed 11.25rem justified to flex-end, so a sub-line that wraps on
+   one card and not the other shifts that card's artwork upward — which is how
+   the two crests came to sit at different heights. */
+.match-mode-card__reward {
+  margin-top: 0.2rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--color-fantasy-gold);
+}
+
+.match-mode-card__reward--none {
+  color: var(--color-fantasy-stone);
+  opacity: 0.65;
+  font-weight: 600;
+}
+
+.match-mode-card--cooldown {
+  cursor: not-allowed;
+  filter: grayscale(0.7);
+  opacity: 0.6;
+}
+
+.match-mode-card__cooldown {
+  position: absolute;
+  top: 0.45rem;
+  left: 0.5rem;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.2rem 0.4rem;
+  color: var(--color-error);
+  font-size: 0.6rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  border-radius: var(--radius-pill);
+  background: rgb(5 13 29 / 0.82);
 }
 
 .match-mode-card__locked-copy {
@@ -501,11 +606,13 @@ function submitJoin() {
 
 @media (prefers-reduced-motion: reduce) {
   .match-mode-card,
+  .match-mode-card--ranked,
   .match-mode-card::before,
   .match-mode-card__artwork,
   .match-mode-card__glow,
   .launcher-action {
     transition: none;
+    animation: none !important;
   }
 
   .match-mode-card:hover,

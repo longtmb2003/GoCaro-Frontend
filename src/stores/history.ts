@@ -128,6 +128,10 @@ export const useHistoryStore = defineStore('history', () => {
     }
   }
 
+  function jumpTo(index: number): void {
+    moveIndex.value = Math.min(Math.max(index, 0), moves.value.length)
+  }
+
   return {
     matches,
     page,
@@ -150,10 +154,12 @@ export const useHistoryStore = defineStore('history', () => {
     atEnd,
     replayBoard,
     replayLastMove,
+    replayMoves: computed(() => moves.value),
     loadReplay,
     first,
     last,
     stepNext,
     stepPrev,
+    jumpTo,
   }
 })

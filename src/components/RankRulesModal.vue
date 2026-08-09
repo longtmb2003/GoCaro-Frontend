@@ -3,16 +3,28 @@ import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseModal from '@/components/ui/BaseModal.vue'
 import { RANK_TIERS } from '@/config/ranks'
 import RankTierCard from './RankTierCard.vue'
+import { useAppLanguage } from '@/composables/useAppLanguage'
+import { useAchievementRewards } from '@/composables/useAchievementRewards'
+import { onMounted } from 'vue'
 
 const emit = defineEmits<{ (e: 'close'): void }>()
+const { rankName, t } = useAppLanguage()
+
+// The payout shown here is the one the server will actually pay: it is
+// env-tunable, so reading it from the API is the only way this screen cannot
+// end up advertising a figure the player never receives.
+const { load: loadRewards, rewardCoins, rankMinElo } = useAchievementRewards()
+
+onMounted(() => {
+  void loadRewards()
+})
 </script>
 
 <template>
-  <BaseModal title="Rank System" size="lg" variant="fantasy" @close="emit('close')">
+  <BaseModal :title="t('Rank System', 'Hệ thống xếp hạng')" size="lg" variant="fantasy" @close="emit('close')">
     <div class="rank-rules">
       <p class="rank-rules__description">
-        Your rank is determined by your Elo rating. Win ranked matches to gain Elo, but be
-        careful—losing will drop your rating!
+        {{ t('Your rank is determined by your Elo rating. Win ranked matches to gain Elo, but be careful—losing will drop your rating!', 'Hạng của bạn được xác định bởi điểm Elo. Thắng trận xếp hạng để tăng Elo, nhưng thua sẽ làm giảm điểm!') }}
       </p>
 
       <ul class="rank-rules__tiers">
@@ -20,19 +32,20 @@ const emit = defineEmits<{ (e: 'close'): void }>()
           v-for="tier in RANK_TIERS.slice().reverse()"
           :key="tier.name"
           :name="tier.name"
-          :min-elo="tier.minElo"
+          :display-name="rankName(tier.name)"
+          :min-elo="tier.achievement ? rankMinElo(tier.achievement, tier.minElo) : tier.minElo"
+          :reward-coins="tier.achievement ? rewardCoins(tier.achievement) : 0"
         />
       </ul>
 
       <p class="rank-rules__note">
-        Each tier is divided into sub-tiers (IV, III, II, I) for every 100 Elo points gained within
-        the tier.
+        {{ t('Each tier is divided into sub-tiers (IV, III, II, I) for every 100 Elo points gained within the tier.', 'Mỗi bậc được chia thành các hạng nhỏ (IV, III, II, I), tương ứng mỗi 100 điểm Elo trong bậc đó.') }}
       </p>
     </div>
 
     <template #footer>
       <div class="rank-rules__footer">
-        <BaseButton variant="primary" @click="emit('close')">Understood</BaseButton>
+        <BaseButton variant="primary" @click="emit('close')">{{ t('Understood', 'Đã hiểu') }}</BaseButton>
       </div>
     </template>
   </BaseModal>

@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Pause, Play } from 'lucide-vue-next'
+import BaseButton from '@/components/ui/BaseButton.vue'
+import { useAppLanguage } from '@/composables/useAppLanguage'
 
 defineProps<{
   moveIndex: number
@@ -18,90 +20,76 @@ const emit = defineEmits<{
   togglePlay: []
   setSpeed: [interval: number]
 }>()
+const { t } = useAppLanguage()
 
-const SPEEDS: { label: string; interval: number }[] = [
+const SPEEDS = [
   { label: '0.5×', interval: 1400 },
   { label: '1×', interval: 700 },
   { label: '2×', interval: 350 },
   { label: '4×', interval: 175 },
 ]
-
-const buttonClass =
-  'flex size-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white backdrop-blur-md transition-all shadow-card hover:bg-white/10 hover:border-white/30 hover:shadow-[0_4px_20px_rgba(255,255,255,0.1)] hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 text-lg font-black'
 </script>
 
 <template>
-  <div class="space-y-4 bg-black/20 backdrop-blur-md p-4 rounded-2xl border border-white/5">
-    <div class="flex items-center justify-center gap-3">
-      <button
-        type="button"
-        :class="buttonClass"
-        :disabled="atStart"
-        aria-label="First move"
-        @click="emit('first')"
-      >
+  <div class="replay-controls">
+    <div class="gap-2 flex items-center justify-center">
+      <BaseButton variant="secondary" size="sm" :disabled="atStart" :aria-label="t('First move', 'Nước đầu')" @click="emit('first')">
         <ChevronsLeft :size="20" aria-hidden="true" />
-      </button>
-      <button
-        type="button"
-        :class="buttonClass"
-        :disabled="atStart"
-        aria-label="Previous move"
-        @click="emit('prev')"
-      >
+      </BaseButton>
+      <BaseButton variant="secondary" size="sm" :disabled="atStart" :aria-label="t('Previous move', 'Nước trước')" @click="emit('prev')">
         <ChevronLeft :size="20" aria-hidden="true" />
-      </button>
-      <button
-        type="button"
-        :class="buttonClass"
-        class="!size-12 !text-xl bg-primary-500/20 border-primary-500/30 text-primary-300 hover:bg-primary-500/30 hover:border-primary-500/50 hover:shadow-glow"
-        :disabled="totalMoves === 0"
-        :aria-label="playing ? 'Pause' : 'Play'"
-        @click="emit('togglePlay')"
-      >
-        <Pause v-if="playing" :size="24" aria-hidden="true" />
-        <Play v-else :size="24" aria-hidden="true" />
-      </button>
-      <button
-        type="button"
-        :class="buttonClass"
-        :disabled="atEnd"
-        aria-label="Next move"
-        @click="emit('next')"
-      >
+      </BaseButton>
+      <BaseButton :disabled="totalMoves === 0" :aria-label="playing ? t('Pause', 'Tạm dừng') : t('Play', 'Phát')" @click="emit('togglePlay')">
+        <Pause v-if="playing" :size="22" aria-hidden="true" />
+        <Play v-else :size="22" aria-hidden="true" />
+      </BaseButton>
+      <BaseButton variant="secondary" size="sm" :disabled="atEnd" :aria-label="t('Next move', 'Nước tiếp')" @click="emit('next')">
         <ChevronRight :size="20" aria-hidden="true" />
-      </button>
-      <button
-        type="button"
-        :class="buttonClass"
-        :disabled="atEnd"
-        aria-label="Last move"
-        @click="emit('last')"
-      >
+      </BaseButton>
+      <BaseButton variant="secondary" size="sm" :disabled="atEnd" :aria-label="t('Last move', 'Nước cuối')" @click="emit('last')">
         <ChevronsRight :size="20" aria-hidden="true" />
-      </button>
+      </BaseButton>
     </div>
 
-    <p class="text-white/70 text-center text-sm font-semibold tracking-wide tabular-nums">
-      Move <span class="text-white font-bold">{{ moveIndex }}</span> / {{ totalMoves }}
+    <p class="text-foreground-muted text-small text-center font-mono tabular-nums">
+      {{ t('Move', 'Nước') }} <strong class="text-foreground">{{ moveIndex }}</strong> / {{ totalMoves }}
     </p>
 
-    <div class="flex items-center justify-center gap-2" role="group" aria-label="Playback speed">
-      <button
+    <div class="grid grid-cols-4 gap-2" role="group" :aria-label="t('Playback speed', 'Tốc độ phát')">
+      <BaseButton
         v-for="option in SPEEDS"
         :key="option.interval"
-        type="button"
-        class="rounded-lg px-4 py-1.5 text-xs font-bold uppercase tracking-wider transition-all"
-        :class="
-          speed === option.interval
-            ? 'bg-primary-500 text-white shadow-glow border border-primary-400/50'
-            : 'text-white/50 hover:text-white hover:bg-white/5 border border-transparent'
-        "
+        :variant="speed === option.interval ? 'primary' : 'ghost'"
+        size="sm"
         :aria-pressed="speed === option.interval"
         @click="emit('setSpeed', option.interval)"
       >
         {{ option.label }}
-      </button>
+      </BaseButton>
     </div>
   </div>
 </template>
+
+<style scoped>
+.replay-controls {
+  display: grid;
+  gap: var(--space-lg);
+  padding: var(--space-lg);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-card);
+  background: var(--surface-glass);
+  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(var(--blur-md));
+}
+
+.replay-controls :deep(.base-button) {
+  min-width: 2.75rem;
+  padding-inline: var(--space-md);
+}
+
+@media (max-width: 30rem) {
+  .replay-controls :deep(.base-button) {
+    padding-inline: var(--space-sm);
+  }
+}
+</style>

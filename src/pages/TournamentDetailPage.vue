@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
-import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { useRoute, RouterLink } from 'vue-router'
 import { Crown, Trophy, Users } from 'lucide-vue-next'
 
 import { useToast } from '@/composables/useToast'
 import { useAuthStore } from '@/stores/auth'
-import { useSocketStore } from '@/stores/socket'
 
 import BaseBadge from '@/components/ui/BaseBadge.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
@@ -17,13 +16,13 @@ import TournamentChampionBanner from '@/components/TournamentChampionBanner.vue'
 import AppLayout from '@/layouts/AppLayout.vue'
 import { useTournamentStore } from '@/stores/tournament'
 import { statusPresentation } from '@/utils/tournament'
+import { useAppLanguage } from '@/composables/useAppLanguage'
 
 const route = useRoute()
-const router = useRouter()
 const toast = useToast()
 const tournaments = useTournamentStore()
 const auth = useAuthStore()
-const socket = useSocketStore()
+const { t } = useAppLanguage()
 
 const tournamentId = computed(() => String(route.params.id ?? ''))
 
@@ -32,18 +31,27 @@ const tournament = computed(() => detail.value?.tournament ?? null)
 const participants = computed(() => detail.value?.participants ?? [])
 const bracket = computed(() => tournaments.bracketFor(tournamentId.value))
 
-const status = computed(() =>
-  tournament.value === null ? null : statusPresentation(tournament.value.status),
-)
+const status = computed(() => {
+  if (tournament.value === null) return null
+  const presentation = statusPresentation(tournament.value.status)
+  const labels = {
+    registration: t('Open', 'Đang mở'),
+    ready: t('Full', 'Đã đủ'),
+    running: t('Live', 'Đang diễn ra'),
+    finished: t('Finished', 'Đã kết thúc'),
+    cancelled: t('Cancelled', 'Đã hủy'),
+  }
+  return { ...presentation, label: labels[tournament.value.status] }
+})
 
 const champion = computed(() => participants.value.find((p) => p.status === 'champion') ?? null)
 
 /** Seeds only exist once the field is full, so the label has to say which it is. */
 const fieldHeading = computed(() => {
-  const t = tournament.value
-  if (t === null) return 'Players'
-  if (t.status !== 'registration') return 'Seeded field'
-  return `Entered (${String(participants.value.length)}/${String(t.max_players)})`
+  const currentTournament = tournament.value
+  if (currentTournament === null) return t('Players', 'Người chơi')
+  if (currentTournament.status !== 'registration') return t('Seeded field', 'Danh sách hạt giống')
+  return `${t('Entered', 'Đã tham gia')} (${String(participants.value.length)}/${String(currentTournament.max_players)})`
 })
 
 function load(): void {
@@ -55,12 +63,12 @@ function load(): void {
 const isOrganizer = computed(() => tournament.value?.created_by === auth.user?.id)
 const isParticipant = computed(() => participants.value.some((p) => p.user_id === auth.user?.id))
 
-const canRegister = computed(
-  () =>
-    tournament.value?.status === 'registration' &&
+const canRegister = computed(() => {
+  const current = tournament.value
+  return current?.status === 'registration' &&
     !isParticipant.value &&
-    participants.value.length < (tournament.value?.max_players ?? 0),
-)
+    participants.value.length < current.max_players
+})
 
 const canWithdraw = computed(() => tournament.value?.status === 'registration' && isParticipant.value)
 
@@ -73,9 +81,10 @@ async function handleRegister() {
   registering.value = true
   try {
     await tournaments.register(tournamentId.value)
-    toast.addToast('Successfully entered the tournament', 'success')
-  } catch (err: any) {
-    toast.addToast(err.message || 'Failed to register', 'error')
+    toast.addToast(t('Successfully entered the tournament', 'Đã tham gia giải đấu'), 'success')
+  } catch (error: unknown) {
+    const fallback = t('Failed to register', 'Không thể đăng ký')
+    toast.addToast(error instanceof Error ? error.message : fallback, 'error')
   } finally {
     registering.value = false
   }
@@ -85,9 +94,10 @@ async function handleWithdraw() {
   registering.value = true
   try {
     await tournaments.withdraw(tournamentId.value)
-    toast.addToast('Withdrawn from the tournament', 'info')
-  } catch (err: any) {
-    toast.addToast(err.message || 'Failed to withdraw', 'error')
+    toast.addToast(t('Withdrawn from the tournament', 'Đã rút khỏi giải đấu'), 'info')
+  } catch (error: unknown) {
+    const fallback = t('Failed to withdraw', 'Không thể rút khỏi giải đấu')
+    toast.addToast(error instanceof Error ? error.message : fallback, 'error')
   } finally {
     registering.value = false
   }
@@ -97,9 +107,10 @@ async function handleStart() {
   starting.value = true
   try {
     await tournaments.start(tournamentId.value)
-    toast.addToast('Tournament started', 'success')
-  } catch (err: any) {
-    toast.addToast(err.message || 'Failed to start', 'error')
+    toast.addToast(t('Tournament started', 'Giải đấu đã bắt đầu'), 'success')
+  } catch (error: unknown) {
+    const fallback = t('Failed to start', 'Không thể bắt đầu giải đấu')
+    toast.addToast(error instanceof Error ? error.message : fallback, 'error')
   } finally {
     starting.value = false
   }
@@ -108,14 +119,7 @@ async function handleStart() {
 onMounted(load)
 watch(tournamentId, load)
 
-watch(
-  () => socket.status,
-  (status) => {
-    if (status === 'matched') {
-      router.push('/game')
-    }
-  },
-)
+
 
 const showChampionBanner = ref(false)
 
@@ -146,24 +150,24 @@ watch(
 </script>
 
 <template>
-  <AppLayout :title="tournament?.name ?? 'Tournament'">
+  <AppLayout :title="tournament?.name ?? 'Tournament'" fantasy>
     <template #actions>
       <RouterLink
         to="/tournaments"
         class="text-foreground-muted hover:text-foreground text-sm font-medium transition-colors"
       >
-        All tournaments
+        {{ t('All tournaments', 'Tất cả giải đấu') }}
       </RouterLink>
     </template>
 
     <div class="gap-6 mx-auto flex max-w-5xl flex-col">
       <p v-if="tournaments.detailLoading" class="text-foreground-muted py-6 text-body text-center">
-        Loading tournament…
+        {{ t('Loading tournament…', 'Đang tải giải đấu…') }}
       </p>
 
       <ErrorState v-else-if="tournaments.detailError" :message="tournaments.detailError">
         <template #action>
-          <BaseButton variant="secondary" @click="load()">Try again</BaseButton>
+          <BaseButton variant="secondary" @click="load()">{{ t('Try again', 'Thử lại') }}</BaseButton>
         </template>
       </ErrorState>
 
@@ -179,9 +183,9 @@ watch(
                 <BaseBadge :variant="status.variant">{{ status.label }}</BaseBadge>
               </div>
               <p class="text-small text-foreground-muted">
-                Single elimination · {{ tournament.max_players }} players
+                {{ t('Single elimination', 'Loại trực tiếp') }} · {{ tournament.max_players }} {{ t('players', 'người chơi') }}
                 <template v-if="tournament.current_round > 0">
-                  · round {{ tournament.current_round }}
+                  · {{ t('round', 'vòng') }} {{ tournament.current_round }}
                 </template>
               </p>
             </div>
@@ -200,7 +204,7 @@ watch(
                 :disabled="registering"
                 @click="handleRegister"
               >
-                Enter Tournament
+                {{ t('Enter Tournament', 'Tham gia giải') }}
               </BaseButton>
               <BaseButton
                 v-if="canWithdraw"
@@ -209,7 +213,7 @@ watch(
                 :disabled="registering"
                 @click="handleWithdraw"
               >
-                Withdraw
+                {{ t('Withdraw', 'Rút lui') }}
               </BaseButton>
               <BaseButton
                 v-if="canStart"
@@ -218,7 +222,7 @@ watch(
                 :disabled="starting"
                 @click="handleStart"
               >
-                Start Tournament
+                {{ t('Start Tournament', 'Bắt đầu giải') }}
               </BaseButton>
             </div>
           </template>
@@ -229,8 +233,8 @@ watch(
 
           <EmptyState
             v-if="participants.length === 0"
-            title="Nobody has entered yet"
-            description="This tournament is waiting for its first players."
+            :title="t('Nobody has entered yet', 'Chưa có ai tham gia')"
+            :description="t('This tournament is waiting for its first players.', 'Giải đấu đang chờ những người chơi đầu tiên.')"
           />
 
           <ul v-else class="gap-2 grid sm:grid-cols-2">
@@ -259,22 +263,22 @@ watch(
                   v-if="participant.status === 'champion'"
                   :size="14"
                   class="text-warning"
-                  aria-label="Champion"
+                  :aria-label="t('Champion', 'Nhà vô địch')"
                 />
               </span>
             </li>
           </ul>
         </GlassCard>
 
-        <GlassCard as="section" title="Bracket">
+        <GlassCard as="section" :title="t('Bracket', 'Nhánh đấu')">
           <p v-if="tournaments.bracketLoading" class="text-foreground-muted py-6 text-body text-center">
-            Loading bracket…
+            {{ t('Loading bracket…', 'Đang tải nhánh đấu…') }}
           </p>
 
           <ErrorState v-else-if="tournaments.bracketError" :message="tournaments.bracketError">
             <template #action>
               <BaseButton variant="secondary" @click="tournaments.loadBracket(tournamentId)">
-                Try again
+                {{ t('Try again', 'Thử lại') }}
               </BaseButton>
             </template>
           </ErrorState>

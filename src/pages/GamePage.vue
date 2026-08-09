@@ -24,18 +24,22 @@ import FantasySystemIcon from '@/components/ui/FantasySystemIcon.vue'
 import GlassCard from '@/components/ui/GlassCard.vue'
 import BoardRenderer from '@/components/board-renderer/BoardRenderer.vue'
 import type { MoveCueName, VictoryCueName } from '@/components/board-renderer/feedbackTiming'
+import type { SpiritCueName } from '@/components/board-renderer/spiritTiming'
+import { assignMatchSpirits } from '@/spirits/spiritAssignment'
 import GameResultBanner from '@/components/GameResultBanner.vue'
 import MatchResultOverlay from '@/components/MatchResultOverlay.vue'
 import InGameChat from '@/components/InGameChat.vue'
-import MatchAudioControls from '@/components/MatchAudioControls.vue'
 import OpponentLeftBanner from '@/components/OpponentLeftBanner.vue'
 import ReconnectingOverlay from '@/components/ReconnectingOverlay.vue'
 import RankFrame from '@/components/RankFrame.vue'
 import TurnTimer from '@/components/TurnTimer.vue'
 import TurnCountdownRing from '@/components/TurnCountdownRing.vue'
+import TurnstileModal from '@/components/TurnstileModal.vue'
 import AppLayout from '@/layouts/AppLayout.vue'
 import { useToast } from '@/composables/useToast'
 import { useWinSequence } from '@/composables/useWinSequence'
+import { useShareLink } from '@/composables/useShareLink'
+import { useAppLanguage } from '@/composables/useAppLanguage'
 import { useAuthStore } from '@/stores/auth'
 import { useGameStore } from '@/stores/game'
 import { useSocketStore } from '@/stores/socket'
@@ -48,6 +52,8 @@ const game = useGameStore()
 const socket = useSocketStore()
 const router = useRouter()
 const { addToast } = useToast()
+const shareLink = useShareLink()
+const { errorText, rankName, t } = useAppLanguage()
 
 const confirmingResign = ref(false)
 const historyScroll = ref<HTMLElement | null>(null)
@@ -58,9 +64,12 @@ const winSequence = useWinSequence(
   },
 )
 
+const turnstileModalOpen = ref(false)
+const pendingMatchmakingMode = ref<'casual' | 'ranked' | null>(null)
+
 const yourSymbolChar = computed(() => (game.yourSymbol === 1 ? 'X' : 'O'))
 const opponentSymbolChar = computed(() => (game.yourSymbol === 1 ? 'O' : 'X'))
-const symbolColorClass = (symbol: string) => (symbol === 'X' ? 'text-accent' : 'text-player-o')
+const symbolColorClass = (symbol: string) => (symbol === 'X' ? 'text-player-x' : 'text-player-o')
 
 /** Whether the timer is in the critical low-time zone (under 5 seconds). */
 const isLowTime = computed(() => socket.turnSecondsLeft < 5 && game.phase === 'playing')
@@ -75,7 +84,7 @@ const turnTimerTone = computed<'normal' | 'warning' | 'critical'>(() => {
 const yourElo = computed(() => auth.user?.elo ?? 1000)
 const yourTier = computed(() => getRankTier(yourElo.value))
 const yourRankLabel = computed(() =>
-  `${yourTier.value.name} ${getRankSubTier(yourElo.value)}`.trim(),
+  `${rankName(yourTier.value.name)} ${getRankSubTier(yourElo.value)}`.trim(),
 )
 const yourInitial = computed(() => auth.displayName.charAt(0).toUpperCase())
 
@@ -84,7 +93,7 @@ const opponentInitial = computed(() => game.opponent.charAt(0).toUpperCase())
 const opponentElo = ref(1000)
 const opponentTier = computed(() => getRankTier(opponentElo.value))
 const opponentRankLabel = computed(() =>
-  `${opponentTier.value.name} ${getRankSubTier(opponentElo.value)}`.trim(),
+  `${rankName(opponentTier.value.name)} ${getRankSubTier(opponentElo.value)}`.trim(),
 )
 
 watch(
@@ -137,6 +146,40 @@ const finishingOutcome = computed<'win' | 'loss'>(() =>
   game.result?.outcome === 'win' ? 'win' : 'loss',
 )
 
+/**
+ * Both players' companions for this match, derived from the room id so the two
+ * clients agree without the server being asked. Dropped once the match ends: the
+ * board stays on screen behind the result overlay, and a summon replaying over a
+ * finished game would read as a move still being made.
+ */
+const matchSpirits = computed(() => {
+  if (game.phase !== 'playing' || game.roomId === null) return null
+  let xEquipped = ''
+  let oEquipped = ''
+  if (game.yourSymbol === 1) {
+    xEquipped = socket.yourSpirit
+    oEquipped = socket.opponentSpirit
+  } else if (game.yourSymbol === 2) {
+    xEquipped = socket.opponentSpirit
+    oEquipped = socket.yourSpirit
+  }
+  return assignMatchSpirits(xEquipped, oEquipped, game.roomId)
+})
+
+watch(
+  () => matchSpirits.value,
+  (spirits) => {
+    if (spirits === null) return
+    if (spirits.x.model.source !== null) {
+      new Image().src = spirits.x.model.source
+    }
+    if (spirits.o.model.source !== null) {
+      new Image().src = spirits.o.model.source
+    }
+  },
+  { immediate: true },
+)
+
 watch(
   () => game.moveHistory.length,
   () => {
@@ -183,17 +226,32 @@ watch(
 
 const turnStatus = computed(() => {
   if (game.phase === 'connection-lost') {
-    return { label: 'Connection lost', description: 'Reconnecting to the match' }
+    return {
+      label: t('Connection lost', 'Mất kết nối'),
+      description: t('Reconnecting to the match', 'Đang kết nối lại trận đấu'),
+    }
   }
   if (game.phase === 'finishing') {
-    return { label: 'Winning five', description: 'Review the decisive line' }
+    return {
+      label: t('Winning five', 'Năm quân chiến thắng'),
+      description: t('Review the decisive line', 'Xem lại đường cờ quyết định'),
+    }
   }
   if (game.phase === 'result') {
-    return { label: 'Match complete', description: 'Review the result below' }
+    return {
+      label: t('Match complete', 'Trận đấu kết thúc'),
+      description: t('Review the result below', 'Xem kết quả bên dưới'),
+    }
   }
   return game.yourTurn
-    ? { label: 'Your turn', description: 'Choose an empty cell to play' }
-    : { label: "Opponent's turn", description: 'Waiting for the next move' }
+    ? {
+        label: t('Your turn', 'Lượt của bạn'),
+        description: t('Choose an empty cell to play', 'Chọn một ô trống để đánh'),
+      }
+    : {
+        label: t("Opponent's turn", 'Lượt của đối thủ'),
+        description: t('Waiting for the next move', 'Đang chờ nước đi tiếp theo'),
+      }
 })
 
 const turnStatusClass = computed(() => {
@@ -226,8 +284,8 @@ const banner = computed<Banner | null>(() => {
   if (game.phase === 'connection-lost') {
     // The match may still be running on the server, so no rating is claimed here.
     return {
-      heading: 'Connection lost',
-      message: 'You were disconnected from the match.',
+      heading: t('Connection lost', 'Mất kết nối'),
+      message: t('You were disconnected from the match.', 'Bạn đã mất kết nối khỏi trận đấu.'),
       tone: 'draw',
     }
   }
@@ -240,25 +298,25 @@ const banner = computed<Banner | null>(() => {
 
 function resultText(result: GameResult): { heading: string; message: string } {
   if (result.outcome === 'draw') {
-    return { heading: 'Draw', message: 'The board is full.' }
+    return { heading: t('Draw', 'Hòa'), message: t('The board is full.', 'Bàn cờ đã đầy.') }
   }
-  const heading = result.outcome === 'win' ? 'Victory' : 'Defeat'
+  const heading = result.outcome === 'win' ? t('Victory', 'Chiến thắng') : t('Defeat', 'Thất bại')
   const messages: Record<GameResult['outcome'], Record<string, string>> = {
     win: {
-      five_in_row: 'You got five in a row.',
-      resign: 'Your opponent resigned.',
-      timeout: 'Your opponent ran out of time.',
-      disconnect: 'Your opponent disconnected.',
+      five_in_row: t('You got five in a row.', 'Bạn đã tạo được năm quân liên tiếp.'),
+      resign: t('Your opponent resigned.', 'Đối thủ đã đầu hàng.'),
+      timeout: t('Your opponent ran out of time.', 'Đối thủ đã hết thời gian.'),
+      disconnect: t('Your opponent disconnected.', 'Đối thủ đã mất kết nối.'),
     },
     loss: {
-      five_in_row: 'Your opponent got five in a row.',
-      resign: 'You resigned.',
-      timeout: 'You ran out of time.',
-      disconnect: 'You were disconnected.',
+      five_in_row: t('Your opponent got five in a row.', 'Đối thủ đã tạo được năm quân liên tiếp.'),
+      resign: t('You resigned.', 'Bạn đã đầu hàng.'),
+      timeout: t('You ran out of time.', 'Bạn đã hết thời gian.'),
+      disconnect: t('You were disconnected.', 'Bạn đã mất kết nối.'),
     },
     draw: {},
   }
-  const fallback = result.outcome === 'win' ? 'You won.' : 'You lost.'
+  const fallback = result.outcome === 'win' ? t('You won.', 'Bạn đã thắng.') : t('You lost.', 'Bạn đã thua.')
   return { heading, message: messages[result.outcome][result.reason] ?? fallback }
 }
 
@@ -304,6 +362,19 @@ function onVictoryCue(cue: VictoryCueName): void {
   )
 }
 
+/**
+ * Spirits ride the same event bus as every other cue rather than calling the
+ * audio composable directly, so the board never owns a sound and the sound
+ * never owns a delay. The id is enough for a listener to look the spirit up.
+ */
+function onSpiritCue(cue: SpiritCueName, symbol: PlayerSymbol, spiritId: string): void {
+  window.dispatchEvent(
+    new CustomEvent('gocaro:spirit-cue', {
+      detail: { cue, symbol, spiritId, isLocalMove: symbol === game.yourSymbol },
+    }),
+  )
+}
+
 function scrollHistory(direction: -1 | 1): void {
   historyScroll.value?.scrollBy({ left: direction * 180, behavior: 'smooth' })
 }
@@ -336,7 +407,20 @@ function playAgain(): void {
   const mode = socket.mode
   refreshRatingIfRanked()
   socket.leaveGame()
-  socket.startMatchmaking(mode)
+  if (import.meta.env.VITE_TURNSTILE_SITE_KEY) {
+    pendingMatchmakingMode.value = mode
+    turnstileModalOpen.value = true
+  } else {
+    socket.startMatchmaking(mode)
+  }
+}
+
+function onTurnstileVerified(token: string): void {
+  turnstileModalOpen.value = false
+  if (pendingMatchmakingMode.value) {
+    socket.startMatchmaking(pendingMatchmakingMode.value, token)
+    pendingMatchmakingMode.value = null
+  }
 }
 
 async function cancelInPlaceSearch(): Promise<void> {
@@ -344,40 +428,26 @@ async function cancelInPlaceSearch(): Promise<void> {
   await router.push('/')
 }
 
-async function shareAchievement(): Promise<void> {
-  // `navigator.share` is typed as always present but is absent in many browsers.
-  // Cast to a possibly-undefined function so the feature check is real and the
-  // fallback branch keeps full access to `navigator`.
-  const nativeShare = (navigator.share as ((data: ShareData) => Promise<void>) | undefined)?.bind(
-    navigator,
-  )
-  if (nativeShare) {
-    try {
-      await nativeShare({
-        title: 'GoCaro - Play Gomoku Online',
-        text: 'I just won a match of Gomoku on GoCaro!',
-        url: window.location.origin,
-      })
-      const granted = await auth.shareAchievement()
-      if (granted) addToast('You earned 50 Coins for sharing!', 'success')
-    } catch {
-      // The user dismissed the share sheet, or sharing failed; nothing to recover.
-    }
-  } else {
-    void navigator.clipboard.writeText(window.location.origin)
-    const granted = await auth.shareAchievement()
-    if (granted) addToast('You earned 50 Coins for sharing!', 'success')
-    addToast('Link copied to clipboard!', 'info')
+async function shareReplay(): Promise<void> {
+  if (!game.roomId) return
+  try {
+    await shareLink.share({
+      title: t('GoCaro match replay', 'Xem lại trận GoCaro'),
+      text: t('Watch my GoCaro match replay!', 'Xem lại trận GoCaro của tôi!'),
+      matchId: game.roomId,
+    })
+  } catch {
+    addToast(t('Unable to create the replay link yet. Please try again.', 'Chưa thể tạo liên kết xem lại. Vui lòng thử lại.'), 'error')
   }
 }
 </script>
 
 <template>
-  <AppLayout title="Match" :hide-footer="true" :full-bleed="true" :fantasy="true">
+  <AppLayout :title="t('Match', 'Trận đấu')" :hide-footer="true" :full-bleed="true" :fantasy="true">
     <div class="match-room relative h-full min-h-0 w-full overflow-hidden">
       <div class="absolute inset-0 bg-background"></div>
       <div
-        class="match-room-art absolute inset-0 bg-[url('/game-room-bg-v3.png')] bg-cover bg-center"
+        class="match-room-art absolute inset-0 bg-[url('/game-room-bg-v3.webp')] bg-cover bg-center"
       ></div>
       <div class="match-room-atmosphere absolute inset-0"></div>
 
@@ -385,10 +455,10 @@ async function shareAchievement(): Promise<void> {
         class="match-shell relative z-10 mx-auto flex h-full min-h-0 w-full max-w-[120rem] flex-col overflow-hidden px-3 py-1 sm:px-3"
       >
         <div
-          class="match-room-grid grid min-h-0 flex-1 gap-2 lg:grid-cols-[9rem_minmax(0,1fr)_10rem]"
+          class="match-room-grid grid min-h-0 flex-1 gap-2 lg:grid-cols-[14rem_minmax(0,1fr)_15rem]"
         >
           <!-- LEFT SIDE: Match Info (Players, Timer & Controls) -->
-          <div class="match-sidebar-left order-2 flex min-h-0 flex-col gap-3 lg:order-none">
+          <div class="match-sidebar-left side-panel-shell order-2 flex min-h-0 flex-col gap-3 lg:order-none">
             <!-- Match Mode Badge & Move Counter -->
             <div class="match-meta-strip flex items-center justify-between gap-1">
               <span
@@ -400,12 +470,12 @@ async function shareAchievement(): Promise<void> {
                 "
               >
                 <Swords :size="12" aria-hidden="true" />
-                {{ isRanked ? 'Ranked' : 'Casual' }}
+                {{ isRanked ? t('Ranked', 'Xếp hạng') : t('Casual', 'Đấu thường') }}
               </span>
               <span
                 class="move-counter rounded-pill border border-border-strong bg-surface-elevated px-2 py-1 text-caption font-semibold tabular-nums text-foreground-muted shadow-sm"
               >
-                Move {{ moveCount }}
+                {{ t('Move', 'Nước') }} {{ moveCount }}
               </span>
             </div>
 
@@ -415,6 +485,7 @@ async function shareAchievement(): Promise<void> {
               <GlassCard
                 as="div"
                 class="player-card player-card-opponent side-panel-material !p-2"
+                body-class="player-card-body"
                 :data-rank-tier="opponentTier.name.toLowerCase()"
                 :class="{
                   'player-card-active': !game.yourTurn && game.phase === 'playing',
@@ -426,7 +497,7 @@ async function shareAchievement(): Promise<void> {
                 <span class="fantasy-corner fantasy-corner-bl" aria-hidden="true"></span>
                 <span class="fantasy-corner fantasy-corner-br" aria-hidden="true"></span>
                 <div class="player-card-header">
-                  <span class="player-role-label">Opponent</span>
+                  <span class="player-role-label">{{ t('Opponent', 'Đối thủ') }}</span>
                   <span
                     class="player-symbol-badge"
                     :class="[
@@ -477,7 +548,6 @@ async function shareAchievement(): Promise<void> {
                   :total-seconds="socket.turnBudgetSeconds"
                 />
                 <p
-                  v-if="!game.yourTurn && game.phase === 'playing'"
                   class="player-turn-banner"
                   :class="{
                     'player-turn-banner-active': !game.yourTurn && game.phase === 'playing',
@@ -486,7 +556,13 @@ async function shareAchievement(): Promise<void> {
                   }"
                 >
                   <span class="turn-banner-crystal" aria-hidden="true"></span>
-                  Opponent turn
+                  {{
+                    game.phase !== 'playing'
+                      ? t('Match complete', 'Trận đấu kết thúc')
+                      : !game.yourTurn
+                        ? t('Opponent turn', 'Lượt đối thủ')
+                        : t('Waiting', 'Đang chờ')
+                  }}
                 </p>
               </GlassCard>
 
@@ -498,6 +574,7 @@ async function shareAchievement(): Promise<void> {
               <GlassCard
                 as="div"
                 class="player-card player-card-you side-panel-material relative overflow-hidden !p-2"
+                body-class="player-card-body"
                 :data-rank-tier="yourTier.name.toLowerCase()"
                 :class="{
                   'player-card-active': game.yourTurn && game.phase === 'playing',
@@ -509,7 +586,7 @@ async function shareAchievement(): Promise<void> {
                 <span class="fantasy-corner fantasy-corner-bl" aria-hidden="true"></span>
                 <span class="fantasy-corner fantasy-corner-br" aria-hidden="true"></span>
                 <div class="player-card-header relative z-10">
-                  <span class="player-role-label text-accent">You</span>
+                  <span class="player-role-label text-accent">{{ t('You', 'Bạn') }}</span>
                   <span
                     class="player-symbol-badge"
                     :class="[
@@ -558,7 +635,6 @@ async function shareAchievement(): Promise<void> {
                   :total-seconds="socket.turnBudgetSeconds"
                 />
                 <p
-                  v-if="game.yourTurn && game.phase === 'playing'"
                   class="player-turn-banner relative z-10"
                   :class="{
                     'player-turn-banner-active': game.yourTurn && game.phase === 'playing',
@@ -567,7 +643,13 @@ async function shareAchievement(): Promise<void> {
                   }"
                 >
                   <span class="turn-banner-crystal" aria-hidden="true"></span>
-                  Your turn
+                  {{
+                    game.phase !== 'playing'
+                      ? t('Match complete', 'Trận đấu kết thúc')
+                      : game.yourTurn
+                        ? t('Your turn', 'Lượt của bạn')
+                        : t('Waiting', 'Đang chờ')
+                  }}
                 </p>
               </GlassCard>
             </div>
@@ -578,9 +660,8 @@ async function shareAchievement(): Promise<void> {
                 <p
                   class="text-caption font-semibold uppercase tracking-widest text-foreground-muted"
                 >
-                  Match controls
+                  {{ t('Match controls', 'Điều khiển trận đấu') }}
                 </p>
-                <MatchAudioControls />
               </div>
               <div v-if="!confirmingResign" class="grid grid-cols-2 gap-2">
                 <BaseButton
@@ -588,39 +669,41 @@ async function shareAchievement(): Promise<void> {
                   class="match-control-button match-control-draw font-bold tracking-wide"
                   size="sm"
                   :aria-label="
-                    socket.waitingForDrawResponse ? 'Waiting for draw response' : 'Offer a draw'
+                    socket.waitingForDrawResponse
+                      ? t('Waiting for draw response', 'Đang chờ phản hồi hòa')
+                      : t('Offer a draw', 'Đề nghị hòa')
                   "
                   :disabled="socket.waitingForDrawResponse || socket.drawOffersLeft === 0"
                   @click="socket.sendOfferDraw()"
                 >
-                  <template v-if="socket.waitingForDrawResponse">Waiting...</template>
+                  <template v-if="socket.waitingForDrawResponse">{{ t('Waiting...', 'Đang chờ...') }}</template>
                   <template v-else>
                     <FantasySystemIcon compact>
                       <Handshake aria-hidden="true" />
                     </FantasySystemIcon>
-                    Draw
+                    {{ t('Draw', 'Hòa') }}
                   </template>
                 </BaseButton>
                 <BaseButton
                   variant="secondary"
                   class="match-control-button match-control-resign font-bold tracking-wide"
                   size="sm"
-                  aria-label="Resign from match"
+                  :aria-label="t('Resign from match', 'Đầu hàng trận đấu')"
                   @click="confirmingResign = true"
                 >
                   <FantasySystemIcon compact>
                     <Flag aria-hidden="true" />
                   </FantasySystemIcon>
-                  Resign
+                  {{ t('Resign', 'Đầu hàng') }}
                 </BaseButton>
               </div>
               <div v-else class="space-y-2">
                 <p class="text-foreground text-small text-center font-bold tracking-wide">
-                  Resign this match?
+                  {{ t('Resign this match?', 'Đầu hàng trận này?') }}
                 </p>
                 <div class="flex gap-2">
                   <BaseButton variant="danger" size="sm" class="flex-1" @click="confirmResign">
-                    Confirm
+                    {{ t('Confirm', 'Xác nhận') }}
                   </BaseButton>
                   <BaseButton
                     variant="secondary"
@@ -628,7 +711,7 @@ async function shareAchievement(): Promise<void> {
                     class="flex-1"
                     @click="confirmingResign = false"
                   >
-                    Cancel
+                    {{ t('Cancel', 'Hủy') }}
                   </BaseButton>
                 </div>
               </div>
@@ -678,7 +761,7 @@ async function shareAchievement(): Promise<void> {
                   v-else
                   class="shrink-0 rounded-pill border border-border-subtle bg-surface-sunken px-2.5 py-1 text-caption font-semibold tabular-nums text-foreground-muted"
                 >
-                  {{ moveCount }} moves
+                  {{ moveCount }} {{ t('moves', 'nước') }}
                 </span>
               </div>
             </div>
@@ -689,20 +772,23 @@ async function shareAchievement(): Promise<void> {
               :show-countdown="winSequence.showCountdown.value"
             />
             <BoardRenderer
+              class="game-board"
               :board="game.board"
               :interactive="boardInteractive"
               :last-move="game.lastMove"
               :winning-line="winningLine"
               :your-symbol="game.yourSymbol"
+              :spirits="matchSpirits"
               @move="onMove"
               @cell-hover="onCellHover"
               @move-cue="onMoveCue"
               @victory-cue="onVictoryCue"
+              @spirit-cue="onSpiritCue"
             />
           </div>
 
           <!-- RIGHT SIDE: Match chat and rules -->
-          <div class="match-sidebar-right order-3 flex h-full min-h-0 flex-col gap-2 lg:order-none">
+          <div class="match-sidebar-right side-panel-shell order-3 flex h-full min-h-0 flex-col gap-2 lg:order-none">
             <OpponentLeftBanner
               v-if="socket.opponentReconnectSecondsLeft !== null"
               :seconds-left="socket.opponentReconnectSecondsLeft"
@@ -714,11 +800,13 @@ async function shareAchievement(): Promise<void> {
               class="text-error text-small text-center font-medium shrink-0"
               role="alert"
             >
-              {{ game.moveError }}
+              {{ errorText(game.moveError) }}
             </p>
 
             <!-- Match chat -->
-            <InGameChat class="side-panel-material h-72 shrink-0 sm:h-80 lg:h-80 lg:min-h-0" />
+            <InGameChat
+              class="side-panel-material h-72 shrink-0 sm:h-80 lg:h-auto lg:min-h-0 lg:flex-1"
+            />
 
             <GlassCard
               as="section"
@@ -733,7 +821,7 @@ async function shareAchievement(): Promise<void> {
                   id="game-rules-heading"
                   class="text-caption font-semibold uppercase tracking-widest text-accent"
                 >
-                  Game Rules
+                  {{ t('Game Rules', 'Luật chơi') }}
                 </h2>
               </div>
               <ul class="rules-list mt-2 space-y-2 text-small text-foreground-secondary">
@@ -742,8 +830,8 @@ async function shareAchievement(): Promise<void> {
                     <Target aria-hidden="true" />
                   </FantasySystemIcon>
                   <span>
-                    <strong>Victory</strong>
-                    Get 5 in a row horizontally, vertically, or diagonally to win.
+                    <strong>{{ t('Victory', 'Chiến thắng') }}</strong>
+                    {{ t('Get 5 in a row horizontally, vertically, or diagonally to win.', 'Xếp 5 quân liên tiếp theo hàng ngang, dọc hoặc chéo để thắng.') }}
                   </span>
                 </li>
                 <li class="rule-item">
@@ -751,8 +839,8 @@ async function shareAchievement(): Promise<void> {
                     <ShieldX aria-hidden="true" />
                   </FantasySystemIcon>
                   <span>
-                    <strong>Blocked line</strong>
-                    A line of 5 blocked at both ends does not count as a win (chặn 2 đầu).
+                    <strong>{{ t('International rules', 'Luật quốc tế') }}</strong>
+                    {{ t('A line still wins when both ends are blocked, and 6 or more counts too.', 'Hàng bị chặn cả hai đầu vẫn thắng, và từ 6 quân trở lên cũng được tính.') }}
                   </span>
                 </li>
               </ul>
@@ -765,12 +853,12 @@ async function shareAchievement(): Promise<void> {
         >
           <span
             class="hidden shrink-0 text-caption font-semibold uppercase tracking-widest text-foreground-muted sm:block"
-            >Last moves</span
+            >{{ t('Last moves', 'Các nước gần nhất') }}</span
           >
           <button
             class="last-moves-arrow"
             type="button"
-            aria-label="Scroll moves left"
+            :aria-label="t('Scroll moves left', 'Cuộn các nước sang trái')"
             @click="scrollHistory(-1)"
           >
             <ChevronLeft :size="18" aria-hidden="true" />
@@ -792,8 +880,8 @@ async function shareAchievement(): Promise<void> {
                   : '',
               ]"
               :aria-current="move.moveNumber === moveCount ? 'step' : undefined"
-              :aria-label="`Move ${move.moveNumber}, ${move.coordinate}, ${move.symbol === 1 ? 'forged X' : 'arcane O'}`"
-              :title="`Move ${move.moveNumber} · ${move.coordinate}`"
+              :aria-label="`${t('Move', 'Nước')} ${move.moveNumber}, ${move.coordinate}, ${move.symbol === 1 ? 'X' : 'O'}`"
+              :title="`${t('Move', 'Nước')} ${move.moveNumber} · ${move.coordinate}`"
             >
               <span class="last-move-number">{{ move.moveNumber }}</span>
               <X v-if="move.symbol === 1" :size="14" stroke-width="3" aria-hidden="true" />
@@ -801,13 +889,13 @@ async function shareAchievement(): Promise<void> {
               <span class="last-move-coordinate">{{ move.coordinate }}</span>
             </button>
             <span v-if="recentMoves.length === 0" class="text-caption text-foreground-muted"
-              >Moves will appear here</span
+              >{{ t('Moves will appear here', 'Các nước đi sẽ xuất hiện tại đây') }}</span
             >
           </div>
           <button
             class="last-moves-arrow"
             type="button"
-            aria-label="Scroll moves right"
+            :aria-label="t('Scroll moves right', 'Cuộn các nước sang phải')"
             @click="scrollHistory(1)"
           >
             <ChevronRight :size="18" aria-hidden="true" />
@@ -830,7 +918,7 @@ async function shareAchievement(): Promise<void> {
         :tone="banner.tone"
         @play-again="playAgain"
         @exit="leave"
-        @share="shareAchievement"
+        @share="shareReplay"
       />
 
       <!-- Draw Offer Dialog. Not dismissible: the offer needs an explicit answer. -->
@@ -841,19 +929,19 @@ async function shareAchievement(): Promise<void> {
       >
         <div class="text-center">
           <h2 id="draw-offer-heading" class="text-section gap-2 flex items-center justify-center">
-            <Flag :size="20" aria-hidden="true" /> Draw Offer
+            <Flag :size="20" aria-hidden="true" /> {{ t('Draw Offer', 'Đề nghị hòa') }}
           </h2>
-          <p class="text-foreground-secondary text-body mt-3">Your opponent has offered a draw.</p>
-          <p class="text-foreground-muted text-small mt-1">(Making a move will decline it)</p>
+          <p class="text-foreground-secondary text-body mt-3">{{ t('Your opponent has offered a draw.', 'Đối thủ đề nghị hòa.') }}</p>
+          <p class="text-foreground-muted text-small mt-1">{{ t('(Making a move will decline it)', '(Đi một nước sẽ từ chối đề nghị)') }}</p>
         </div>
 
         <template #footer>
           <div class="gap-3 flex">
             <BaseButton variant="success" class="flex-1" @click="socket.sendRespondDraw(true)">
-              Accept
+              {{ t('Accept', 'Chấp nhận') }}
             </BaseButton>
             <BaseButton variant="secondary" class="flex-1" @click="socket.sendRespondDraw(false)">
-              Decline
+              {{ t('Decline', 'Từ chối') }}
             </BaseButton>
           </div>
         </template>
@@ -865,14 +953,25 @@ async function shareAchievement(): Promise<void> {
         class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex flex-col items-center justify-center gap-4"
       >
         <BaseSpinner size="lg" />
-        <h3 class="text-section font-bold text-foreground">Finding next opponent...</h3>
+        <h3 class="text-section font-bold text-foreground">{{ t('Finding next opponent...', 'Đang tìm đối thủ tiếp theo...') }}</h3>
         <p class="text-foreground-muted text-small">
-          {{ isRanked ? 'Ranked Match' : 'Casual Match' }}
+          {{ isRanked ? t('Ranked Match', 'Trận xếp hạng') : t('Casual Match', 'Trận thường') }}
         </p>
         <BaseButton variant="secondary" size="sm" class="mt-4" @click="cancelInPlaceSearch">
-          Cancel Queue
+          {{ t('Cancel Queue', 'Hủy hàng chờ') }}
         </BaseButton>
       </div>
+      <ReconnectingOverlay
+        v-else-if="socket.connection === 'reconnecting'"
+        :seconds-left="socket.reconnectSecondsLeft"
+        state="reconnecting"
+      />
+
+      <TurnstileModal
+        v-if="turnstileModalOpen"
+        @verify="onTurnstileVerified"
+        @close="turnstileModalOpen = false; pendingMatchmakingMode = null"
+      />
     </div>
   </AppLayout>
 </template>
@@ -938,7 +1037,7 @@ async function shareAchievement(): Promise<void> {
       color-mix(in srgb, var(--surface-background) 50%, transparent),
       var(--surface-background)
     );
-  box-shadow: inset 0 0 14rem 5rem rgb(0 4 14 / 0.92);
+  box-shadow: inset 0 0 6rem 2rem rgb(0 4 14 / 0.92);
 }
 
 .match-room-atmosphere::before,
@@ -1028,8 +1127,23 @@ async function shareAchievement(): Promise<void> {
 
 .match-sidebar-left,
 .match-sidebar-right {
-  opacity: 0.88;
+  opacity: 0.94;
   transition: opacity var(--transition-duration-normal) ease-out;
+}
+
+.side-panel-shell {
+  overflow: hidden;
+  padding: 0.625rem;
+  border: 1px solid color-mix(in srgb, var(--color-board-frame-metal) 68%, var(--color-border));
+  border-radius: var(--radius-card);
+  background:
+    radial-gradient(circle at 50% 0%, var(--color-board-surface-reflection), transparent 34%),
+    color-mix(in srgb, var(--surface-glass) 65%, transparent);
+  box-shadow:
+    var(--shadow-card),
+    inset 0 1px 0 color-mix(in srgb, var(--color-fantasy-stone) 12%, transparent);
+  -webkit-backdrop-filter: blur(var(--blur-md));
+  backdrop-filter: blur(var(--blur-md));
 }
 
 .match-sidebar-left:focus-within,
@@ -1062,16 +1176,7 @@ async function shareAchievement(): Promise<void> {
     inset 0 1px 0 color-mix(in srgb, var(--color-fantasy-stone) 16%, transparent),
     inset 0 -2px 0 color-mix(in srgb, var(--color-piece-contact) 38%, transparent),
     inset 0 0 0 1px color-mix(in srgb, var(--color-board-frame-metal) 18%, transparent);
-  clip-path: polygon(
-    0.75rem 0,
-    calc(100% - 0.75rem) 0,
-    100% 0.75rem,
-    100% calc(100% - 0.75rem),
-    calc(100% - 0.75rem) 100%,
-    0.75rem 100%,
-    0 calc(100% - 0.75rem),
-    0 0.75rem
-  );
+  border-radius: var(--radius-card);
 }
 
 .match-meta-strip {
@@ -1102,12 +1207,37 @@ async function shareAchievement(): Promise<void> {
 .player-card {
   --player-rank: var(--color-rank-iron);
   --player-rank-highlight: color-mix(in srgb, var(--color-rank-iron) 48%, white);
-  opacity: 0.82;
+  /* Dimming the whole card also dimmed its text. The inactive state is carried
+     by border and glow below, so this only needs to take the edge off. */
+  opacity: 0.92;
+  overflow: hidden;
   transition:
     opacity var(--transition-duration-normal) ease-out,
     border-color var(--transition-duration-normal) ease-out,
     box-shadow var(--transition-duration-normal) ease-out,
     transform var(--transition-duration-normal) ease-out;
+}
+
+/* The grid belongs on GlassCard's body wrapper, not on the card itself: a
+   non-nested GlassCard wraps its slot in one div, so a grid declared on the
+   card would see that wrapper as its only item and squeeze the whole card into
+   the first column. `body-class` is the prop GlassCard exposes for exactly
+   this, and the portrait column is wider than the 4rem portrait because the
+   rank emblem and the summoning ring both hang outside the avatar.
+
+   `:deep` is required, not decorative: a scoped style only tags this
+   component's own template, and GlassCard renders the body wrapper from its
+   template, so the plain selector matches nothing. */
+.player-card :deep(.player-card-body) {
+  display: grid;
+  grid-template-areas:
+    'header header'
+    'portrait details'
+    'banner banner';
+  grid-template-columns: 4.75rem minmax(0, 1fr);
+  column-gap: 0.75rem;
+  row-gap: 0.375rem;
+  align-items: center;
 }
 
 .player-card[data-rank-tier='bronze'] {
@@ -1146,12 +1276,15 @@ async function shareAchievement(): Promise<void> {
   pointer-events: none;
 }
 
+/* Inner keyline. `clip-path: inherit` resolved to `none` — the card has no
+   clip-path of its own — so this drew a square frame inside a rounded card.
+   Following the card radius, minus the 2px inset, is what makes it sit true. */
 .player-card::after {
   position: absolute;
   inset: 2px;
   z-index: 0;
-  border: 1px solid color-mix(in srgb, var(--color-board-frame-metal) 54%, transparent);
-  clip-path: inherit;
+  border: 1px solid color-mix(in srgb, var(--color-board-frame-metal) 72%, transparent);
+  border-radius: calc(var(--radius-card) - 2px);
   content: '';
   pointer-events: none;
 }
@@ -1176,39 +1309,46 @@ async function shareAchievement(): Promise<void> {
   border-color: color-mix(in srgb, var(--color-error) 62%, var(--color-border));
 }
 
+/* Ornamental corner brackets.
+   `--fantasy-corner-inset` is derived, not eyeballed: on a corner of radius r
+   the arc passes closest to the corner at r(1 - 1/√2) ≈ 0.293r, so anything
+   inset less than that pokes through the card edge and gets shaved by
+   `overflow: hidden`. 0.35rem on a 1rem radius clears the arc with room left. */
 .fantasy-corner {
+  --fantasy-corner-inset: 0.35rem;
+
   position: absolute;
   z-index: 2;
-  width: 0.75rem;
-  height: 0.75rem;
+  width: 0.85rem;
+  height: 0.85rem;
   border-color: color-mix(in srgb, var(--player-rank-highlight) 72%, transparent);
   pointer-events: none;
 }
 
 .fantasy-corner-tl {
-  top: 0.25rem;
-  left: 0.25rem;
+  top: var(--fantasy-corner-inset);
+  left: var(--fantasy-corner-inset);
   border-top: 1px solid;
   border-left: 1px solid;
 }
 
 .fantasy-corner-tr {
-  top: 0.25rem;
-  right: 0.25rem;
+  top: var(--fantasy-corner-inset);
+  right: var(--fantasy-corner-inset);
   border-top: 1px solid;
   border-right: 1px solid;
 }
 
 .fantasy-corner-bl {
-  bottom: 0.25rem;
-  left: 0.25rem;
+  bottom: var(--fantasy-corner-inset);
+  left: var(--fantasy-corner-inset);
   border-bottom: 1px solid;
   border-left: 1px solid;
 }
 
 .fantasy-corner-br {
-  right: 0.25rem;
-  bottom: 0.25rem;
+  right: var(--fantasy-corner-inset);
+  bottom: var(--fantasy-corner-inset);
   border-right: 1px solid;
   border-bottom: 1px solid;
 }
@@ -1217,6 +1357,7 @@ async function shareAchievement(): Promise<void> {
   position: relative;
   z-index: 2;
   display: flex;
+  grid-area: header;
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
@@ -1237,42 +1378,50 @@ async function shareAchievement(): Promise<void> {
   width: 1.75rem;
   align-items: center;
   justify-content: center;
-  border: 1px solid color-mix(in srgb, currentColor 34%, var(--color-border));
+  /* No `border`: the hexagon clip cuts the border box, so a border survives on
+     the flat sides and vanishes on every diagonal. A drop-shadow traces the
+     clipped shape instead, which is the only rim that follows all six edges. */
   background:
     linear-gradient(145deg, var(--color-board-surface-reflection), transparent 42%),
-    color-mix(in srgb, var(--surface-sunken) 88%, var(--color-board-frame-metal));
+    color-mix(in srgb, var(--surface-sunken) 82%, var(--color-board-frame-metal));
   box-shadow:
     inset 0 1px 0 color-mix(in srgb, var(--color-fantasy-stone) 14%, transparent),
     inset 0 -2px 3px color-mix(in srgb, var(--color-piece-contact) 42%, transparent);
   clip-path: polygon(50% 0, 92% 25%, 92% 75%, 50% 100%, 8% 75%, 8% 25%);
+  filter: drop-shadow(0 0 0.08rem color-mix(in srgb, currentColor 52%, transparent));
 }
 
 .player-symbol-badge-active {
   background:
     radial-gradient(circle, var(--color-accent-soft), transparent 68%),
     color-mix(in srgb, var(--surface-sunken) 84%, var(--color-board-crystal));
-  filter: drop-shadow(0 0 0.3rem var(--color-accent-glow));
+  filter: drop-shadow(0 0 0.08rem color-mix(in srgb, currentColor 68%, transparent))
+    drop-shadow(0 0 0.3rem var(--color-accent-glow));
 }
 
 .player-portrait {
   position: relative;
   z-index: 1;
+  grid-area: portrait;
   width: 4rem;
   height: 4rem;
-  margin: 0.25rem auto 0;
+  align-self: center;
+  margin: 0;
 }
 
+/* Summoning ring. The conic sweep is the fantasy read; anchoring its bright
+   arcs to the rank colour is what stops every card looking identical. */
 .player-portrait::before {
   position: absolute;
-  inset: -0.25rem;
-  border: 1px solid color-mix(in srgb, var(--player-rank) 52%, var(--color-border));
+  inset: -0.3rem;
+  border: 1px solid color-mix(in srgb, var(--player-rank) 62%, var(--color-border));
   border-radius: var(--radius-pill);
   background: conic-gradient(
     from 45deg,
     transparent,
-    var(--color-board-frame-metal),
+    color-mix(in srgb, var(--player-rank-highlight) 46%, var(--color-board-frame-metal)),
     transparent 25% 50%,
-    var(--color-board-frame-metal),
+    color-mix(in srgb, var(--player-rank-highlight) 46%, var(--color-board-frame-metal)),
     transparent 75%
   );
   box-shadow:
@@ -1294,7 +1443,7 @@ async function shareAchievement(): Promise<void> {
     radial-gradient(circle at 38% 28%, var(--color-board-surface-reflection), transparent 32%),
     linear-gradient(
       145deg,
-      color-mix(in srgb, var(--player-rank) 54%, var(--surface-3)),
+      color-mix(in srgb, var(--player-rank) 34%, var(--surface-2)),
       var(--surface-sunken)
     );
   box-shadow:
@@ -1306,10 +1455,13 @@ async function shareAchievement(): Promise<void> {
   filter: drop-shadow(0 0 0.35rem var(--color-accent-glow));
 }
 
+/* Offsets are bounded by the portrait cell widened above: the emblem is
+   2.75rem wide in a 4rem portrait, so it may hang 0.75rem past the avatar
+   without reaching the details column. */
 .player-rank-emblem {
   position: absolute;
-  right: -0.75rem;
-  bottom: -0.5rem;
+  right: -0.5rem;
+  bottom: -0.4rem;
   z-index: 3;
   filter: drop-shadow(0 0.25rem 0.25rem var(--color-piece-contact));
 }
@@ -1318,13 +1470,14 @@ async function shareAchievement(): Promise<void> {
   position: relative;
   z-index: 2;
   display: grid;
+  grid-area: details;
   min-width: 0;
-  grid-template-columns: auto auto;
+  grid-template-columns: minmax(0, 1fr);
   align-items: center;
-  justify-content: center;
-  gap: 0.25rem 0.5rem;
-  margin-top: 0.5rem;
-  text-align: center;
+  align-content: center;
+  gap: 0.375rem 0.5rem;
+  margin: 0;
+  text-align: left;
 }
 
 .player-name {
@@ -1341,7 +1494,8 @@ async function shareAchievement(): Promise<void> {
   display: inline-flex;
   max-width: 100%;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  justify-self: start;
   gap: 0.25rem;
   border: 1px solid color-mix(in srgb, var(--player-rank) 62%, var(--color-border));
   border-radius: var(--radius-pill);
@@ -1358,6 +1512,7 @@ async function shareAchievement(): Promise<void> {
   line-height: 1;
   padding: 0.25rem 0.5rem;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .player-elo {
@@ -1372,11 +1527,12 @@ async function shareAchievement(): Promise<void> {
   position: relative;
   z-index: 2;
   display: flex;
+  grid-area: banner;
   min-height: 1.75rem;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  margin-top: 0.5rem;
+  margin-top: 0;
   border: 1px solid var(--color-border-subtle);
   background: color-mix(in srgb, var(--surface-sunken) 88%, transparent);
   box-shadow: inset 0 1px 0 var(--color-board-surface-reflection);
@@ -1384,8 +1540,11 @@ async function shareAchievement(): Promise<void> {
   font-size: var(--text-caption);
   font-weight: 700;
   letter-spacing: 0.1em;
+  /* Clear of the chevron cut below, so the label never runs under it. */
+  padding-inline: 0.75rem;
   text-align: center;
   text-transform: uppercase;
+  white-space: nowrap;
   clip-path: polygon(
     0.5rem 0,
     calc(100% - 0.5rem) 0,
@@ -1397,13 +1556,13 @@ async function shareAchievement(): Promise<void> {
 }
 
 .player-turn-banner-active {
-  border-color: color-mix(in srgb, var(--color-accent) 48%, var(--color-border));
+  border-color: color-mix(in srgb, var(--color-accent) 24%, var(--color-border));
   background:
     linear-gradient(90deg, transparent, var(--color-accent-soft), transparent),
-    color-mix(in srgb, var(--surface-sunken) 86%, var(--color-board-crystal));
+    color-mix(in srgb, var(--surface-sunken) 92%, var(--color-board-crystal));
   box-shadow:
     inset 0 1px 0 var(--color-board-surface-reflection),
-    0 0 0.65rem color-mix(in srgb, var(--color-accent-glow) 52%, transparent);
+    0 0 0.4rem color-mix(in srgb, var(--color-accent-glow) 30%, transparent);
   color: var(--color-accent);
 }
 
@@ -1436,17 +1595,25 @@ async function shareAchievement(): Promise<void> {
 .vs-divider::after {
   height: 1px;
   flex: 1;
-  background: linear-gradient(90deg, transparent, rgb(103 168 225 / 0.32));
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--color-board-frame-metal) 82%, transparent)
+  );
   content: '';
 }
 
 .vs-divider::after {
-  background: linear-gradient(90deg, rgb(103 168 225 / 0.32), transparent);
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--color-board-frame-metal) 82%, transparent),
+    transparent
+  );
 }
 
 .vs-divider span {
   margin: 0 0.6rem;
-  color: var(--text-muted);
+  color: color-mix(in srgb, var(--color-fantasy-gold) 58%, var(--text-muted));
   font-size: var(--text-caption);
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -1691,8 +1858,8 @@ async function shareAchievement(): Promise<void> {
 }
 
 .last-move-token-x {
-  color: var(--color-primary-300);
-  box-shadow: 0 0 14px rgb(60 139 255 / 0.28);
+  color: var(--color-player-x-hover);
+  box-shadow: 0 0 14px var(--color-player-x-soft);
 }
 
 .last-move-token-o {
@@ -1834,6 +2001,20 @@ async function shareAchievement(): Promise<void> {
   .board-stage {
     --game-board-size: calc(100vw - 1.5rem);
   }
+
+  .game-board {
+    overflow: hidden;
+    border-radius: var(--radius-card);
+  }
+
+  .game-board :deep(.board-renderer-surface) {
+    transform: scale(1.14);
+    transform-origin: center;
+  }
+
+  .game-board :deep(.fantasy-playfield) {
+    --playable-grid-gutter: 0.5rem;
+  }
 }
 
 @media (max-width: 63.99rem) {
@@ -1873,11 +2054,16 @@ async function shareAchievement(): Promise<void> {
   }
 
   .match-room-grid {
-    grid-template-columns: 9rem minmax(0, 1fr) 10rem;
-    gap: 0.375rem;
+    grid-template-columns:
+      clamp(14rem, 16vw, 16rem)
+      minmax(0, 1fr)
+      clamp(15rem, 17vw, 17rem);
+    gap: 0.75rem;
   }
 
   .match-sidebar-left {
+    max-height: 100%;
+    align-self: start;
     overflow-y: auto;
     overscroll-behavior: contain;
     scrollbar-width: none;
@@ -1904,7 +2090,7 @@ async function shareAchievement(): Promise<void> {
   }
 
   .board-stage {
-    --game-board-size: clamp(20rem, min(calc(100vw - 21.5rem), calc(100dvh - 9.625rem)), 82rem);
+    --game-board-size: clamp(20rem, min(100%, calc(100dvh - 9.625rem)), 82rem);
   }
 
   .turn-status {
@@ -1939,11 +2125,7 @@ async function shareAchievement(): Promise<void> {
 
 @media (min-width: 120rem) {
   .match-room-grid {
-    grid-template-columns: 10rem minmax(0, 1fr) 11rem;
-  }
-
-  .board-stage {
-    --game-board-size: clamp(20rem, min(calc(100vw - 23.5rem), calc(100dvh - 9.625rem)), 82rem);
+    grid-template-columns: 16rem minmax(0, 1fr) 17rem;
   }
 }
 </style>

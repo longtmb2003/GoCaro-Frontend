@@ -4,6 +4,7 @@ import { ref } from 'vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseInput from '@/components/ui/BaseInput.vue'
 import type { Credentials } from '@/types/auth'
+import { useAppLanguage } from '@/composables/useAppLanguage'
 
 const props = withDefaults(
   defineProps<{
@@ -20,6 +21,7 @@ const props = withDefaults(
 )
 
 const emit = defineEmits<{ submit: [credentials: Credentials] }>()
+const { errorText, t } = useAppLanguage()
 
 const username = ref('')
 const password = ref('')
@@ -38,15 +40,15 @@ function validate(): boolean {
 
   const name = username.value.trim()
   if (name.length < USERNAME_MIN || name.length > USERNAME_MAX) {
-    usernameError.value = 'Username must be 3-20 characters.'
+    usernameError.value = t('Username must be 3-20 characters.', 'Tên đăng nhập phải có từ 3 đến 20 ký tự.')
   } else if (!USERNAME_PATTERN.test(name)) {
-    usernameError.value = 'Username may only contain letters and numbers.'
+    usernameError.value = t('Username may only contain letters and numbers.', 'Tên đăng nhập chỉ được chứa chữ cái và số.')
   }
 
   if (password.value.length < PASSWORD_MIN) {
-    passwordError.value = 'Password must be at least 8 characters.'
+    passwordError.value = t('Password must be at least 8 characters.', 'Mật khẩu phải có ít nhất 8 ký tự.')
   } else if (password.value.length > PASSWORD_MAX) {
-    passwordError.value = 'Password must be at most 72 characters.'
+    passwordError.value = t('Password must be at most 72 characters.', 'Mật khẩu không được vượt quá 72 ký tự.')
   }
 
   return usernameError.value === '' && passwordError.value === ''
@@ -65,7 +67,7 @@ function handleSubmit(): void {
     <BaseInput
       v-model="username"
       name="username"
-      label="Username"
+      :label="t('Username', 'Tên đăng nhập')"
       autocomplete="username"
       :error="usernameError"
       :disabled="loading"
@@ -75,15 +77,15 @@ function handleSubmit(): void {
       v-model="password"
       name="password"
       type="password"
-      label="Password"
+      :label="t('Password', 'Mật khẩu')"
       :autocomplete="passwordAutocomplete"
       :error="passwordError"
       :disabled="loading"
       required
     />
-    <p v-if="serverError" class="text-danger-400 text-sm" role="alert">{{ serverError }}</p>
+    <p v-if="serverError" class="text-danger-400 text-sm" role="alert">{{ errorText(serverError) }}</p>
     <BaseButton type="submit" variant="primary" size="lg" class="w-full" :loading="loading">
-      {{ loading && submitLabel === 'Sign in' ? 'Signing in...' : submitLabel }}
+      {{ loading && submitLabel === 'Sign in' ? t('Signing in...', 'Đang đăng nhập...') : submitLabel }}
     </BaseButton>
   </form>
 </template>

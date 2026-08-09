@@ -1,4 +1,4 @@
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { defineStore } from 'pinia'
 
 import { matchmakeUrl, reconnectUrl, SocketManager, type SocketMessage } from '@/api/websocket'
@@ -10,6 +10,8 @@ import type {
   GameOverPayload,
   MatchFoundPayload,
   MatchmakingMode,
+  MatchProposalClosedPayload,
+  MatchProposedPayload,
   OpponentReconnectingPayload,
   PlayerSymbol,
   QueueSearchingPayload,
@@ -42,7 +44,14 @@ const RECONNECT_RETRY_DELAY_MS = 2_000
  * - `matched`: `match_found` received; the connection stays open for gameplay.
  * - `error`: the attempt failed or the connection dropped while searching.
  */
-export type MatchmakingStatus = 'idle' | 'connecting' | 'searching' | 'matched' | 'error'
+export type MatchmakingStatus =
+  | 'idle'
+  | 'connecting'
+  | 'searching'
+  /** A pairing has been offered and is waiting on this player's answer. */
+  | 'proposed'
+  | 'matched'
+  | 'error'
 export type GameConnectionStatus = 'live' | 'reconnecting' | 'failed'
 
 /**
@@ -55,11 +64,39 @@ const QUEUE_ERROR_MESSAGES: Record<string, string> = {
   ALREADY_IN_MATCH:
     'You are already in a match, probably in another tab. Finish it before starting another.',
   ALREADY_QUEUED: 'You are already searching for a match, probably in another tab.',
+  // The server's own wording carries a second count that would go untranslated,
+  // so the code is worded here and the number is read from retry_after_seconds.
+  QUEUE_LOCKED: 'Matchmaking is locked because too many matches were abandoned.',
 }
 
 export const useSocketStore = defineStore('socket', () => {
   const status = ref<MatchmakingStatus>('idle')
   const errorMessage = ref<string | null>(null)
+
+  const isMatchmaking = computed(
+    () =>
+      status.value === 'connecting' ||
+      status.value === 'searching' ||
+      status.value === 'proposed' ||
+      status.value === 'error'
+  )
+
+  /** The pairing awaiting this player's answer, or null. */
+  const proposal = ref<MatchProposedPayload | null>(null)
+  /** Seconds left to answer, ticked locally; the server owns the real deadline. */
+  const proposalSecondsLeft = ref(0)
+  /** Set when a refusal will lift by itself, so the UI can count it down. */
+  const retryAfterSeconds = ref(0)
+  // The deadline the refusal expires at, derived once from retry_after_seconds.
+  // The raw count is a snapshot taken when the frame arrived; a view that shows
+  // it verbatim keeps printing the same number while the wait actually shrinks,
+  // so anything counting down needs a fixed point in time to count towards.
+  const retryUntil = ref<string | null>(null)
+  let proposalTimer: number | null = null
+
+  const yourSpirit = ref<string>('')
+  const opponentSpirit = ref<string>('')
+
   /** Which queue the current (or last) search ran on. */
   const mode = ref<MatchmakingMode>('casual')
   /** Latest ranked search progress, reset whenever a new search starts. */
@@ -113,7 +150,11 @@ export const useSocketStore = defineStore('socket', () => {
   let opponentTimer: ReturnType<typeof setInterval> | null = null
   let turnTimer: ReturnType<typeof setInterval> | null = null
 
-  function startMatchmaking(searchMode: MatchmakingMode = 'casual'): void {
+  // Set per matchmaking attempt, read by handleClose to explain a failure.
+  let matchmakingUsedCaptcha = false
+  let socketOpened = false
+
+  function startMatchmaking(searchMode: MatchmakingMode = 'casual', captchaToken?: string): void {
     if (auth.token === null) {
       status.value = 'error'
       errorMessage.value = 'You are not signed in.'
@@ -141,14 +182,79 @@ export const useSocketStore = defineStore('socket', () => {
       }
     }, 1000)
 
-    manager.connect(matchmakeUrl(auth.token, searchMode), {
+    // A rejected handshake reaches the browser as a bare connection failure:
+    // the 403 body is unreadable. Remembering that this attempt carried a
+    // captcha, and whether the socket ever opened, is what lets a player who
+    // failed verification be told so instead of seeing "connection lost".
+    matchmakingUsedCaptcha = captchaToken !== undefined
+    socketOpened = false
+
+    manager.connect(matchmakeUrl(auth.token, searchMode, captchaToken), {
+      onOpen: () => {
+        socketOpened = true
+      },
       onMessage: handleMessage,
       onClose: handleClose,
     })
   }
 
   function cancelMatchmaking(): void {
+    clearProposal()
     teardown('cancelled')
+  }
+
+  /**
+   * A pairing was offered. The countdown is drawn locally so the dialog can
+   * show one; the server holds the authoritative deadline and will close the
+   * proposal itself, so reaching zero here is never what decides anything.
+   */
+  function openProposal(payload: MatchProposedPayload): void {
+    clearProposal()
+    proposal.value = payload
+    proposalSecondsLeft.value = payload.timeout_seconds
+    status.value = 'proposed'
+    matchAudio.playMatchFound()
+
+    proposalTimer = window.setInterval(() => {
+      proposalSecondsLeft.value = Math.max(0, proposalSecondsLeft.value - 1)
+    }, 1000)
+  }
+
+  function closeProposal(payload: MatchProposalClosedPayload): void {
+    clearProposal()
+    if (payload.reason === 'you_declined') {
+      teardown('cancelled')
+      return
+    }
+    if (payload.requeued) {
+      // Still in the queue, so the search simply resumes rather than erroring.
+      status.value = 'searching'
+      errorMessage.value = null
+      return
+    }
+    status.value = 'error'
+    matchAudio.cancelMatchmakingAudio()
+    errorMessage.value = 'The match was cancelled because nobody accepted in time.'
+  }
+
+  function clearProposal(): void {
+    if (proposalTimer !== null) {
+      clearInterval(proposalTimer)
+      proposalTimer = null
+    }
+    proposal.value = null
+    proposalSecondsLeft.value = 0
+  }
+
+  /** Answers a proposal. Both are no-ops once the offer has already closed. */
+  function acceptMatch(): void {
+    if (proposal.value === null) return
+    manager.send({ type: 'accept_match' })
+  }
+
+  function declineMatch(): void {
+    if (proposal.value === null) return
+    manager.send({ type: 'decline_match' })
   }
 
   /** Sends a move; the server validates it and answers with a board_update. */
@@ -182,6 +288,8 @@ export const useSocketStore = defineStore('socket', () => {
 
   /** Leaves a finished or lost match and returns to a clean, idle state. */
   function leaveGame(): void {
+    yourSpirit.value = ''
+    opponentSpirit.value = ''
     teardown()
   }
 
@@ -189,6 +297,11 @@ export const useSocketStore = defineStore('socket', () => {
     switch (message.type) {
       case 'queued':
         status.value = 'searching'
+        // Reaching the queue proves any lockout has lifted. This is the only
+        // place it clears: teardown must not, or dismissing the notice would
+        // erase a lock the server is still enforcing, and the play buttons
+        // would go back to inviting a search that can only be refused.
+        retryUntil.value = null
         break
       case 'queue_searching':
         if (isQueueSearchingPayload(message.payload)) {
@@ -200,8 +313,22 @@ export const useSocketStore = defineStore('socket', () => {
           }
         }
         break
+      case 'match_proposed':
+        if (isMatchProposedPayload(message.payload)) {
+          openProposal(message.payload)
+        }
+        break
+      case 'match_proposal_closed':
+        if (isMatchProposalClosedPayload(message.payload)) {
+          closeProposal(message.payload)
+        }
+        break
       case 'match_found':
+        // Whether or not there was a proposal, the match starting ends it.
+        clearProposal()
         if (isMatchFoundPayload(message.payload)) {
+          yourSpirit.value = message.payload.your_spirit
+          opponentSpirit.value = message.payload.opponent_spirit
           game.startMatch(message.payload)
           if (auth.user !== null) {
             saveMatchRecovery({ match: message.payload, mode: mode.value, playerId: auth.user.id })
@@ -293,6 +420,8 @@ export const useSocketStore = defineStore('socket', () => {
   function resumeFromSync(payload: SyncStatePayload): void {
     clearReconnectState()
     connection.value = 'live'
+    yourSpirit.value = payload.your_spirit
+    opponentSpirit.value = payload.opponent_spirit
     game.syncFromState(payload.moves, payload.your_symbol, payload.turn === auth.user?.id)
     // sync_state carries the current turn's true remaining, so the clock lands
     // back in step with the server after the gap.
@@ -306,12 +435,21 @@ export const useSocketStore = defineStore('socket', () => {
       }
       return
     }
+    clearProposal()
     status.value = 'error'
     matchAudio.cancelMatchmakingAudio()
     if (!isErrorPayload(payload)) {
       errorMessage.value = 'Matchmaking failed. Please try again.'
       return
     }
+    // A refusal that lifts by itself carries its own countdown, so the player
+    // is told how long rather than left to keep retrying.
+    const retry = (payload as { retry_after_seconds?: unknown }).retry_after_seconds
+    retryAfterSeconds.value = typeof retry === 'number' ? retry : 0
+    retryUntil.value =
+      retryAfterSeconds.value > 0
+        ? new Date(Date.now() + retryAfterSeconds.value * 1000).toISOString()
+        : null
     errorMessage.value = QUEUE_ERROR_MESSAGES[payload.code] ?? payload.message
   }
 
@@ -319,7 +457,14 @@ export const useSocketStore = defineStore('socket', () => {
     if (status.value === 'connecting' || status.value === 'searching') {
       matchAudio.cancelMatchmakingAudio()
       status.value = 'error'
-      errorMessage.value = 'Connection lost. Please try again.'
+      // Never opening the socket on a captcha-gated attempt means the server
+      // refused the handshake, and verification is the reason it added. The
+      // wording stays honest about the alternative: an unreachable server
+      // looks identical from here.
+      errorMessage.value =
+        matchmakingUsedCaptcha && !socketOpened
+          ? 'Security verification failed or expired. Please try again.'
+          : 'Connection lost. Please try again.'
       return
     }
     if (game.phase !== 'playing' && connection.value !== 'reconnecting') {
@@ -509,7 +654,9 @@ export const useSocketStore = defineStore('socket', () => {
   function teardown(audioExit: 'idle' | 'cancelled' = 'idle'): void {
     status.value = 'idle'
     errorMessage.value = null
+    retryAfterSeconds.value = 0
     searchProgress.value = null
+    clearProposal()
     clearReconnectState()
     clearOpponentCountdown()
     clearTurnClock()
@@ -542,6 +689,7 @@ export const useSocketStore = defineStore('socket', () => {
   return {
     status,
     errorMessage,
+    isMatchmaking,
     mode,
     searchProgress,
     connection,
@@ -554,6 +702,14 @@ export const useSocketStore = defineStore('socket', () => {
     drawOffersLeft,
     chatHistory,
     isMuted,
+    yourSpirit,
+    opponentSpirit,
+    proposal,
+    proposalSecondsLeft,
+    retryAfterSeconds,
+    retryUntil,
+    acceptMatch,
+    declineMatch,
     startMatchmaking,
     cancelMatchmaking,
     sendMove,
@@ -583,6 +739,27 @@ function isMatchFoundPayload(payload: unknown): payload is MatchFoundPayload {
     isPlayerSymbol(record.your_symbol) &&
     typeof record.your_turn === 'boolean'
   )
+}
+
+function isMatchProposedPayload(payload: unknown): payload is MatchProposedPayload {
+  if (typeof payload !== 'object' || payload === null) {
+    return false
+  }
+  const record = payload as Record<string, unknown>
+  return (
+    typeof record.opponent_id === 'string' &&
+    typeof record.opponent === 'string' &&
+    typeof record.ranked === 'boolean' &&
+    typeof record.timeout_seconds === 'number'
+  )
+}
+
+function isMatchProposalClosedPayload(payload: unknown): payload is MatchProposalClosedPayload {
+  if (typeof payload !== 'object' || payload === null) {
+    return false
+  }
+  const record = payload as Record<string, unknown>
+  return typeof record.reason === 'string' && typeof record.requeued === 'boolean'
 }
 
 function isQueueSearchingPayload(payload: unknown): payload is QueueSearchingPayload {

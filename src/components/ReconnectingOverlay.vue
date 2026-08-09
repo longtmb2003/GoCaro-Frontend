@@ -2,6 +2,7 @@
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseModal from '@/components/ui/BaseModal.vue'
 import BaseSpinner from '@/components/ui/BaseSpinner.vue'
+import { useAppLanguage } from '@/composables/useAppLanguage'
 
 defineProps<{
   secondsLeft: number
@@ -9,6 +10,7 @@ defineProps<{
 }>()
 
 const emit = defineEmits<{ leave: []; retry: [] }>()
+const { t } = useAppLanguage()
 </script>
 
 <template>
@@ -20,27 +22,27 @@ const emit = defineEmits<{ leave: []; retry: [] }>()
       </div>
 
       <h2 id="reconnecting-heading" class="text-card text-foreground">
-        {{ state === 'reconnecting' ? 'Reconnecting…' : 'Connection lost' }}
+        {{ state === 'reconnecting' ? t('Reconnecting…', 'Đang kết nối lại…') : t('Connection lost', 'Mất kết nối') }}
       </h2>
       <p
         v-if="state === 'reconnecting'"
         class="text-foreground-muted text-body mt-2"
         aria-live="polite"
       >
-        Your match is still going. Trying to rejoin —
-        <span class="font-semibold tabular-nums">{{ secondsLeft }}s</span> remaining.
+        {{ t('Your match is still going. Trying to rejoin —', 'Trận đấu vẫn đang tiếp tục. Đang thử tham gia lại —') }}
+        <span class="font-semibold tabular-nums">{{ secondsLeft }}s</span> {{ t('remaining.', 'còn lại.') }}
       </p>
       <p v-else class="text-foreground-muted text-body mt-2" role="alert">
-        The automatic reconnect did not succeed. You can try connecting again or leave the match.
+        {{ t('The automatic reconnect did not succeed. You can try connecting again or leave the match.', 'Tự động kết nối lại không thành công. Bạn có thể thử kết nối lại hoặc rời trận.') }}
       </p>
     </div>
 
     <template #footer>
       <BaseButton v-if="state === 'failed'" class="w-full" @click="emit('retry')">
-        Try reconnecting
+        {{ t('Try reconnecting', 'Thử kết nối lại') }}
       </BaseButton>
       <BaseButton variant="secondary" class="w-full" @click="emit('leave')">
-        Leave match
+        {{ t('Leave match', 'Rời trận') }}
       </BaseButton>
     </template>
   </BaseModal>

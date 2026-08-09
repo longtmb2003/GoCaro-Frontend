@@ -2,9 +2,9 @@
 import { onBeforeUnmount, onMounted, ref, useId } from 'vue'
 import { X } from 'lucide-vue-next'
 
-import BaseDivider from './BaseDivider.vue'
 import FantasySystemIcon from './FantasySystemIcon.vue'
 import { useFocusTrap } from '@/composables/useFocusTrap'
+import { useAppLanguage } from '@/composables/useAppLanguage'
 
 const props = withDefaults(
   defineProps<{
@@ -16,6 +16,7 @@ const props = withDefaults(
 )
 
 const emit = defineEmits<{ close: [] }>()
+const { t } = useAppLanguage()
 
 defineOptions({ inheritAttrs: false })
 
@@ -68,7 +69,7 @@ function onKeydown(event: KeyboardEvent): void {
       <Transition appear name="drawer">
         <div
           ref="panel"
-          class="bg-surface-3 border-border-strong border-t md:border-t-0 md:border-l backdrop-blur-glass drawer-panel custom-scrollbar relative flex w-full flex-col overflow-y-auto sm:max-w-md md:max-w-[400px]"
+          class="bg-slate-950/95 border-t border-[var(--color-fantasy-border-subtle)] md:border-t-0 md:border-l backdrop-blur-2xl shadow-2xl drawer-panel custom-scrollbar relative flex w-full flex-col overflow-y-auto sm:max-w-md md:max-w-[400px]"
           role="dialog"
           aria-modal="true"
           :aria-labelledby="title === '' ? undefined : headingId"
@@ -76,20 +77,19 @@ function onKeydown(event: KeyboardEvent): void {
           v-bind="$attrs"
         >
           <!-- Cố định Header để vùng dưới scroll -->
-          <div v-if="title !== ''" class="sticky top-0 z-10 bg-surface-3/95 p-4 backdrop-blur pb-2">
-            <div class="gap-3 mb-2 flex items-center justify-between">
-              <h2 :id="headingId" class="text-card text-foreground">{{ title }}</h2>
+          <div v-if="title !== ''" class="sticky top-0 z-10 bg-slate-950/90 p-4 backdrop-blur pb-2 border-b border-[var(--color-fantasy-border-subtle)]">
+            <div class="gap-3 mb-1 flex items-center justify-between">
+              <h2 :id="headingId" class="font-serif text-lg font-bold text-[var(--color-fantasy-stone)] tracking-wide">{{ title }}</h2>
               <button
                 v-if="dismissible"
                 type="button"
-                class="text-foreground-muted hover:text-foreground hover:bg-glass-light rounded-sm duration-fast -mr-2 flex size-11 shrink-0 items-center justify-center transition"
+                class="text-slate-400 hover:text-white hover:bg-white/10 rounded-lg p-1.5 duration-fast transition"
                 @click="emit('close')"
               >
-                <span class="sr-only">Close</span>
-                <FantasySystemIcon compact><X :size="20" aria-hidden="true" /></FantasySystemIcon>
+                <span class="sr-only">{{ t('Close', 'Đóng') }}</span>
+                <FantasySystemIcon compact><X :size="18" aria-hidden="true" /></FantasySystemIcon>
               </button>
             </div>
-            <BaseDivider />
           </div>
 
           <!-- Nội dung cuộn được -->

@@ -2,12 +2,15 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { SocialSocketManager, socialUrl } from '@/api/socialSocket'
 import type { SocketMessage } from '@/api/websocket'
+import { ACHIEVEMENTS } from '@/config/achievements'
+import { useAppLanguage } from '@/composables/useAppLanguage'
 import {
   acceptChallenge,
   cancelChallenge,
   declineChallenge,
   getFriends,
   getIncomingRequests,
+  sendFriendRequest,
   sendChallenge,
   type Friend,
   type FriendRequest,
@@ -38,10 +41,13 @@ export const useSocialStore = defineStore('social', () => {
   const incomingRequests = ref<FriendRequest[]>([])
   const incomingChallenge = ref<IncomingChallenge | null>(null)
   const outgoingChallenge = ref<OutgoingChallenge | null>(null)
+  const friendRequestPendingIds = ref<string[]>([])
+  const sentFriendRequestIds = ref<string[]>([])
 
   let manager: SocialSocketManager | null = null
 
   const toast = useToast()
+  const { t, language } = useAppLanguage()
 
   const connect = (token: string) => {
     disconnect()
@@ -50,11 +56,11 @@ export const useSocialStore = defineStore('social', () => {
     manager.connect(socialUrl(), {
       onOpen: () => {
         isConnected.value = true
-        fetchInitialData()
+        void fetchInitialData()
         
         // Also init chat state
         const chatStore = useChatStore()
-        chatStore.fetchInitialData()
+        void chatStore.fetchInitialData()
       },
       onMessage: handleMessage,
       onClose: () => {
@@ -73,6 +79,8 @@ export const useSocialStore = defineStore('social', () => {
     incomingRequests.value = []
     incomingChallenge.value = null
     outgoingChallenge.value = null
+    friendRequestPendingIds.value = []
+    sentFriendRequestIds.value = []
     useChatStore().reset()
   }
 
@@ -114,12 +122,12 @@ export const useSocialStore = defineStore('social', () => {
         break
       }
       case 'friend_request_received': {
-        fetchInitialData()
+        void fetchInitialData()
         toast.addToast('You have a new friend request', 'info')
         break
       }
       case 'friend_request_accepted': {
-        fetchInitialData()
+        void fetchInitialData()
         toast.addToast('A friend request was accepted', 'success')
         break
       }
@@ -171,7 +179,7 @@ export const useSocialStore = defineStore('social', () => {
       case 'tournament_started': {
         const payload = msg.payload as { tournament_id: string; name?: string; round?: number }
         const name = payload.name ?? 'Tournament'
-        const round = payload.round ? `Round ${payload.round} has started!` : 'Tournament has started!'
+        const round = payload.round ? `Round ${String(payload.round)} has started!` : 'Tournament has started!'
         toast.addToast(`${name}: ${round}`, 'info')
         
         const tStore = useTournamentStore()
@@ -192,7 +200,7 @@ export const useSocialStore = defineStore('social', () => {
       case 'tournament_rematch': {
         const payload = msg.payload as { rematch_count?: number; max_rematches?: number }
         const progress = payload.rematch_count && payload.max_rematches 
-          ? ` (Rematch ${payload.rematch_count}/${payload.max_rematches})` 
+          ? ` (Rematch ${String(payload.rematch_count)}/${String(payload.max_rematches)})`
           : ''
         toast.addToast(`Match drawn. Replaying${progress}...`, 'info')
         
@@ -213,7 +221,7 @@ export const useSocialStore = defineStore('social', () => {
       case 'tournament_round_finished': {
         const payload = msg.payload as { tournament_id: string; round?: number; next_round?: number }
         const msgText = payload.round && payload.next_round 
-          ? `Round ${payload.round} completed! Advancing to Round ${payload.next_round}.`
+          ? `Round ${String(payload.round)} completed! Advancing to Round ${String(payload.next_round)}.`
           : 'Tournament round completed!'
         toast.addToast(msgText, 'info')
         
@@ -233,9 +241,19 @@ export const useSocialStore = defineStore('social', () => {
         break
       }
       case 'achievement_unlocked': {
-        const payload = msg.payload as { achievement_id: string }
-        const name = payload.achievement_id.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
-        toast.addToast(`Achievement Unlocked: ${name}!`, 'success')
+        // coins arrives as a string: the notifier payload is map[string]string
+        // on the Go side. Absent when the achievement pays nothing.
+        const payload = msg.payload as { achievement_id: string; coins?: string; item_code?: string }
+        // Prefer the catalogue's translated name; title-casing the id is the
+        // fallback for an achievement the client does not know about yet.
+        const known = ACHIEVEMENTS.find((a) => a.id === payload.achievement_id)
+        const name = known
+          ? known.name[language.value]
+          : payload.achievement_id.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+
+        const coins = Number(payload.coins ?? 0)
+        const reward = Number.isFinite(coins) && coins > 0 ? ` +${String(coins)} ${t('coins', 'xu')}` : ''
+        toast.addToast(`${t('Achievement Unlocked', 'Mở khóa thành tựu')}: ${name}!${reward}`, 'success')
         break
       }
       case 'activity_feed_event': {
@@ -263,6 +281,31 @@ export const useSocialStore = defineStore('social', () => {
       receiver_id: receiverId,
       receiver_name: receiverName,
       expires_at: challenge.expires_at,
+    }
+  }
+
+  async function requestFriendship(receiverId: string, receiverName: string): Promise<boolean> {
+    if (
+      friends.value.some((friend) => friend.user.id === receiverId) ||
+      friendRequestPendingIds.value.includes(receiverId) ||
+      sentFriendRequestIds.value.includes(receiverId)
+    ) {
+      return false
+    }
+
+    friendRequestPendingIds.value = [...friendRequestPendingIds.value, receiverId]
+    try {
+      await sendFriendRequest(receiverId)
+      sentFriendRequestIds.value = [...sentFriendRequestIds.value, receiverId]
+      toast.addToast(`Friend request sent to ${receiverName}.`, 'success')
+      return true
+    } catch (error: unknown) {
+      toast.addToast(error instanceof Error ? error.message : 'Failed to send friend request', 'error')
+      return false
+    } finally {
+      friendRequestPendingIds.value = friendRequestPendingIds.value.filter(
+        (id) => id !== receiverId,
+      )
     }
   }
 
@@ -311,13 +354,15 @@ export const useSocialStore = defineStore('social', () => {
     incomingRequests,
     incomingChallenge,
     outgoingChallenge,
+    friendRequestPendingIds,
+    sentFriendRequestIds,
     connect,
     disconnect,
     fetchInitialData,
     issueChallenge,
+    requestFriendship,
     cancelOutgoingChallenge,
     acceptIncomingChallenge,
     declineIncomingChallenge,
   }
 })
-

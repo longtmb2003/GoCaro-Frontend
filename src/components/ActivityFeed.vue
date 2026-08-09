@@ -2,7 +2,7 @@
   <div class="activity-feed">
     <div class="activity-feed__header">
       <FantasySystemIcon compact><Activity :size="18" /></FantasySystemIcon>
-      <h3>Friend Activity</h3>
+      <h3>{{ t('Friend Activity', 'Hoạt động bạn bè') }}</h3>
     </div>
 
     <div v-if="isLoading" class="flex justify-center py-8">
@@ -14,11 +14,11 @@
     </div>
 
     <div v-else-if="activities.length === 0" class="activity-feed__empty">
-      <p>No recent activity from your friends.</p>
+      <p>{{ t('No recent activity from your friends.', 'Chưa có hoạt động gần đây từ bạn bè.') }}</p>
     </div>
 
     <ul v-else class="activity-feed__list">
-      <li v-for="activity in activities" :key="activity.id">
+      <li v-for="activity in displayedActivities" :key="activity.id">
         <div class="activity-feed__icon">
           <FantasySystemIcon compact>
             <component
@@ -48,17 +48,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { Trophy, Star, Swords, Activity, Flame, Medal, Award, Crown, Users } from 'lucide-vue-next'
 import { fetchActivityFeed, type UserActivity } from '@/api/users'
 import BaseSpinner from '@/components/ui/BaseSpinner.vue'
 import UserProfileModal from '@/components/UserProfileModal.vue'
 import FantasySystemIcon from '@/components/ui/FantasySystemIcon.vue'
 import { useUserProfile } from '@/composables/useUserProfile'
+import { useAppLanguage } from '@/composables/useAppLanguage'
 
 const { openProfile } = useUserProfile()
+const { language, t } = useAppLanguage()
 
 const activities = ref<UserActivity[]>([])
+const displayedActivities = computed(() => activities.value.slice(0, 3))
 const isLoading = ref(true)
 const error = ref<string | null>(null)
 
@@ -68,7 +71,7 @@ const loadActivities = async () => {
   try {
     activities.value = await fetchActivityFeed()
   } catch {
-    error.value = 'Could not load activity feed'
+    error.value = t('Could not load activity feed', 'Không thể tải hoạt động bạn bè')
   } finally {
     isLoading.value = false
   }
@@ -139,14 +142,14 @@ const getActivityMessage = (activity: UserActivity) => {
         .split('_')
         .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
         .join(' ')
-      return ` unlocked the achievement "${name}"!`
+      return t(` unlocked the achievement "${name}"!`, ` đã mở khóa thành tựu "${name}"!`)
     }
     case 'tournament_champion':
-      return ` won a tournament!`
+      return t(' won a tournament!', ' đã vô địch một giải đấu!')
     case 'tournament_joined':
-      return ` joined a tournament.`
+      return t(' joined a tournament.', ' đã tham gia một giải đấu.')
     default:
-      return ` performed an activity.`
+      return t(' performed an activity.', ' vừa có một hoạt động mới.')
   }
 }
 
@@ -155,11 +158,23 @@ const formatTimeAgo = (dateStr: string) => {
   const now = new Date()
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
 
-  if (diffInSeconds < 60) return 'Just now'
-  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60).toString()}m ago`
-  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600).toString()}h ago`
-  if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 86400).toString()}d ago`
-  return date.toLocaleDateString()
+  if (diffInSeconds < 60) return t('Just now', 'Vừa xong')
+  if (diffInSeconds < 3600)
+    return t(
+      `${Math.floor(diffInSeconds / 60).toString()}m ago`,
+      `${Math.floor(diffInSeconds / 60).toString()} phút trước`,
+    )
+  if (diffInSeconds < 86400)
+    return t(
+      `${Math.floor(diffInSeconds / 3600).toString()}h ago`,
+      `${Math.floor(diffInSeconds / 3600).toString()} giờ trước`,
+    )
+  if (diffInSeconds < 2592000)
+    return t(
+      `${Math.floor(diffInSeconds / 86400).toString()}d ago`,
+      `${Math.floor(diffInSeconds / 86400).toString()} ngày trước`,
+    )
+  return date.toLocaleDateString(language.value === 'vi' ? 'vi-VN' : 'en-US')
 }
 </script>
 

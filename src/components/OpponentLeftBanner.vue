@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import BaseSpinner from '@/components/ui/BaseSpinner.vue'
+import { useAppLanguage } from '@/composables/useAppLanguage'
 
 defineProps<{ secondsLeft: number }>()
+const { t } = useAppLanguage()
 </script>
 
 <template>
@@ -12,9 +14,9 @@ defineProps<{ secondsLeft: number }>()
   >
     <BaseSpinner size="sm" tone="warning" />
     <p class="text-foreground text-small">
-      Opponent disconnected — waiting up to
+      {{ t('Opponent disconnected — waiting up to', 'Đối thủ đã mất kết nối — chờ tối đa') }}
       <span class="font-semibold tabular-nums">{{ secondsLeft }}s</span>
-      for them to return.
+      {{ t('for them to return.', 'để họ quay lại.') }}
     </p>
   </div>
 </template>

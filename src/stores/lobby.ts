@@ -18,7 +18,8 @@ export const useLobbyStore = defineStore('lobby', () => {
     autoReconnect: true,
     onMessage(message) {
       if (message.type === 'lobby_state') {
-        onlineUsers.value = (message.payload as LobbyStatePayload).online_users
+        const payload = message.payload as LobbyStatePayload
+        onlineUsers.value = payload.online_users
       }
     },
     onOpen() {

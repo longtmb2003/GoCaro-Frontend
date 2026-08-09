@@ -3,8 +3,10 @@ import { CircleCheck, Info, TriangleAlert, X } from 'lucide-vue-next'
 
 import { useToast } from '@/composables/useToast'
 import FantasySystemIcon from '@/components/ui/FantasySystemIcon.vue'
+import { useAppLanguage } from '@/composables/useAppLanguage'
 
 const { toasts, removeToast } = useToast()
+const { t } = useAppLanguage()
 </script>
 
 <template>
@@ -38,7 +40,7 @@ const { toasts, removeToast } = useToast()
           <p class="text-sm font-medium text-foreground">{{ toast.message }}</p>
         </div>
         <button class="text-foreground-muted hover:text-foreground">
-          <span class="sr-only">Dismiss notification</span>
+          <span class="sr-only">{{ t('Dismiss notification', 'Đóng thông báo') }}</span>
           <FantasySystemIcon compact><X :size="20" aria-hidden="true" /></FantasySystemIcon>
         </button>
       </div>

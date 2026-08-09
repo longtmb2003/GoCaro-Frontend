@@ -42,10 +42,28 @@ const router = createRouter({
       meta: { requiresAuth: true, title: 'Leaderboard' },
     },
     {
+      path: '/shop',
+      name: 'shop',
+      component: () => import('@/pages/ShopPage.vue'),
+      meta: { requiresAuth: true, title: 'Shop' },
+    },
+    {
       path: '/history',
       name: 'history',
       component: () => import('@/pages/HistoryPage.vue'),
       meta: { requiresAuth: true, title: 'Match history' },
+    },
+    {
+      path: '/collection',
+      name: 'collection',
+      component: () => import('@/pages/CollectionPage.vue'),
+      meta: { requiresAuth: true, title: 'Collection' },
+    },
+    {
+      path: '/achievements',
+      name: 'achievements',
+      component: () => import('@/pages/AchievementsPage.vue'),
+      meta: { requiresAuth: true, title: 'Achievements' },
     },
     {
       path: '/tournaments',
@@ -63,7 +81,13 @@ const router = createRouter({
       path: '/replay/:id',
       name: 'replay',
       component: () => import('@/pages/ReplayPage.vue'),
-      meta: { requiresAuth: true, title: 'Replay' },
+      meta: { title: 'Replay' },
+    },
+    {
+      path: '/share/:token',
+      name: 'shared-link',
+      component: () => import('@/pages/ShareRedirectPage.vue'),
+      meta: { title: 'Shared link' },
     },
     {
       path: '/login',
@@ -118,7 +142,7 @@ const matchAudio = useMatchAudio()
 router.afterEach((to) => {
   document.title = to.meta.title ? `${to.meta.title} · GoCaro` : 'GoCaro'
   if (to.name === 'game') matchAudio.enterMatch()
-  else matchAudio.stopAll()
+  else matchAudio.enterLobby()
 })
 
 export default router

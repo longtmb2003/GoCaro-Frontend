@@ -1,5 +1,6 @@
 import { ref } from 'vue'
 import { fetchPublicProfile, type PublicProfile } from '@/api/users'
+import { ApiError } from '@/api/ApiError'
 
 // Global state for the profile modal
 const isProfileModalOpen = ref(false)
@@ -34,8 +35,8 @@ export function useUserProfile() {
       const data = await fetchPublicProfile(userId)
       profileCache.set(userId, { data, timestamp: now })
       profileData.value = data
-    } catch (err: any) {
-      profileError.value = err.response?.data?.error?.message || 'Failed to load profile'
+    } catch (error: unknown) {
+      profileError.value = error instanceof ApiError ? error.message : 'Failed to load profile'
     } finally {
       isLoadingProfile.value = false
     }

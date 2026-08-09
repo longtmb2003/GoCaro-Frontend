@@ -2,8 +2,8 @@
 import { computed } from 'vue'
 
 import BaseButton from '@/components/ui/BaseButton.vue'
-import BaseModal from '@/components/ui/BaseModal.vue'
 import BaseSpinner from '@/components/ui/BaseSpinner.vue'
+import { useAppLanguage } from '@/composables/useAppLanguage'
 import type { MatchmakingStatus } from '@/stores/socket'
 import type { MatchmakingMode } from '@/types/game'
 
@@ -21,16 +21,17 @@ const props = withDefaults(
 )
 
 const emit = defineEmits<{ cancel: []; retry: [] }>()
+const { errorText, t } = useAppLanguage()
 
 const isError = computed(() => props.status === 'error')
 const heading = computed(() =>
   props.status === 'connecting'
-    ? 'Connecting…'
+    ? t('Connecting…', 'Đang kết nối…')
     : isError.value
-      ? 'Matchmaking failed'
+      ? t('Matchmaking failed', 'Tìm trận thất bại')
       : props.mode === 'ranked'
-        ? 'Finding a ranked opponent'
-        : 'Finding an opponent',
+        ? t('Finding a ranked opponent', 'Đang tìm đối thủ xếp hạng')
+        : t('Finding an opponent', 'Đang tìm đối thủ'),
 )
 
 const elapsedLabel = computed(() => {
@@ -45,36 +46,71 @@ const elapsedLabel = computed(() => {
 </script>
 
 <template>
-  <BaseModal aria-labelledby="matchmaking-heading" @close="emit('cancel')">
-    <div class="text-center">
-      <div v-if="!isError" class="mb-6 flex justify-center">
-        <BaseSpinner size="lg" />
-      </div>
-
-      <h2 id="matchmaking-heading" class="text-card text-foreground">{{ heading }}</h2>
-
-      <p v-if="isError" class="text-error text-body mt-2">
-        {{ errorMessage ?? 'Something went wrong.' }}
-      </p>
-      <div v-else class="text-foreground-muted text-body mt-3 space-y-2" aria-live="polite">
+  <aside
+    class="matchmaking-card"
+    aria-labelledby="matchmaking-heading"
+    aria-live="polite"
+  >
+    <div class="matchmaking-card__body">
+      <BaseSpinner v-if="!isError" size="md" />
+      <div class="min-w-0 flex-1">
+        <h2 id="matchmaking-heading" class="text-card text-foreground">{{ heading }}</h2>
+        <p v-if="isError" class="text-error text-small mt-1">
+          {{ errorMessage ? errorText(errorMessage) : t('Something went wrong.', 'Đã xảy ra lỗi.') }}
+        </p>
+        <div v-else class="text-foreground-muted text-small mt-1">
         <template v-if="status === 'searching'">
-          <p class="text-accent text-card font-mono tabular-nums">{{ elapsedLabel }}</p>
-          <p v-if="mode === 'ranked' && searchProgress?.search_range" class="text-small">
-            searching within ±{{ searchProgress.search_range }} rating
-          </p>
-          <p v-else class="text-small">Looking for a worthy opponent...</p>
+            <span class="text-accent font-mono font-bold tabular-nums">{{ elapsedLabel }}</span>
+            <span v-if="mode === 'ranked' && searchProgress?.search_range">
+              · ±{{ searchProgress.search_range }} {{ t('rating', 'điểm') }}
+            </span>
+            <span v-else> · {{ t('You can keep using the lobby', 'Bạn vẫn có thể sử dụng sảnh') }}</span>
         </template>
-        <template v-else>Opening a connection…</template>
+        <template v-else>{{ t('Opening a connection…', 'Đang mở kết nối…') }}</template>
+        </div>
       </div>
     </div>
-
-    <template #footer>
-      <div class="gap-3 flex justify-center">
-        <BaseButton v-if="isError" class="flex-1" @click="emit('retry')">Try again</BaseButton>
-        <BaseButton variant="secondary" class="flex-1" @click="emit('cancel')">
-          {{ isError ? 'Close' : 'Cancel' }}
-        </BaseButton>
-      </div>
-    </template>
-  </BaseModal>
+    <div class="matchmaking-card__actions">
+      <BaseButton v-if="isError" size="sm" @click="emit('retry')">{{ t('Try again', 'Thử lại') }}</BaseButton>
+      <BaseButton variant="secondary" size="sm" @click="emit('cancel')">
+        {{ isError ? t('Close', 'Đóng') : t('Cancel search', 'Hủy tìm trận') }}
+      </BaseButton>
+    </div>
+  </aside>
 </template>
+
+<style scoped>
+.matchmaking-card {
+  position: fixed;
+  right: var(--space-lg);
+  bottom: var(--space-lg);
+  z-index: 40;
+  width: min(24rem, calc(100vw - var(--space-2xl)));
+  padding: var(--space-lg);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-card);
+  background: var(--surface-glass-strong);
+  box-shadow: var(--shadow-floating), var(--shadow-glow);
+  backdrop-filter: blur(var(--blur-lg));
+}
+
+.matchmaking-card__body,
+.matchmaking-card__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.matchmaking-card__actions {
+  justify-content: flex-end;
+  margin-top: var(--space-lg);
+}
+
+@media (max-width: 40rem) {
+  .matchmaking-card {
+    right: var(--space-md);
+    bottom: var(--space-md);
+    width: calc(100vw - var(--space-xl));
+  }
+}
+</style>

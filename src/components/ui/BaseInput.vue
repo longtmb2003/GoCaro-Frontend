@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, useId, ref, useSlots } from 'vue'
 import { Eye, EyeOff } from 'lucide-vue-next'
+import { useAppLanguage } from '@/composables/useAppLanguage'
 
 const props = withDefaults(
   defineProps<{
@@ -35,6 +36,7 @@ const props = withDefaults(
 
 const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
 const slots = useSlots()
+const { t } = useAppLanguage()
 
 const inputId = useId()
 const errorId = computed(() => `${inputId}-error`)
@@ -110,7 +112,7 @@ defineExpose({
         v-if="type === 'password'"
         type="button"
         class="text-foreground-muted hover:text-foreground duration-fast absolute top-1/2 right-3 -translate-y-1/2 p-1 transition"
-        :aria-label="showPassword ? 'Hide password' : 'Show password'"
+        :aria-label="showPassword ? t('Hide password', 'Ẩn mật khẩu') : t('Show password', 'Hiện mật khẩu')"
         @click="showPassword = !showPassword"
       >
         <Eye v-if="!showPassword" :size="20" aria-hidden="true" />

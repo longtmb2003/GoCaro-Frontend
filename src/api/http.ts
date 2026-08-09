@@ -2,6 +2,7 @@ import axios from 'axios'
 import type { AxiosInstance } from 'axios'
 
 import { ApiError } from './ApiError'
+import { isServerFailure, markServerUnavailable } from './serverAvailability'
 
 const REQUEST_TIMEOUT_MS = 10_000
 
@@ -63,7 +64,12 @@ export const http: AxiosInstance = axios.create({
 
 http.interceptors.response.use(
   (response) => response,
-  (error: unknown) => Promise.reject(toApiError(error)),
+  (error: unknown) => {
+    if (isServerFailure(error)) {
+      markServerUnavailable()
+    }
+    return Promise.reject(toApiError(error))
+  },
 )
 
 /**

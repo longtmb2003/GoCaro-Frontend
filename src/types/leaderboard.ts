@@ -10,5 +10,7 @@ export interface LeaderboardEntry {
   id: string
   username: string
   display_name: string
+  title: string
+  profile_frame: string
   elo: number
 }
