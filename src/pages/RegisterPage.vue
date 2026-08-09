@@ -8,9 +8,11 @@ import PlayAsGuestButton from '@/components/PlayAsGuestButton.vue'
 import AuthLayout from '@/layouts/AuthLayout.vue'
 import { useAuthStore } from '@/stores/auth'
 import type { Credentials } from '@/types/auth'
+import { useAppLanguage } from '@/composables/useAppLanguage'
 
 const auth = useAuthStore()
 const router = useRouter()
+const { t } = useAppLanguage()
 
 const loading = ref(false)
 const serverError = ref('')
@@ -34,17 +36,17 @@ async function handleSubmit(credentials: Credentials): Promise<void> {
 </script>
 
 <template>
-  <AuthLayout title="Create account" subtitle="Join GoCaro and start playing">
+  <AuthLayout :title="t('Create account', 'Tạo tài khoản')" :subtitle="t('Join GoCaro and start playing', 'Tham gia GoCaro và bắt đầu chơi')">
     <PlayAsGuestButton :disabled="loading" />
 
     <div class="my-6 flex items-center gap-3">
       <span class="bg-white/20 h-px flex-1" aria-hidden="true" />
-      <span class="text-white/50 text-xs font-bold uppercase tracking-widest">or</span>
+      <span class="text-white/50 text-xs font-bold uppercase tracking-widest">{{ t('or', 'hoặc') }}</span>
       <span class="bg-white/20 h-px flex-1" aria-hidden="true" />
     </div>
 
     <CredentialsForm
-      submit-label="Create account"
+      :submit-label="t('Create account', 'Tạo tài khoản')"
       password-autocomplete="new-password"
       :loading="loading"
       :server-error="serverError"
@@ -52,9 +54,9 @@ async function handleSubmit(credentials: Credentials): Promise<void> {
     />
     <template #footer>
       <p class="text-foreground-muted text-sm">
-        Already have an account?
+        {{ t('Already have an account?', 'Đã có tài khoản?') }}
         <RouterLink to="/login" class="text-primary-400 hover:text-primary-300 font-medium">
-          Sign in
+          {{ t('Sign in', 'Đăng nhập') }}
         </RouterLink>
       </p>
     </template>

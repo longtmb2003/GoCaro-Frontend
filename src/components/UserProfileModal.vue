@@ -1,7 +1,7 @@
 <template>
   <BaseModal
     v-if="isProfileModalOpen"
-    title="Player Profile"
+    :title="t('Player Profile', 'Hồ sơ người chơi')"
     size="md"
     variant="fantasy"
     @close="closeProfile"
@@ -11,69 +11,82 @@
     </div>
 
     <div v-else-if="profileError" class="text-center py-8">
-      <p class="text-danger-400 mb-4">{{ profileError }}</p>
-      <BaseButton variant="secondary" @click="closeProfile">Close</BaseButton>
+      <p class="text-danger-400 mb-4">{{ errorText(profileError) }}</p>
+      <BaseButton variant="secondary" @click="closeProfile">{{ t('Close', 'Đóng') }}</BaseButton>
     </div>
 
     <div v-else-if="profileData" class="space-y-6">
       <!-- Header: Avatar & Basic Info -->
       <div class="profile-identity" :data-rank-tier="profileTier.name.toLowerCase()">
-        <RankFrame
-          :elo="profileData.elo"
-          :initial="profileData.display_name.charAt(0).toUpperCase()"
-          size="xl"
-        />
-        <div class="profile-identity__copy">
+        <div class="profile-identity__avatar" :class="profileData.profile_frame">
+          <BaseAvatar :name="profileData.display_name" size="xl" :online="isUserOnline" />
+        </div>
+        <div class="profile-identity__copy flex-1 min-w-0">
           <p class="profile-identity__eyebrow">{{ profileRankLabel }}</p>
-          <h2 class="profile-identity__name">
-            {{ profileData.display_name }}
+          <h2 class="profile-identity__name flex items-center gap-2">
+            <span>{{ profileData.display_name }}</span>
+            <span v-if="profileData.title" class="text-xs font-bold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 capitalize align-middle">
+              {{ formatTitle(profileData.title) }}
+            </span>
           </h2>
           <!-- Show the handle for all registered users -->
           <p v-if="profileData.username" class="text-sm text-surface-400">
             @{{ profileData.username }}
           </p>
           <p class="profile-identity__rating">{{ profileData.elo }} <span>Elo</span></p>
+          <FriendRequestButton
+            v-if="profileData.id !== auth.user?.id"
+            class="profile-identity__friend"
+            :user-id="profileData.id"
+            :display-name="profileData.display_name"
+          />
+        </div>
+
+        <div v-if="equippedSpirit" class="profile-identity__companion flex flex-col items-center gap-1 p-2.5 rounded-xl bg-amber-400/10 border border-amber-400/30 shadow-md shrink-0">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-amber-300">{{ t('Active Companion', 'Đồng hành') }}</span>
+          <img :src="equippedSpirit.source" :alt="equippedSpirit.name" class="w-12 h-12 object-contain filter drop-shadow-md" />
+          <span class="text-xs font-serif font-bold text-[var(--color-fantasy-stone)]">{{ equippedSpirit.name }}</span>
         </div>
       </div>
 
       <!-- Competitive Tournament Stats -->
       <div v-if="profileData.tournament_stats" class="space-y-3">
         <h3 class="text-sm font-semibold text-surface-400 uppercase tracking-wider">
-          Competitive Record
+          {{ t('Competitive Record', 'Thành tích thi đấu') }}
         </h3>
         <div class="grid grid-cols-3 gap-3">
           <GlassCard as="div" variant="nested" class="p-3 text-center">
-            <div class="text-surface-400 text-xs">Tournaments</div>
+            <div class="text-surface-400 text-xs">{{ t('Tournaments', 'Giải đấu') }}</div>
             <div class="text-lg font-bold text-surface-50">
               {{ profileData.tournament_stats.tournaments_joined }}
             </div>
           </GlassCard>
           <GlassCard as="div" variant="nested" class="p-3 text-center">
-            <div class="text-surface-400 text-xs">Championships</div>
+            <div class="text-surface-400 text-xs">{{ t('Championships', 'Chức vô địch') }}</div>
             <div class="text-lg font-bold text-surface-50">
               {{ profileData.tournament_stats.championships }}
             </div>
           </GlassCard>
           <GlassCard as="div" variant="nested" class="p-3 text-center">
-            <div class="text-surface-400 text-xs">Best Finish</div>
+            <div class="text-surface-400 text-xs">{{ t('Best Finish', 'Thành tích tốt nhất') }}</div>
             <div class="text-lg font-bold text-surface-50 capitalize">
               {{ formatBestFinish(profileData.tournament_stats.best_finish) }}
             </div>
           </GlassCard>
           <GlassCard as="div" variant="nested" class="p-3 text-center">
-            <div class="text-surface-400 text-xs">Matches Played</div>
+            <div class="text-surface-400 text-xs">{{ t('Matches Played', 'Số trận đã chơi') }}</div>
             <div class="text-lg font-bold text-surface-50">
               {{ profileData.tournament_stats.matches_played }}
             </div>
           </GlassCard>
           <GlassCard as="div" variant="nested" class="p-3 text-center">
-            <div class="text-surface-400 text-xs">Matches Won</div>
+            <div class="text-surface-400 text-xs">{{ t('Matches Won', 'Số trận thắng') }}</div>
             <div class="text-lg font-bold text-surface-50">
               {{ profileData.tournament_stats.matches_won }}
             </div>
           </GlassCard>
           <GlassCard as="div" variant="nested" class="p-3 text-center">
-            <div class="text-surface-400 text-xs">Win Rate</div>
+            <div class="text-surface-400 text-xs">{{ t('Win Rate', 'Tỷ lệ thắng') }}</div>
             <div class="text-lg font-bold text-surface-50">
               {{ formatWinRate(profileData.tournament_stats.win_rate) }}
             </div>
@@ -84,69 +97,52 @@
       <!-- Global Stats -->
       <div class="space-y-3">
         <h3 class="text-sm font-semibold text-surface-400 uppercase tracking-wider">
-          Global Statistics
+          {{ t('Global Statistics', 'Thống kê tổng') }}
         </h3>
         <div class="grid grid-cols-3 gap-3">
           <div class="bg-surface-800/30 rounded-lg p-2 text-center">
-            <div class="text-surface-400 text-xs">Matches</div>
+            <div class="text-surface-400 text-xs">{{ t('Matches', 'Trận đấu') }}</div>
             <div class="font-medium text-surface-100">
               {{ profileData.global_stats.matches_played }}
             </div>
           </div>
           <div class="bg-surface-800/30 rounded-lg p-2 text-center">
-            <div class="text-surface-400 text-xs">Wins</div>
+            <div class="text-surface-400 text-xs">{{ t('Wins', 'Thắng') }}</div>
             <div class="font-medium text-success-400">{{ profileData.global_stats.wins }}</div>
           </div>
           <div class="bg-surface-800/30 rounded-lg p-2 text-center">
-            <div class="text-surface-400 text-xs">Losses</div>
+            <div class="text-surface-400 text-xs">{{ t('Losses', 'Thua') }}</div>
             <div class="font-medium text-danger-400">{{ profileData.global_stats.losses }}</div>
           </div>
           <div class="bg-surface-800/30 rounded-lg p-2 text-center">
-            <div class="text-surface-400 text-xs">Win Rate</div>
+            <div class="text-surface-400 text-xs">{{ t('Win Rate', 'Tỷ lệ thắng') }}</div>
             <div class="font-medium text-surface-100">
               {{ formatGlobalWinRate(profileData.global_stats) }}
             </div>
           </div>
           <div class="bg-surface-800/30 rounded-lg p-2 text-center">
-            <div class="text-surface-400 text-xs">Max Streak</div>
+            <div class="text-surface-400 text-xs">{{ t('Max Streak', 'Chuỗi thắng cao nhất') }}</div>
             <div class="font-medium text-warning-400">
               {{ profileData.global_stats.max_streak }}
             </div>
           </div>
           <div class="bg-surface-800/30 rounded-lg p-2 text-center">
-            <div class="text-surface-400 text-xs">Coins</div>
+            <div class="text-surface-400 text-xs">{{ t('Coins', 'Xu') }}</div>
             <div class="font-medium text-warning-400">{{ profileData.global_stats.coins }}</div>
           </div>
         </div>
       </div>
 
-      <!-- Achievements -->
-      <div v-if="profileData.achievements && profileData.achievements.length > 0" class="space-y-3">
-        <h3 class="text-sm font-semibold text-surface-400 uppercase tracking-wider">
-          Achievements
-        </h3>
-        <div class="grid grid-cols-4 gap-2">
-          <div
-            v-for="ach in profileData.achievements"
-            :key="ach.achievement_id"
-            class="bg-surface-800/30 rounded-lg p-3 flex flex-col items-center justify-center text-center gap-2 group relative"
-          >
-            <component
-              :is="getAchievementIcon(ach.achievement_id)"
-              class="w-6 h-6 text-primary-400"
-            />
-            <div class="text-[10px] text-surface-300 leading-tight">
-              {{ formatAchievementName(ach.achievement_id) }}
-            </div>
-
-            <!-- Tooltip -->
-            <div
-              class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max px-2 py-1 bg-surface-900 text-surface-100 text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 whitespace-nowrap"
-            >
-              Unlocked: {{ new Date(ach.unlocked_at).toLocaleDateString() }}
-            </div>
-          </div>
-        </div>
+      <!-- Achievements Button -->
+      <div class="pt-2">
+        <BaseButton
+          variant="secondary"
+          class="w-full flex items-center justify-center gap-2 py-3"
+          @click="openAchievements()"
+        >
+          <Trophy class="w-4 h-4 text-primary-400" />
+          {{ t('View All Achievements', 'Xem tất cả Thành tựu') }}
+        </BaseButton>
       </div>
     </div>
   </BaseModal>
@@ -157,54 +153,62 @@ import { useUserProfile } from '@/composables/useUserProfile'
 import BaseModal from '@/components/ui/BaseModal.vue'
 import BaseSpinner from '@/components/ui/BaseSpinner.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
+import BaseAvatar from '@/components/ui/BaseAvatar.vue'
 import GlassCard from '@/components/ui/GlassCard.vue'
-import RankFrame from '@/components/RankFrame.vue'
+import FriendRequestButton from '@/components/FriendRequestButton.vue'
 import { computed } from 'vue'
 import { getRankSubTier, getRankTier } from '@/config/ranks'
 import type { UserStats } from '@/api/users'
-import { Trophy, Star, Flame, Award, Crown, Swords, Medal, Users } from 'lucide-vue-next'
+import { Trophy } from 'lucide-vue-next'
+import { useAuthStore } from '@/stores/auth'
+import { useLobbyStore } from '@/stores/lobby'
+import { useShopStore } from '@/stores/shop'
+import { resolveSpirit } from '@/spirits/spiritRegistry'
+import { useAppLanguage } from '@/composables/useAppLanguage'
+import { useAchievementsModal } from '@/composables/useAchievementsModal'
 
 const { isProfileModalOpen, profileData, isLoadingProfile, profileError, closeProfile } =
   useUserProfile()
+const auth = useAuthStore()
+const lobby = useLobbyStore()
+const shopStore = useShopStore()
+const { errorText, language, rankName, t } = useAppLanguage()
+const { openAchievements } = useAchievementsModal()
+
+const isUserOnline = computed(() => {
+  const profile = profileData.value
+  if (!profile) return false
+  if (profile.id === auth.user?.id) return true
+  return lobby.onlineUsers.some(u => u.id === profile.id)
+})
+
+const equippedSpirit = computed(() => {
+  if (!profileData.value) return null
+  let code: string | null
+  if (profileData.value.id === auth.user?.id) {
+    code = shopStore.getEquipped('spirit_art')
+  } else {
+    // Strictly read from the target user's profile data — never fallback to current user's equipment
+    code = profileData.value.equipped_spirit || null
+  }
+  if (!code) return null
+  const spirit = resolveSpirit(code, null, { withArt: true })
+  if (!spirit.model.source) return null
+  const langKey = language.value
+  return {
+    code,
+    name: spirit.name[langKey],
+    source: spirit.model.source,
+  }
+})
 
 const profileTier = computed(() => getRankTier(profileData.value?.elo ?? 0))
 const profileRankLabel = computed(() => {
   const elo = profileData.value?.elo ?? 0
-  return `${profileTier.value.name} ${getRankSubTier(elo)}`.trim()
+  return `${rankName(profileTier.value.name)} ${getRankSubTier(elo)}`.trim()
 })
 
-const getAchievementIcon = (id: string) => {
-  switch (id) {
-    case 'first_win':
-      return Star
-    case 'win_streak_5':
-      return Flame
-    case 'ranked_50_wins':
-      return Award
-    case 'ranked_100_wins':
-      return Crown
-    case 'first_tournament':
-      return Swords
-    case 'first_tournament_win':
-      return Medal
-    case 'tournament_champion':
-      return Trophy
-    case 'first_friend':
-      return Users
-    default:
-      return Star
-  }
-}
-
-const formatAchievementName = (id: string) => {
-  return id
-    .split('_')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ')
-}
-
 const formatWinRate = (rate: number) => {
-  if (!rate && rate !== 0) return '0%'
   return `${String(Math.round(rate * 100))}%`
 }
 
@@ -216,6 +220,11 @@ const formatGlobalWinRate = (stats: UserStats) => {
 const formatBestFinish = (finish: string) => {
   if (!finish) return '-'
   return finish.split('_').join(' ')
+}
+
+const formatTitle = (titleCode: string) => {
+  if (!titleCode) return ''
+  return titleCode.replace('title_', '').split('_').join(' ')
 }
 </script>
 
@@ -231,6 +240,7 @@ const formatBestFinish = (finish: string) => {
   overflow: hidden;
   padding: 1.5rem;
   border: 1px solid color-mix(in srgb, var(--profile-rank) 58%, var(--color-rank-gold));
+  border-radius: var(--radius-card);
   background:
     radial-gradient(
       circle at 15% 45%,
@@ -246,16 +256,6 @@ const formatBestFinish = (finish: string) => {
     inset 0 1px 0 color-mix(in srgb, var(--profile-rank-highlight) 22%, transparent),
     inset 0 -0.25rem 0 rgb(0 0 0 / 0.2),
     var(--shadow-card);
-  clip-path: polygon(
-    0 var(--radius-md),
-    var(--radius-md) 0,
-    calc(100% - var(--radius-md)) 0,
-    100% var(--radius-md),
-    100% calc(100% - var(--radius-md)),
-    calc(100% - var(--radius-md)) 100%,
-    var(--radius-md) 100%,
-    0 calc(100% - var(--radius-md))
-  );
 }
 
 .profile-identity[data-rank-tier='bronze'] {
@@ -283,8 +283,23 @@ const formatBestFinish = (finish: string) => {
   inset: 0.375rem;
   z-index: -1;
   border: 1px solid color-mix(in srgb, var(--profile-rank) 20%, transparent);
+  border-radius: calc(var(--radius-card) - 0.375rem);
   content: '';
-  clip-path: inherit;
+}
+
+.profile-identity__avatar {
+  position: relative;
+  display: grid;
+  width: 5.5rem;
+  height: 5.5rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--profile-rank) 62%, var(--color-rank-gold));
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--color-rank-panel-deep) 88%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--profile-rank-highlight) 24%, transparent),
+    0 0 1rem color-mix(in srgb, var(--profile-rank) 16%, transparent);
 }
 
 .profile-identity__copy {
@@ -327,14 +342,18 @@ const formatBestFinish = (finish: string) => {
   text-transform: uppercase;
 }
 
+.profile-identity__friend {
+  margin-top: 0.75rem;
+}
+
 @media (max-width: 39.99rem) {
   .profile-identity {
     gap: 1rem;
     padding: 1rem;
   }
-  .profile-identity :deep(.rank-frame[data-size='xl']) {
-    width: 5rem;
-    height: 5rem;
+  .profile-identity__avatar {
+    width: 4.75rem;
+    height: 4.75rem;
   }
   .profile-identity__name {
     font-size: var(--text-card);

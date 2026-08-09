@@ -13,25 +13,26 @@ import { useSocialStore } from '@/stores/social'
 import { sendLobbyMessage, sendDirectMessage, getDirectMessageHistory, type LobbyMessage } from '@/api/chat'
 import { ApiError } from '@/api/ApiError'
 import { useToast } from '@/composables/useToast'
+import { useAppLanguage } from '@/composables/useAppLanguage'
 
 const props = defineProps<{
   open: boolean
 }>()
 
 const emit = defineEmits<{
-  (e: 'close'): void
-  (e: 'upgrade'): void
+  (e: 'close' | 'upgrade'): void
 }>()
 
 const chatStore = useChatStore()
 const authStore = useAuthStore()
 const socialStore = useSocialStore()
 const { addToast } = useToast()
+const { t } = useAppLanguage()
 
 const scrollContainer = ref<HTMLElement | null>(null)
 const inputMessage = ref('')
 const isSending = ref(false)
-const chatInputRef = ref<InstanceType<typeof BaseInput> | null>(null)
+const chatInputRef = ref<{ focus: () => void } | null>(null)
 const showNewMsgPill = ref(false)
 const isLoadingMore = ref(false)
 
@@ -50,7 +51,7 @@ const scrollToBottom = (force = false) => {
   const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100
 
   if (force || isNearBottom) {
-    nextTick(() => {
+    void nextTick(() => {
       const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
       el.scrollTo({
         top: el.scrollHeight,
@@ -88,7 +89,7 @@ const handleScroll = async () => {
             // Prepend older messages
             chatStore.directMessages[friendId] = [...older.reverse(), ...msgs]
             // Maintain scroll position
-            nextTick(() => {
+            void nextTick(() => {
               el.scrollTop = el.scrollHeight - oldScrollHeight + oldScrollTop
             })
           }
@@ -108,14 +109,14 @@ watch(() => chatStore.lobbyMessages.length, () => {
 
 watch(() => currentTab.value, () => {
   scrollToBottom(true)
-  nextTick(() => {
+  void nextTick(() => {
     chatInputRef.value?.focus()
   })
 })
 
 watch(() => props.open, (isOpen) => {
   if (isOpen) {
-    nextTick(() => {
+    void nextTick(() => {
       chatInputRef.value?.focus()
     })
   }
@@ -178,53 +179,53 @@ const friendsWithUnread = computed(() => {
 <template>
   <BaseDrawer
     v-if="open"
-    title="Chat"
+    :title="t('Chat', 'Trò chuyện')"
     @close="emit('close')"
   >
     <!-- Tabs Header -->
-    <div class="flex gap-2 mb-2 pb-2 border-b border-border-strong">
+    <div class="flex gap-1.5 mb-2 pb-2 border-b border-[var(--color-fantasy-border-subtle)]">
       <button 
-        class="px-3 py-1 text-sm font-medium rounded-sm transition-colors"
-        :class="currentTab === 'lobby' ? 'bg-surface-sunken text-foreground' : 'text-foreground-muted hover:text-foreground'"
+        class="px-3 py-1.5 text-xs font-bold rounded-lg transition-all border"
+        :class="currentTab === 'lobby' ? 'bg-amber-400/10 text-amber-300 border-amber-400/40 shadow-sm' : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-white/5'"
         @click="chatStore.setActiveChat('lobby')"
       >
-        Lobby
+        {{ t('Lobby', 'Sảnh') }}
       </button>
       <button 
-        class="px-3 py-1 text-sm font-medium rounded-sm transition-colors flex items-center gap-1"
-        :class="currentTab !== 'lobby' ? 'bg-surface-sunken text-foreground' : 'text-foreground-muted hover:text-foreground'"
+        class="px-3 py-1.5 text-xs font-bold rounded-lg transition-all border flex items-center gap-1.5"
+        :class="currentTab !== 'lobby' ? 'bg-amber-400/10 text-amber-300 border-amber-400/40 shadow-sm' : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-white/5'"
         @click="chatStore.setActiveChat(null)"
       >
-        Friends
-        <span v-if="Object.values(chatStore.unreadCounts).reduce((a, b) => a + b, 0) > 0" class="flex h-2 w-2 rounded-full bg-error"></span>
+        {{ t('Friends', 'Bạn bè') }}
+        <span v-if="chatStore.totalUnreadMessages > 0" class="flex h-2 w-2 rounded-full bg-red-500 animate-pulse"></span>
       </button>
     </div>
 
     <!-- Content: DM List -->
     <div v-if="currentTab === 'dm_list'" class="flex flex-col gap-2 h-full overflow-y-auto custom-scrollbar">
-      <div v-if="friendsWithUnread.length === 0" class="text-center text-foreground-muted py-8 text-sm">
-        You have no friends yet.
+      <div v-if="friendsWithUnread.length === 0" class="text-center text-slate-400 py-8 text-sm">
+        {{ t('You have no friends yet.', 'Bạn chưa có người bạn nào.') }}
       </div>
       <button
         v-for="friend in friendsWithUnread"
         :key="friend.user.id"
-        class="flex items-center gap-3 p-2 rounded-sm hover:bg-glass-light transition text-left"
+        class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-white/5 border border-transparent hover:border-[var(--color-fantasy-border-subtle)] transition text-left"
         @click="chatStore.setActiveChat(friend.user.id)"
       >
         <BaseAvatar :name="friend.user.display_name" size="sm" :online="friend.is_online" />
-        <span class="flex-1 text-sm font-medium text-foreground">{{ friend.user.display_name }}</span>
+        <span class="flex-1 text-sm font-semibold text-slate-200">{{ friend.user.display_name }}</span>
         <BaseBadge v-if="friend.unread > 0" variant="danger">{{ friend.unread }}</BaseBadge>
       </button>
     </div>
 
     <!-- Content: Chat Area (Lobby or DM) -->
     <template v-else>
-      <div v-if="currentTab === 'dm_chat' && activeFriend" class="flex items-center gap-2 mb-2 pb-2 border-b border-border-subtle">
-        <button class="text-foreground-muted hover:text-foreground mr-1 p-1 rounded-sm hover:bg-surface-sunken" title="Back" @click="chatStore.setActiveChat(null)">
+      <div v-if="currentTab === 'dm_chat' && activeFriend" class="flex items-center gap-2 mb-2 pb-2 border-b border-[var(--color-fantasy-border-subtle)]">
+        <button class="text-slate-400 hover:text-white mr-1 p-1 rounded-lg hover:bg-white/10 transition" :title="t('Back', 'Quay lại')" @click="chatStore.setActiveChat(null)">
           <FantasySystemIcon compact><ArrowLeft :size="16" /></FantasySystemIcon>
         </button>
         <BaseAvatar :name="activeFriend.display_name" size="sm" />
-        <span class="text-sm font-semibold">{{ activeFriend.display_name }}</span>
+        <span class="text-sm font-bold text-[var(--color-fantasy-stone)]">{{ activeFriend.display_name }}</span>
       </div>
 
       <div 
@@ -232,7 +233,7 @@ const friendsWithUnread = computed(() => {
         class="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-3 py-2 relative min-h-0"
         @scroll="handleScroll"
       >
-        <div v-if="isLoadingMore" class="text-center text-xs text-foreground-muted py-1">Loading older messages...</div>
+        <div v-if="isLoadingMore" class="text-center text-xs text-slate-400 py-1">{{ t('Loading older messages...', 'Đang tải tin nhắn cũ...') }}</div>
 
         <div 
           v-for="msg in messagesToDisplay" 
@@ -240,20 +241,20 @@ const friendsWithUnread = computed(() => {
           class="flex flex-col max-w-[85%]"
           :class="msg.sender_id === authStore.user?.id ? 'self-end items-end' : 'self-start items-start'"
         >
-          <div class="text-[10px] text-foreground-muted mb-0.5 flex gap-1 mx-1">
-            <span v-if="currentTab === 'lobby' && msg.sender_id !== authStore.user?.id" class="font-bold">{{ (msg as LobbyMessage).display_name }}</span>
+          <div class="text-[10px] text-slate-400 mb-0.5 flex gap-1 mx-1">
+            <span v-if="currentTab === 'lobby' && msg.sender_id !== authStore.user?.id" class="font-bold text-amber-300/90">{{ (msg as LobbyMessage).display_name }}</span>
             <span>{{ new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }}</span>
           </div>
           <div 
-            class="px-3 py-1.5 rounded-card text-sm text-foreground break-words"
-            :class="msg.sender_id === authStore.user?.id ? 'bg-primary/20 border border-primary/30' : 'bg-surface-sunken border border-border-strong'"
+            class="px-3 py-1.5 rounded-xl text-sm break-words shadow-sm"
+            :class="msg.sender_id === authStore.user?.id ? 'bg-amber-400/15 border border-amber-400/30 text-amber-100' : 'bg-slate-900/80 border border-slate-800 text-slate-200'"
           >
             {{ msg.content }}
           </div>
         </div>
         
         <div v-if="messagesToDisplay.length === 0" class="text-center text-foreground-muted text-sm my-auto">
-          No messages yet.
+          {{ t('No messages yet.', 'Chưa có tin nhắn.') }}
         </div>
       </div>
 
@@ -263,7 +264,7 @@ const friendsWithUnread = computed(() => {
         class="absolute bottom-16 left-1/2 -translate-x-1/2 bg-surface-3 border border-border-strong shadow-floating text-xs px-3 py-1 rounded-pill flex items-center gap-1 z-10 animate-fade-in"
         @click="scrollToBottom(true)"
       >
-        New messages
+        {{ t('New messages', 'Tin nhắn mới') }}
         <FantasySystemIcon compact><ChevronDown :size="12" /></FantasySystemIcon>
       </button>
 
@@ -272,18 +273,18 @@ const friendsWithUnread = computed(() => {
         <div v-if="authStore.isGuest" class="flex flex-col items-center justify-center p-3 bg-surface-sunken rounded-sm border border-border-subtle gap-2">
           <div class="flex items-center gap-2 text-warning text-sm">
             <FantasySystemIcon compact><Lock :size="14" /></FantasySystemIcon>
-            <span>Guests cannot chat</span>
+            <span>{{ t('Guests cannot chat', 'Khách không thể trò chuyện') }}</span>
           </div>
-          <BaseButton size="sm" variant="primary" @click="emit('upgrade')">Upgrade Account</BaseButton>
+          <BaseButton size="sm" variant="primary" @click="emit('upgrade')">{{ t('Upgrade Account', 'Nâng cấp tài khoản') }}</BaseButton>
         </div>
         <form v-else class="flex gap-2" @submit.prevent="sendMessage">
           <BaseInput
             ref="chatInputRef"
             v-model="inputMessage"
             name="chat_message"
-            label="Message"
+            :label="t('Message', 'Tin nhắn')"
             :label-hidden="true"
-            placeholder="Type a message..."
+            :placeholder="t('Type a message...', 'Nhập tin nhắn...')"
             class="flex-1"
             :disabled="isSending"
             :maxlength="200"

@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { HeartCrack, Trophy } from 'lucide-vue-next'
+import { useAppLanguage } from '@/composables/useAppLanguage'
 
 defineProps<{
   outcome: 'win' | 'loss'
   countdown: number
   showCountdown: boolean
 }>()
+const { t } = useAppLanguage()
 </script>
 
 <template>
@@ -19,12 +21,12 @@ defineProps<{
     <div class="match-result-heading">
       <Trophy v-if="outcome === 'win'" :size="20" aria-hidden="true" />
       <HeartCrack v-else :size="20" aria-hidden="true" />
-      <strong>{{ outcome === 'win' ? 'VICTORY' : 'DEFEAT' }}</strong>
+      <strong>{{ outcome === 'win' ? t('VICTORY', 'CHIẾN THẮNG') : t('DEFEAT', 'THẤT BẠI') }}</strong>
     </div>
     <p class="match-result-detail">
-      {{ outcome === 'win' ? '5 in a row' : 'Opponent completed 5 in a row' }}
+      {{ outcome === 'win' ? t('5 in a row', '5 quân liên tiếp') : t('Opponent completed 5 in a row', 'Đối thủ đã có 5 quân liên tiếp') }}
     </p>
-    <p v-if="showCountdown" class="match-result-countdown">Opening match result in {{ countdown }}...</p>
+    <p v-if="showCountdown" class="match-result-countdown">{{ t('Opening match result in', 'Mở kết quả trận sau') }} {{ countdown }}...</p>
   </div>
 </template>
 

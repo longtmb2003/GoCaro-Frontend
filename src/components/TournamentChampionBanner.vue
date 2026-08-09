@@ -2,6 +2,7 @@
 import { Trophy } from 'lucide-vue-next'
 import BaseModal from '@/components/ui/BaseModal.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
+import { useAppLanguage } from '@/composables/useAppLanguage'
 
 const emit = defineEmits<{
   (e: 'close'): void
@@ -10,10 +11,11 @@ const emit = defineEmits<{
 defineProps<{
   tournamentName: string
 }>()
+const { t } = useAppLanguage()
 </script>
 
 <template>
-  <BaseModal @close="emit('close')" aria-labelledby="champion-banner-title">
+  <BaseModal aria-labelledby="champion-banner-title" @close="emit('close')">
     <!-- CSS Glow Effect Background -->
     <div class="fixed inset-0 z-[-1] overflow-hidden pointer-events-none rounded-xl">
       <div class="absolute inset-0 bg-warning/10" />
@@ -29,15 +31,15 @@ defineProps<{
       </div>
       
       <h2 id="champion-banner-title" class="text-3xl font-black text-foreground mb-2 tracking-tight">
-        You are the Champion!
+        {{ t('You are the Champion!', 'Bạn là nhà vô địch!') }}
       </h2>
       
       <p class="text-foreground-muted mb-8 max-w-sm">
-        Congratulations on winning the <strong class="text-foreground font-semibold">{{ tournamentName }}</strong> tournament.
+        {{ t('Congratulations on winning the', 'Chúc mừng bạn đã vô địch giải') }} <strong class="text-foreground font-semibold">{{ tournamentName }}</strong>.
       </p>
 
-      <BaseButton variant="primary" size="lg" @click="emit('close')" autofocus>
-        Close
+      <BaseButton variant="primary" size="lg" autofocus @click="emit('close')">
+        {{ t('Close', 'Đóng') }}
       </BaseButton>
     </div>
   </BaseModal>

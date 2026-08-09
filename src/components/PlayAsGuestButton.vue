@@ -3,6 +3,7 @@ import { DoorOpen } from 'lucide-vue-next'
 
 import BaseButton from '@/components/ui/BaseButton.vue'
 import { useGuestLogin } from '@/composables/useGuestLogin'
+import { useAppLanguage } from '@/composables/useAppLanguage'
 
 withDefaults(
   defineProps<{
@@ -20,6 +21,7 @@ withDefaults(
 )
 
 const { loading, error, playAsGuest } = useGuestLogin()
+const { t } = useAppLanguage()
 </script>
 
 <template>
@@ -34,11 +36,11 @@ const { loading, error, playAsGuest } = useGuestLogin()
       @click="playAsGuest"
     >
       <DoorOpen v-if="compact" :size="18" aria-hidden="true" />
-      <span>{{ compact ? compactLabel : 'Play as guest' }}</span>
+      <span>{{ compact ? compactLabel : t('Play as guest', 'Chơi với tư cách khách') }}</span>
       <span v-if="compact" class="guest-badge">{{ compactBadge }}</span>
     </BaseButton>
     <p v-if="!compact" class="text-white/50 mt-3 text-center text-xs font-medium tracking-wide">
-      Start playing right away. You can save your account later.
+      {{ t('Start playing right away. You can save your account later.', 'Chơi ngay lập tức. Bạn có thể lưu tài khoản sau.') }}
     </p>
     <p v-if="error" class="text-danger-400 mt-2 text-center text-sm" role="alert">{{ error }}</p>
   </div>

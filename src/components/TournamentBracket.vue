@@ -5,10 +5,12 @@ import BracketSlotCard from '@/components/BracketSlotCard.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import type { BracketSlot } from '@/types/tournament'
 import { groupByRound } from '@/utils/tournament'
+import { useAppLanguage } from '@/composables/useAppLanguage'
 
 const props = defineProps<{
   slots: BracketSlot[]
 }>()
+const { t } = useAppLanguage()
 
 const rounds = computed(() => groupByRound(props.slots))
 </script>
@@ -16,8 +18,8 @@ const rounds = computed(() => groupByRound(props.slots))
 <template>
   <EmptyState
     v-if="rounds.length === 0"
-    title="No bracket yet"
-    description="The bracket is drawn once the field is full."
+    :title="t('No bracket yet', 'Chưa có nhánh đấu')"
+    :description="t('The bracket is drawn once the field is full.', 'Nhánh đấu sẽ được tạo khi đủ người chơi.')"
   />
 
   <!--
@@ -33,7 +35,15 @@ const rounds = computed(() => groupByRound(props.slots))
         class="gap-3 flex min-w-56 flex-1 flex-col"
       >
         <h3 class="text-caption text-foreground-muted tracking-wider uppercase">
-          {{ round.label }}
+          {{
+            round.label === 'Final'
+              ? t('Final', 'Chung kết')
+              : round.label === 'Semi-finals'
+                ? t('Semi-finals', 'Bán kết')
+                : round.label === 'Quarter-finals'
+                  ? t('Quarter-finals', 'Tứ kết')
+                  : round.label.replace('Round', t('Round', 'Vòng'))
+          }}
         </h3>
         <ul class="gap-3 flex flex-col">
           <li v-for="pairing in round.slots" :key="pairing.id">

@@ -5,6 +5,7 @@ import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseInput from '@/components/ui/BaseInput.vue'
 import BaseModal from '@/components/ui/BaseModal.vue'
 import type { ProfileUpdate } from '@/types/auth'
+import { useAppLanguage } from '@/composables/useAppLanguage'
 
 const props = withDefaults(
   defineProps<{
@@ -28,6 +29,7 @@ const props = withDefaults(
 )
 
 const emit = defineEmits<{ submit: [update: ProfileUpdate]; close: [] }>()
+const { errorText, language, t } = useAppLanguage()
 
 // Mirrors models.MaxFullNameLength and the users_full_name_not_blank check.
 const FULL_NAME_MAX = 50
@@ -44,7 +46,9 @@ function normalisePhone(value: string): string {
 
 const nameAvailableLabel = computed(() => {
   const at = props.nameAvailableAt
-  return at === null ? '' : at.toLocaleDateString(undefined, { dateStyle: 'medium' })
+  return at === null
+    ? ''
+    : at.toLocaleDateString(language.value === 'vi' ? 'vi-VN' : 'en-US', { dateStyle: 'medium' })
 })
 
 /**
@@ -66,15 +70,18 @@ function validate(): boolean {
     // two have to agree or the client accepts a name the server rejects.
     // eslint-disable-next-line @typescript-eslint/no-misused-spread
     if ([...name].length > FULL_NAME_MAX) {
-      fullNameError.value = `Full name must be at most ${String(FULL_NAME_MAX)} characters.`
+      fullNameError.value = t(
+        `Full name must be at most ${String(FULL_NAME_MAX)} characters.`,
+        `Họ tên không được vượt quá ${String(FULL_NAME_MAX)} ký tự.`,
+      )
     } else if (!/\p{L}/u.test(name)) {
-      fullNameError.value = 'Full name must contain at least one letter.'
+      fullNameError.value = t('Full name must contain at least one letter.', 'Họ tên phải có ít nhất một chữ cái.')
     }
   }
 
   const phone = normalisePhone(phoneDraft.value)
   if (phone !== '' && !/^\+?[0-9]{6,19}$/.test(phone)) {
-    phoneError.value = 'Enter 6 to 19 digits, optionally starting with +.'
+    phoneError.value = t('Enter 6 to 19 digits, optionally starting with +.', 'Nhập từ 6 đến 19 chữ số, có thể bắt đầu bằng dấu +.')
   }
 
   return fullNameError.value === '' && phoneError.value === ''
@@ -119,60 +126,60 @@ function requestClose(): void {
 
 <template>
   <BaseModal
-    title="Edit profile"
+    :title="t('Edit profile', 'Chỉnh sửa hồ sơ')"
     :dismissible="!loading"
     initial-focus="input"
     aria-describedby="edit-profile-description"
     @close="requestClose"
   >
     <p id="edit-profile-description" class="text-foreground-muted text-body mb-4">
-      Your full name is what other players see. Your username and rating do not change.
+      {{ t('Your full name is what other players see. Your username and rating do not change.', 'Họ tên là nội dung người chơi khác nhìn thấy. Tên đăng nhập và điểm xếp hạng không thay đổi.') }}
     </p>
 
     <form class="space-y-4" novalidate @submit.prevent="handleSubmit">
       <BaseInput
         v-model="fullNameDraft"
         name="full_name"
-        label="Full name"
+        :label="t('Full name', 'Họ tên')"
         autocomplete="name"
-        placeholder="Leave empty to use your username"
+        :placeholder="t('Leave empty to use your username', 'Để trống để dùng tên đăng nhập')"
         :maxlength="FULL_NAME_MAX"
         :error="fullNameError"
         :disabled="loading || !canChangeName"
       />
 
       <p v-if="!canChangeName" class="text-foreground-muted text-small">
-        You changed your name recently. You can change it again on
+        {{ t('You changed your name recently. You can change it again on', 'Bạn vừa đổi tên gần đây. Bạn có thể đổi lại vào') }}
         {{ nameAvailableLabel }}.
       </p>
       <p v-else-if="nameIsChanging" class="text-foreground-muted text-small">
-        You will appear as <span class="text-foreground font-medium">{{ resultingName }}</span
-        >. After saving you cannot change it again for 7 days.
+        {{ t('You will appear as', 'Bạn sẽ hiển thị với tên') }} <span class="text-foreground font-medium">{{ resultingName }}</span
+        >. {{ t('After saving you cannot change it again for 7 days.', 'Sau khi lưu, bạn không thể đổi lại trong 7 ngày.') }}
       </p>
 
       <BaseInput
         v-model="phoneDraft"
         name="phone"
         type="tel"
-        label="Phone"
+        :label="t('Phone', 'Số điện thoại')"
         autocomplete="tel"
-        placeholder="Leave empty to keep current"
+        :placeholder="t('Leave empty to keep current', 'Để trống để giữ nguyên')"
         :maxlength="20"
         :error="phoneError"
         :disabled="loading"
       />
-      <p class="text-foreground-muted text-small">Phone is hidden for security. Leave empty to keep existing.</p>
+      <p class="text-foreground-muted text-small">{{ t('Phone is hidden for security. Leave empty to keep existing.', 'Số điện thoại được ẩn để bảo mật. Để trống để giữ số hiện tại.') }}</p>
 
-      <p v-if="serverError" class="text-error text-small" role="alert">{{ serverError }}</p>
+      <p v-if="serverError" class="text-error text-small" role="alert">{{ errorText(serverError) }}</p>
 
       <BaseButton type="submit" variant="primary" size="lg" class="w-full" :loading="loading">
-        Save changes
+        {{ t('Save changes', 'Lưu thay đổi') }}
       </BaseButton>
     </form>
 
     <template #footer>
       <BaseButton variant="secondary" class="w-full" :disabled="loading" @click="requestClose">
-        Cancel
+        {{ t('Cancel', 'Hủy') }}
       </BaseButton>
     </template>
   </BaseModal>

@@ -7,34 +7,48 @@ import BaseBadge from '@/components/ui/BaseBadge.vue'
 import GlassCard from '@/components/ui/GlassCard.vue'
 import type { TournamentSummary } from '@/types/tournament'
 import { statusPresentation } from '@/utils/tournament'
+import { useAppLanguage } from '@/composables/useAppLanguage'
 
 const props = defineProps<{
   tournament: TournamentSummary
 }>()
+const { language, t } = useAppLanguage()
 
-const status = computed(() => statusPresentation(props.tournament.status))
+const status = computed(() => {
+  const presentation = statusPresentation(props.tournament.status)
+  const labels = {
+    registration: t('Open', 'Đang mở'),
+    ready: t('Full', 'Đã đủ'),
+    running: t('Live', 'Đang diễn ra'),
+    finished: t('Finished', 'Đã kết thúc'),
+    cancelled: t('Cancelled', 'Đã hủy'),
+  }
+  return { ...presentation, label: labels[props.tournament.status] }
+})
 
 /** The one line that says most about where a tournament is right now. */
 const progress = computed(() => {
-  const t = props.tournament
-  if (t.status === 'finished') {
-    return t.champion_display_name === null ? 'Finished' : `Won by ${t.champion_display_name}`
+  const tournament = props.tournament
+  if (tournament.status === 'finished') {
+    return tournament.champion_display_name === null
+      ? t('Finished', 'Đã kết thúc')
+      : `${t('Won by', 'Vô địch bởi')} ${tournament.champion_display_name}`
   }
-  if (t.status === 'running') {
-    return `Round ${String(t.current_round)} in play`
+  if (tournament.status === 'running') {
+    return `${t('Round', 'Vòng')} ${String(tournament.current_round)} ${t('in play', 'đang diễn ra')}`
   }
-  if (t.status === 'ready') {
-    return 'Bracket drawn, waiting to start'
+  if (tournament.status === 'ready') {
+    return t('Bracket drawn, waiting to start', 'Đã có nhánh đấu, đang chờ bắt đầu')
   }
-  if (t.status === 'cancelled') {
-    return 'Cancelled by the organiser'
+  if (tournament.status === 'cancelled') {
+    return t('Cancelled by the organiser', 'Đã bị ban tổ chức hủy')
   }
-  return `${String(t.max_players - t.current_players)} of ${String(t.max_players)} places left`
+  return `${String(tournament.max_players - tournament.current_players)}/${String(tournament.max_players)} ${t('places left', 'chỗ còn lại')}`
 })
 
 const finishedDate = computed(() => {
   if (!props.tournament.finished_at) return null
-  return new Intl.DateTimeFormat('en-US', {
+  return new Intl.DateTimeFormat(language.value === 'vi' ? 'vi-VN' : 'en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric'

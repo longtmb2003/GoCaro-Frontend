@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useAuthStore } from './auth'
 import type { SocketMessage } from '@/api/websocket'
 import {
@@ -91,7 +91,7 @@ export const useChatStore = defineStore('chat', () => {
     const existing = markReadTimeouts.get(friendId)
     if (existing) clearTimeout(existing)
     const timeout = setTimeout(() => {
-      doMarkAsRead(friendId)
+      void doMarkAsRead(friendId)
       markReadTimeouts.delete(friendId)
     }, 1000)
     markReadTimeouts.set(friendId, timeout)
@@ -101,10 +101,10 @@ export const useChatStore = defineStore('chat', () => {
     activeChatId.value = id
     if (id && id !== 'lobby') {
       if (!directMessages.value[id]) {
-        fetchFriendHistory(id)
+        void fetchFriendHistory(id)
       } else if (unreadCounts.value[id] && unreadCounts.value[id] > 0) {
         // We already have history but just reopened, clear unread
-        doMarkAsRead(id)
+        void doMarkAsRead(id)
       }
     }
   }
@@ -149,6 +149,10 @@ export const useChatStore = defineStore('chat', () => {
     }
   }
 
+  const totalUnreadMessages = computed(() => {
+    return Object.values(unreadCounts.value).reduce((acc: number, count: number) => acc + count, 0)
+  })
+
   const reset = () => {
     lobbyMessages.value = []
     directMessages.value = {}
@@ -161,6 +165,7 @@ export const useChatStore = defineStore('chat', () => {
     directMessages,
     unreadCounts,
     activeChatId,
+    totalUnreadMessages,
     fetchInitialData,
     fetchFriendHistory,
     setActiveChat,

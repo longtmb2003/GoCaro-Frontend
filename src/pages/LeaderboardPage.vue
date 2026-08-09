@@ -11,11 +11,13 @@ import LeaderboardTable from '@/components/LeaderboardTable.vue'
 import AppLayout from '@/layouts/AppLayout.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useLeaderboardStore } from '@/stores/leaderboard'
+import { useAppLanguage } from '@/composables/useAppLanguage'
 
 const PAGE_SIZE = 20
 
 const auth = useAuthStore()
 const leaderboard = useLeaderboardStore()
+const { t } = useAppLanguage()
 
 const searchQuery = ref('')
 const currentPage = ref(1)
@@ -49,41 +51,41 @@ onMounted(() => {
 </script>
 
 <template>
-  <AppLayout title="Leaderboard">
+  <AppLayout title="Leaderboard" fantasy>
     <template #actions>
       <RouterLink
         to="/"
         class="text-foreground-muted hover:text-foreground text-sm font-medium transition-colors"
       >
-        Back to lobby
+        {{ t('Back to lobby', 'Về sảnh') }}
       </RouterLink>
     </template>
 
-    <GlassCard title="Top players" class="mx-auto max-w-2xl">
+    <GlassCard :title="t('Top players', 'Người chơi hàng đầu')" class="mx-auto max-w-2xl">
       <template #icon><Crown :size="18" aria-hidden="true" /></template>
       <template #actions>
         <div class="gap-2 flex w-full items-end sm:w-auto">
           <BaseInput
             v-model="searchQuery"
             name="leaderboard-search"
-            label="Search by username"
-            placeholder="Search by username…"
+            :label="t('Search by username', 'Tìm theo tên đăng nhập')"
+            :placeholder="t('Search by username…', 'Tìm theo tên đăng nhập…')"
             label-hidden
             class="w-full sm:w-64"
             @keyup.enter="handleSearch"
           />
-          <BaseButton @click="handleSearch">Search</BaseButton>
+          <BaseButton @click="handleSearch">{{ t('Search', 'Tìm kiếm') }}</BaseButton>
         </div>
       </template>
 
       <p v-if="leaderboard.loading" class="text-foreground-muted py-6 text-body text-center">
-        Loading leaderboard…
+        {{ t('Loading leaderboard…', 'Đang tải bảng xếp hạng…') }}
       </p>
 
       <ErrorState v-else-if="leaderboard.error" :message="leaderboard.error">
         <template #action>
           <BaseButton variant="secondary" @click="leaderboard.load(currentPage, PAGE_SIZE, searchQuery)">
-            Try again
+            {{ t('Try again', 'Thử lại') }}
           </BaseButton>
         </template>
       </ErrorState>
@@ -100,13 +102,13 @@ onMounted(() => {
           class="border-border-subtle mt-6 pt-4 flex items-center justify-between border-t"
         >
           <BaseButton variant="secondary" :disabled="currentPage <= 1" @click="prevPage">
-            Previous
+            {{ t('Previous', 'Trước') }}
           </BaseButton>
           <span class="text-foreground-muted text-small font-semibold tabular-nums">
-            Page {{ currentPage }} of {{ totalPages }}
+            {{ t('Page', 'Trang') }} {{ currentPage }} {{ t('of', 'trên') }} {{ totalPages }}
           </span>
           <BaseButton variant="secondary" :disabled="currentPage >= totalPages" @click="nextPage">
-            Next
+            {{ t('Next', 'Tiếp') }}
           </BaseButton>
         </div>
       </template>

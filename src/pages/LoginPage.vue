@@ -9,7 +9,6 @@ import {
   Gift,
   Globe2,
   LockKeyhole,
-  Settings,
   ShieldCheck,
   Sparkles,
   Trophy,
@@ -19,17 +18,17 @@ import {
 
 import { ApiError } from '@/api/ApiError'
 import PlayAsGuestButton from '@/components/PlayAsGuestButton.vue'
+import AppSettingsMenu from '@/components/AppSettingsMenu.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseInput from '@/components/ui/BaseInput.vue'
 import GlassCard from '@/components/ui/GlassCard.vue'
+import { useAppLanguage, type LanguageCode } from '@/composables/useAppLanguage'
 import { useAuthStore } from '@/stores/auth'
 
 const auth = useAuthStore()
 const router = useRouter()
 const route = useRoute()
 const isRegisterMode = computed(() => route.name === 'register')
-
-type LanguageCode = 'en' | 'vi'
 
 const UI_COPY = {
   en: {
@@ -148,12 +147,9 @@ const UI_COPY = {
   },
 } as const
 
-const languageOptions = [
-  { code: 'en', label: 'English' },
-  { code: 'vi', label: 'Tiếng Việt' },
-] as const
-const storedLanguage = localStorage.getItem('gocaro.language')
-const language = ref<LanguageCode>(storedLanguage === 'vi' ? 'vi' : 'en')
+const appLanguage = useAppLanguage()
+const language = appLanguage.language
+const languageOptions = appLanguage.languageOptions
 const ui = computed(() => UI_COPY[language.value])
 const selectedLanguage = computed(
   () => languageOptions.find((option) => option.code === language.value)?.label ?? 'English',
@@ -190,9 +186,7 @@ watch(isRegisterMode, () => {
 
 watch(
   language,
-  (value) => {
-    localStorage.setItem('gocaro.language', value)
-    document.documentElement.lang = value
+  () => {
     usernameError.value = ''
     passwordError.value = ''
     confirmPasswordError.value = ''
@@ -288,7 +282,7 @@ function showNotificationNotice(): void {
 }
 
 function selectLanguage(nextLanguage: LanguageCode, event: MouseEvent): void {
-  language.value = nextLanguage
+  appLanguage.setLanguage(nextLanguage)
   const languageMenu = (event.currentTarget as HTMLElement).closest('details')
   languageMenu?.removeAttribute('open')
 }
@@ -298,7 +292,7 @@ function selectLanguage(nextLanguage: LanguageCode, event: MouseEvent): void {
   <main class="launcher min-h-screen overflow-hidden bg-background text-foreground">
     <img
       class="launcher__art"
-      src="/gocaro-login-stone-arena-v4.png"
+      src="/gocaro-login-stone-arena-v4.webp"
       alt=""
       aria-hidden="true"
       fetchpriority="high"
@@ -320,7 +314,7 @@ function selectLanguage(nextLanguage: LanguageCode, event: MouseEvent): void {
       </div>
 
       <div class="launcher-bar__actions">
-        <span class="server-state"><i aria-hidden="true" /> North America</span>
+        <span class="server-state"><i aria-hidden="true" /> {{ appLanguage.t('North America', 'Bắc Mỹ') }}</span>
         <details class="bar-menu">
           <summary :aria-label="ui.languageLabel">
             <Globe2 :size="18" aria-hidden="true" />
@@ -349,22 +343,7 @@ function selectLanguage(nextLanguage: LanguageCode, event: MouseEvent): void {
           <Bell :size="18" aria-hidden="true" />
           <span class="bar-icon__dot" aria-hidden="true" />
         </button>
-        <details class="bar-menu bar-menu--settings">
-          <summary class="bar-icon" :aria-label="ui.launcherSettings" :title="ui.launcherSettings">
-            <Settings :size="18" aria-hidden="true" />
-          </summary>
-          <div class="bar-menu__popover settings-popover">
-            <p>{{ ui.launcherSettings }}</p>
-            <div class="settings-row">
-              <span>{{ ui.ambientSound }}</span
-              ><span class="setting-state">{{ ui.off }}</span>
-            </div>
-            <div class="settings-row">
-              <span>{{ ui.motionEffects }}</span
-              ><span class="setting-state">{{ ui.auto }}</span>
-            </div>
-          </div>
-        </details>
+        <AppSettingsMenu />
       </div>
     </header>
 

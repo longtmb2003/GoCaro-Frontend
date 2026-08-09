@@ -1,5 +1,8 @@
 <script setup lang="ts">
+import { useAppLanguage } from '@/composables/useAppLanguage'
+
 withDefaults(defineProps<{ title: string; subtitle?: string }>(), { subtitle: '' })
+const { t } = useAppLanguage()
 </script>
 
 <template>
@@ -69,7 +72,7 @@ withDefaults(defineProps<{ title: string; subtitle?: string }>(), { subtitle: ''
       <img
         class="absolute inset-0 h-full w-full object-contain p-8 transition-transform duration-1000 z-10 [animation:float_6s_ease-in-out_infinite]"
         src="/thumbnail.webp"
-        alt="GoCaro Cover"
+        :alt="t('GoCaro Cover', 'Ảnh bìa GoCaro')"
       />
       <div
         class="absolute inset-0 bg-gradient-to-br from-primary-900/40 via-transparent to-background/90 mix-blend-multiply pointer-events-none z-20"
@@ -84,7 +87,7 @@ withDefaults(defineProps<{ title: string; subtitle?: string }>(), { subtitle: ''
             class="flex items-center gap-2 bg-success-500/20 border border-success-500/30 text-success-400 text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full backdrop-blur-sm"
           >
             <span class="w-1.5 h-1.5 rounded-full bg-success-400 animate-pulse"></span>
-            Server Online
+            {{ t('Server Online', 'Máy chủ trực tuyến') }}
           </div>
         </div>
         <h2
@@ -94,11 +97,11 @@ withDefaults(defineProps<{ title: string; subtitle?: string }>(), { subtitle: ''
         </h2>
         <div class="flex items-center gap-2 mt-2">
           <span class="text-white/70 text-xs font-semibold tracking-wide uppercase"
-            >Realtime Multiplayer</span
+            >{{ t('Realtime Multiplayer', 'Đối kháng thời gian thực') }}</span
           >
           <span class="w-1 h-1 rounded-full bg-white/30"></span>
           <span class="text-white/70 text-xs font-semibold tracking-wide uppercase"
-            >Cross Platform</span
+            >{{ t('Cross Platform', 'Đa nền tảng') }}</span
           >
         </div>
       </div>
@@ -107,7 +110,7 @@ withDefaults(defineProps<{ title: string; subtitle?: string }>(), { subtitle: ''
         <div
           class="inline-block bg-primary-500/20 border border-primary-500/30 text-primary-300 text-xs font-bold uppercase tracking-widest px-3 py-1.5 rounded-full backdrop-blur-sm shadow-[0_0_15px_rgba(139,92,246,0.3)]"
         >
-          Latest Update: Season 1
+          {{ t('Latest Update: Season 1', 'Cập nhật mới nhất: Mùa 1') }}
         </div>
       </div>
     </div>

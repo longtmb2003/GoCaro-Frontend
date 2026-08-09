@@ -4,6 +4,7 @@ import { Coins, Flame, Lock, Pencil, ShieldCheck, Trophy } from 'lucide-vue-next
 
 import { getRankSubTier, getRankTier } from '@/config/ranks'
 import { useCountUp } from '@/composables/useCountUp'
+import { useAppLanguage } from '@/composables/useAppLanguage'
 import { useUserProfile } from '@/composables/useUserProfile'
 import { useAuthStore } from '@/stores/auth'
 import type { AccountType, UserStats } from '@/types/auth'
@@ -11,8 +12,33 @@ import FantasySystemIcon from './ui/FantasySystemIcon.vue'
 
 import RankFrame from './RankFrame.vue'
 
+import { onMounted } from 'vue'
+import { useShopStore } from '@/stores/shop'
+import { resolveSpirit } from '@/spirits/spiritRegistry'
+
 const auth = useAuthStore()
+const shopStore = useShopStore()
 const { openProfile } = useUserProfile()
+const { language, rankName, t } = useAppLanguage()
+
+onMounted(async () => {
+  if (!shopStore.isLoaded && auth.isAuthenticated) {
+    await shopStore.loadStore().catch(() => undefined)
+  }
+})
+
+const equippedSpirit = computed(() => {
+  const code = shopStore.getEquipped('spirit_art')
+  if (!code) return null
+  const spirit = resolveSpirit(code, null, { withArt: true })
+  if (!spirit.model.source) return null
+  const langKey = language.value
+  return {
+    code,
+    name: spirit.name[langKey],
+    source: spirit.model.source,
+  }
+})
 
 const props = defineProps<{
   displayName: string
@@ -27,7 +53,7 @@ const initial = computed(() => props.displayName.charAt(0).toUpperCase())
 const isGuest = computed(() => props.accountType === 'anonymous')
 const rankTier = computed(() => {
   const tier = getRankTier(props.elo)
-  return `${tier.name} ${getRankSubTier(props.elo)}`.trim()
+  return `${rankName(tier.name)} ${getRankSubTier(props.elo)}`.trim()
 })
 const rankColor = computed(() => getRankTier(props.elo).color)
 const rankKey = computed(() => getRankTier(props.elo).name.toLowerCase())
@@ -42,7 +68,7 @@ const displayCoins = useCountUp(() => props.stats?.coins || 0)
 </script>
 
 <template>
-  <section class="profile-card" :data-rank-tier="rankKey" aria-label="Your profile">
+  <section class="profile-card" :data-rank-tier="rankKey" :aria-label="t('Your profile', 'Hồ sơ của bạn')">
     <span class="profile-card__light" aria-hidden="true" />
 
     <div class="profile-card__identity">
@@ -52,27 +78,26 @@ const displayCoins = useCountUp(() => props.stats?.coins || 0)
         <span class="profile-card__status" aria-hidden="true" />
       </div>
 
-      <div class="min-w-0">
-        <div class="flex items-center gap-1">
-          <h2 class="profile-card__name">{{ displayName }}</h2>
-          <button
-            v-if="!isGuest"
-            type="button"
-            class="profile-card__edit"
-            aria-label="Edit profile"
-            @click="emit('edit')"
-          >
-            <FantasySystemIcon compact><Pencil :size="16" aria-hidden="true" /></FantasySystemIcon>
-          </button>
-        </div>
-        <p class="profile-card__presence">
-          <span /> {{ isGuest ? 'Practice Mode' : 'Ready for battle' }}
-        </p>
+      <div v-if="equippedSpirit" class="profile-card__companion" :title="t('Active Companion: ', 'Đồng hành: ') + equippedSpirit.name">
+        <img :src="equippedSpirit.source" :alt="equippedSpirit.name" class="companion-art" />
       </div>
     </div>
 
+    <div class="profile-card__name-row">
+      <p class="profile-card__fullname" :title="displayName">{{ displayName }}</p>
+      <button
+        v-if="!isGuest"
+        type="button"
+        class="profile-card__edit"
+        :aria-label="t('Edit profile', 'Chỉnh sửa hồ sơ')"
+        @click="emit('edit')"
+      >
+        <FantasySystemIcon compact><Pencil :size="14" aria-hidden="true" /></FantasySystemIcon>
+      </button>
+    </div>
+
     <div class="profile-card__rank">
-      <p>Realm rating</p>
+      <p>{{ t('Realm rating', 'Điểm xếp hạng') }}</p>
       <strong>{{ elo }}</strong>
       <span :class="rankColor"
         ><FantasySystemIcon compact><ShieldCheck :size="18" /></FantasySystemIcon>
@@ -82,7 +107,7 @@ const displayCoins = useCountUp(() => props.stats?.coins || 0)
 
     <div class="profile-card__progress">
       <div>
-        <span>Rank progress</span>
+        <span>{{ t('Rank progress', 'Tiến trình xếp hạng') }}</span>
         <span>{{ elo }} / {{ nextLevelMax }}</span>
       </div>
       <div
@@ -91,7 +116,7 @@ const displayCoins = useCountUp(() => props.stats?.coins || 0)
         :aria-valuenow="progressPercent"
         aria-valuemin="0"
         aria-valuemax="100"
-        :aria-label="`Progress to ${nextLevelMax.toString()} rating`"
+        :aria-label="t(`Progress to ${nextLevelMax.toString()} rating`, `Tiến trình đến ${nextLevelMax.toString()} điểm`)"
       >
         <span class="profile-card__track-bed" aria-hidden="true" />
         <span class="profile-card__crystal" aria-hidden="true" />
@@ -110,18 +135,18 @@ const displayCoins = useCountUp(() => props.stats?.coins || 0)
       <div>
         <dt>
           <FantasySystemIcon compact><Coins :size="18" aria-hidden="true" /></FantasySystemIcon>
-          Coins
+          {{ t('Coins', 'Xu') }}
         </dt>
         <dd>{{ displayCoins }}</dd>
       </div>
       <div>
-        <dt>Win rate</dt>
+        <dt>{{ t('Win rate', 'Tỷ lệ thắng') }}</dt>
         <dd>{{ winRate }}%</dd>
       </div>
       <div>
         <dt>
           <FantasySystemIcon compact><Flame :size="18" aria-hidden="true" /></FantasySystemIcon>
-          Streak
+          {{ t('Streak', 'Chuỗi thắng') }}
         </dt>
         <dd>{{ streak > 0 ? `+${streak.toString()}` : streak }}</dd>
       </div>
@@ -136,7 +161,11 @@ const displayCoins = useCountUp(() => props.stats?.coins || 0)
         <Lock v-if="auth.isGuest" :size="18" aria-hidden="true" />
         <Trophy v-else :size="18" aria-hidden="true" />
       </FantasySystemIcon>
-      {{ auth.isGuest ? 'Unlock Competitive Profile' : 'View Competitive Profile' }}
+      {{
+        auth.isGuest
+          ? t('Unlock Competitive Profile', 'Mở khóa hồ sơ thi đấu')
+          : t('View Competitive Profile', 'Xem hồ sơ thi đấu')
+      }}
     </button>
   </section>
 </template>
@@ -148,26 +177,25 @@ const displayCoins = useCountUp(() => props.stats?.coins || 0)
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  padding: 1.25rem;
-  border: 1px solid color-mix(in srgb, var(--profile-rank) 46%, var(--color-rank-gold));
+  padding: 0.85rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--profile-rank) 30%, transparent);
   border-radius: var(--radius-card);
   background:
     radial-gradient(
       circle at 18% 0%,
-      color-mix(in srgb, var(--profile-rank) 15%, transparent),
+      color-mix(in srgb, var(--profile-rank) 10%, transparent),
       transparent 42%
     ),
     repeating-linear-gradient(
       108deg,
       transparent 0 0.85rem,
-      rgb(229 222 210 / 0.018) 0.9rem 0.95rem
+      rgb(229 222 210 / 0.015) 0.9rem 0.95rem
     ),
-    linear-gradient(145deg, rgb(42 55 64 / 0.94), rgb(9 25 43 / 0.96));
+    linear-gradient(145deg, rgb(30 42 52 / 0.92), rgb(7 18 32 / 0.95));
   box-shadow:
     var(--shadow-card),
-    inset 0 1px 0 rgb(229 222 210 / 0.16),
-    inset 0 0 0 2px rgb(3 12 24 / 0.34),
-    0 0 1.25rem color-mix(in srgb, var(--profile-rank) 9%, transparent);
+    inset 0 1px 0 rgb(229 222 210 / 0.1),
+    0 0 1rem color-mix(in srgb, var(--profile-rank) 5%, transparent);
   -webkit-backdrop-filter: blur(var(--blur-md)) saturate(1.08);
   backdrop-filter: blur(var(--blur-md)) saturate(1.08);
 }
@@ -197,9 +225,9 @@ const displayCoins = useCountUp(() => props.stats?.coins || 0)
   inset: 0;
   z-index: -1;
   margin: 0.3rem;
-  border: 1px solid rgb(229 222 210 / 0.07);
+  border: 1px solid rgb(229 222 210 / 0.05);
   border-radius: calc(var(--radius-card) - 0.3rem);
-  background: linear-gradient(115deg, rgb(229 222 210 / 0.04), transparent 38%);
+  background: linear-gradient(115deg, rgb(229 222 210 / 0.03), transparent 38%);
   content: '';
 }
 
@@ -207,38 +235,38 @@ const displayCoins = useCountUp(() => props.stats?.coins || 0)
   position: absolute;
   inset: 0.3rem;
   z-index: 0;
-  border: 1px solid rgb(229 222 210 / 0.055);
+  border: 1px solid rgb(229 222 210 / 0.04);
   border-radius: calc(var(--radius-card) - 0.3rem);
   background:
     linear-gradient(
         135deg,
-        rgb(214 181 106 / 0.82) 0 0.18rem,
-        rgb(70 47 22 / 0.82) 0.2rem 0.32rem,
+        rgb(214 181 106 / 0.35) 0 0.18rem,
+        rgb(70 47 22 / 0.4) 0.2rem 0.32rem,
         transparent 0.34rem
       )
       top left / 1.25rem 1.25rem no-repeat,
     linear-gradient(
         225deg,
-        rgb(214 181 106 / 0.82) 0 0.18rem,
-        rgb(70 47 22 / 0.82) 0.2rem 0.32rem,
+        rgb(214 181 106 / 0.35) 0 0.18rem,
+        rgb(70 47 22 / 0.4) 0.2rem 0.32rem,
         transparent 0.34rem
       )
       top right / 1.25rem 1.25rem no-repeat,
     linear-gradient(
         45deg,
-        rgb(214 181 106 / 0.68) 0 0.18rem,
-        rgb(70 47 22 / 0.74) 0.2rem 0.32rem,
+        rgb(214 181 106 / 0.3) 0 0.18rem,
+        rgb(70 47 22 / 0.35) 0.2rem 0.32rem,
         transparent 0.34rem
       )
       bottom left / 1.25rem 1.25rem no-repeat,
     linear-gradient(
         315deg,
-        rgb(214 181 106 / 0.68) 0 0.18rem,
-        rgb(70 47 22 / 0.74) 0.2rem 0.32rem,
+        rgb(214 181 106 / 0.3) 0 0.18rem,
+        rgb(70 47 22 / 0.35) 0.2rem 0.32rem,
         transparent 0.34rem
       )
       bottom right / 1.25rem 1.25rem no-repeat;
-  box-shadow: inset 0 0 1.25rem rgb(0 5 14 / 0.2);
+  box-shadow: inset 0 0 1rem rgb(0 5 14 / 0.15);
   content: '';
   pointer-events: none;
 }
@@ -266,8 +294,8 @@ const displayCoins = useCountUp(() => props.stats?.coins || 0)
 .profile-card__avatar {
   position: relative;
   display: grid;
-  width: 4.75rem;
-  height: 4.75rem;
+  width: 4.15rem;
+  height: 4.15rem;
   place-items: center;
 }
 
@@ -310,23 +338,32 @@ const displayCoins = useCountUp(() => props.stats?.coins || 0)
   box-shadow: 0 0 6px var(--color-success);
 }
 
-.profile-card__name {
-  overflow: hidden;
-  max-width: 12rem;
+.profile-card__name-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  margin-top: 0.125rem;
+}
+
+.profile-card__fullname {
   color: var(--text-foreground);
-  font-size: var(--text-card);
+  font-size: 0.8rem;
   font-weight: 700;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.3;
+  text-align: center;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .profile-card__edit {
   display: grid;
-  width: 2.75rem;
-  height: 2.75rem;
+  flex-shrink: 0;
+  width: 1.5rem;
+  height: 1.5rem;
   place-items: center;
   color: var(--text-muted);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   transition:
     color var(--transition-duration-fast) ease-out,
     background var(--transition-duration-fast) ease-out;
@@ -337,30 +374,13 @@ const displayCoins = useCountUp(() => props.stats?.coins || 0)
   background: var(--color-accent-soft);
 }
 
-.profile-card__presence {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 0.5rem;
-  margin-top: 0.25rem;
-  color: var(--text-muted);
-  font-size: var(--text-small);
-}
-
-.profile-card__presence span {
-  width: 0.375rem;
-  height: 0.375rem;
-  border-radius: var(--radius-pill);
-  background: var(--color-success);
-}
-
 .profile-card__rank {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: end;
   gap: 0.25rem 0.75rem;
-  margin-top: 1rem;
-  padding-top: 0.875rem;
+  margin-top: 0.5rem;
+  padding-top: 0.45rem;
   border-top: 1px solid var(--surface-border-subtle);
 }
 
@@ -380,12 +400,12 @@ const displayCoins = useCountUp(() => props.stats?.coins || 0)
 .profile-card__rank strong {
   color: transparent;
   font-family: 'Manrope', Inter, ui-sans-serif, system-ui, sans-serif;
-  font-size: 2rem;
-  line-height: 2.25rem;
+  font-size: 1.5rem;
+  line-height: 1.7rem;
   background: linear-gradient(135deg, #fff1b8, var(--color-warning));
   -webkit-background-clip: text;
   background-clip: text;
-  filter: drop-shadow(0 0 8px rgb(211 168 84 / 0.14));
+  filter: drop-shadow(0 0 6px rgb(211 168 84 / 0.12));
 }
 
 .profile-card__rank > span {
@@ -400,7 +420,7 @@ const displayCoins = useCountUp(() => props.stats?.coins || 0)
 }
 
 .profile-card__progress {
-  margin-top: 0.875rem;
+  margin-top: 0.45rem;
 }
 
 .profile-card__progress > div:first-child {
@@ -497,7 +517,7 @@ const displayCoins = useCountUp(() => props.stats?.coins || 0)
 .profile-card__stats {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  margin-top: 1rem;
+  margin-top: 0.5rem;
 }
 
 .profile-card__stats > div {
@@ -519,7 +539,7 @@ const displayCoins = useCountUp(() => props.stats?.coins || 0)
 }
 
 .profile-card__stats dd {
-  margin-top: 0.25rem;
+  margin-top: 0.15rem;
   color: var(--text-foreground);
   font-size: var(--text-body);
   font-weight: 800;
@@ -528,12 +548,12 @@ const displayCoins = useCountUp(() => props.stats?.coins || 0)
 .profile-card__cta {
   display: flex;
   width: 100%;
-  min-height: 2.75rem;
+  min-height: 2.25rem;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  margin-top: 1rem;
-  padding: 0.75rem 1rem;
+  margin-top: 0.6rem;
+  padding: 0.45rem 0.75rem;
   color: var(--text-secondary);
   font-size: var(--text-small);
   font-weight: 700;
@@ -551,6 +571,33 @@ const displayCoins = useCountUp(() => props.stats?.coins || 0)
   border-color: rgb(211 168 84 / 0.44);
   box-shadow: 0 0 12px rgb(211 168 84 / 0.1);
   transform: translateY(-2px);
+}
+
+.profile-card__companion {
+  position: relative;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-card);
+  border: 1px solid var(--color-fantasy-border-subtle);
+  background: color-mix(in srgb, var(--color-fantasy-gold) 12%, transparent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--color-fantasy-gold) 20%, transparent);
+  transition: transform var(--transition-duration-normal) ease, border-color var(--transition-duration-normal) ease;
+}
+
+.profile-card__companion:hover {
+  transform: scale(1.12);
+  border-color: var(--color-fantasy-gold);
+}
+
+.companion-art {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 8px rgb(0 0 0 / 0.6));
 }
 
 @media (prefers-reduced-motion: reduce) {

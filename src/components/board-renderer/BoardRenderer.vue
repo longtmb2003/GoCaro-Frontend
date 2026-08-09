@@ -2,6 +2,7 @@
 import FantasyBoard2D from './FantasyBoard2D.vue'
 import type { BoardRendererEmits, BoardRendererProps, RendererCell } from './rendererTypes'
 import type { MoveCueName, VictoryCueName } from './feedbackTiming'
+import type { SpiritCueName } from './spiritTiming'
 import type { PlayerSymbol } from '@/types/game'
 
 const props = withDefaults(defineProps<BoardRendererProps>(), {
@@ -9,6 +10,7 @@ const props = withDefaults(defineProps<BoardRendererProps>(), {
   lastMove: null,
   winningLine: () => [],
   yourSymbol: null,
+  spirits: null,
 })
 
 const emit = defineEmits<BoardRendererEmits>()
@@ -32,6 +34,10 @@ function forwardMoveCue(cue: MoveCueName, symbol: PlayerSymbol, cell: RendererCe
 function forwardVictoryCue(cue: VictoryCueName): void {
   emit('victory-cue', cue)
 }
+
+function forwardSpiritCue(cue: SpiritCueName, symbol: PlayerSymbol, spiritId: string): void {
+  emit('spirit-cue', cue, symbol, spiritId)
+}
 </script>
 
 <template>
@@ -44,11 +50,13 @@ function forwardVictoryCue(cue: VictoryCueName): void {
       :last-move="props.lastMove"
       :winning-line="props.winningLine"
       :your-symbol="props.yourSymbol"
+      :spirits="props.spirits"
       @move="forwardMove"
       @cell-hover="forwardHover"
       @cell-click="forwardCellClick"
       @move-cue="forwardMoveCue"
       @victory-cue="forwardVictoryCue"
+      @spirit-cue="forwardSpiritCue"
     />
   </div>
 </template>

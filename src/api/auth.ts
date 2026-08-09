@@ -44,8 +44,3 @@ export async function updateProfile(update: ProfileUpdate): Promise<LoginResult>
   const { data } = await http.patch<Envelope<LoginResult>>('/api/profile', update)
   return data.data
 }
-
-export async function shareAchievement(): Promise<boolean> {
-  const { data } = await http.post<Envelope<{ granted: boolean }>>('/api/users/share')
-  return data.data.granted
-}

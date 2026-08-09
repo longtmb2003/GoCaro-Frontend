@@ -4,6 +4,7 @@ import { computed } from 'vue'
 import { Handshake, HeartCrack, Share2, Trophy, RotateCw, Home } from 'lucide-vue-next'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseModal from '@/components/ui/BaseModal.vue'
+import { useAppLanguage } from '@/composables/useAppLanguage'
 
 const props = defineProps<{
   heading: string
@@ -12,6 +13,7 @@ const props = defineProps<{
 }>()
 
 defineEmits<{ playAgain: []; exit: []; share: [] }>()
+const { t } = useAppLanguage()
 
 const headingClass = computed(() =>
   props.tone === 'win' ? 'text-success' : props.tone === 'loss' ? 'text-error' : 'text-foreground',
@@ -43,14 +45,14 @@ const headingClass = computed(() =>
 
     <template #footer>
       <div class="result-banner-actions space-y-2">
-        <BaseButton v-if="tone === 'win'" variant="success" class="w-full" @click="$emit('share')">
-          <Share2 :size="16" aria-hidden="true" /> Share Achievement (+50 Coins)
+        <BaseButton variant="success" class="w-full" @click="$emit('share')">
+          <Share2 :size="16" aria-hidden="true" /> {{ t('Share replay (+50 after a view)', 'Chia sẻ replay (+50 sau một lượt xem)') }}
         </BaseButton>
         <BaseButton class="w-full font-bold shadow-glow" @click="$emit('playAgain')">
-          <RotateCw :size="18" class="mr-2" aria-hidden="true" /> Play again
+          <RotateCw :size="18" class="mr-2" aria-hidden="true" /> {{ t('Play again', 'Chơi lại') }}
         </BaseButton>
         <BaseButton variant="secondary" class="w-full" @click="$emit('exit')">
-          <Home :size="18" class="mr-2" aria-hidden="true" /> Back to lobby
+          <Home :size="18" class="mr-2" aria-hidden="true" /> {{ t('Back to lobby', 'Về sảnh') }}
         </BaseButton>
       </div>
     </template>

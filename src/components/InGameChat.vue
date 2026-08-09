@@ -6,12 +6,14 @@ import BaseButton from '@/components/ui/BaseButton.vue'
 import FantasySystemIcon from '@/components/ui/FantasySystemIcon.vue'
 import GlassCard from '@/components/ui/GlassCard.vue'
 import { useToast } from '@/composables/useToast'
+import { useAppLanguage } from '@/composables/useAppLanguage'
 import { useAuthStore } from '@/stores/auth'
 import { useSocketStore } from '@/stores/socket'
 
 const auth = useAuthStore()
 const socket = useSocketStore()
 const { addToast } = useToast()
+const { t } = useAppLanguage()
 
 const content = ref('')
 const scrollArea = ref<HTMLElement | null>(null)
@@ -44,7 +46,7 @@ function send() {
   const msg = content.value.trim()
   if (!msg) return
   if (msg.length > 500) {
-    addToast('Message too long (max 500 characters)', 'error')
+    addToast(t('Message too long (max 500 characters)', 'Tin nhắn quá dài (tối đa 500 ký tự)'), 'error')
     return
   }
   socket.sendGameChat(msg)
@@ -71,13 +73,13 @@ function toggleMute() {
         <FantasySystemIcon compact>
           <MessageCircle aria-hidden="true" />
         </FantasySystemIcon>
-        Match chat
+        {{ t('Match chat', 'Chat trong trận') }}
       </h3>
       <button
         type="button"
         class="chat-icon-button text-foreground-muted hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-button"
-        :title="isMuted ? 'Unmute opponent' : 'Mute opponent'"
-        :aria-label="isMuted ? 'Unmute opponent' : 'Mute opponent'"
+        :title="isMuted ? t('Unmute opponent', 'Bật tiếng đối thủ') : t('Mute opponent', 'Tắt tiếng đối thủ')"
+        :aria-label="isMuted ? t('Unmute opponent', 'Bật tiếng đối thủ') : t('Mute opponent', 'Tắt tiếng đối thủ')"
         :aria-pressed="isMuted"
         @click="toggleMute"
       >
@@ -94,7 +96,7 @@ function toggleMute() {
         class="flex flex-col items-center justify-center h-full text-foreground-muted gap-2 opacity-50"
       >
         <MessageSquareOff :size="24" />
-        <p class="text-small font-medium text-center">Chat muted</p>
+        <p class="text-small font-medium text-center">{{ t('Chat muted', 'Đã tắt chat') }}</p>
       </div>
       <div
         v-else-if="socket.chatHistory.length === 0"
@@ -106,8 +108,8 @@ function toggleMute() {
           </span>
         </span>
         <div class="text-center">
-          <p class="text-small font-semibold text-foreground-secondary">The channel is quiet</p>
-          <p class="mt-1 text-caption opacity-65">Send a greeting when you're ready.</p>
+          <p class="text-small font-semibold text-foreground-secondary">{{ t('The channel is quiet', 'Kênh chat đang yên tĩnh') }}</p>
+          <p class="mt-1 text-caption opacity-65">{{ t("Send a greeting when you're ready.", 'Gửi lời chào khi bạn sẵn sàng.') }}</p>
         </div>
       </div>
 
@@ -137,12 +139,12 @@ function toggleMute() {
       <input
         v-model="content"
         type="text"
-        placeholder="Type a message..."
+        :placeholder="t('Type a message...', 'Nhập tin nhắn...')"
         autocomplete="off"
         maxlength="500"
         class="chat-input h-11 flex-1 rounded-button border border-border bg-surface-sunken px-3 text-small text-foreground placeholder:text-foreground-muted outline-none focus:border-accent focus:ring-2 focus:ring-accent/50 focus:shadow-glow disabled:cursor-not-allowed disabled:opacity-50"
         :disabled="isMuted"
-        aria-label="Message"
+        :aria-label="t('Message', 'Tin nhắn')"
       />
       <BaseButton
         type="submit"
@@ -150,7 +152,7 @@ function toggleMute() {
         class="w-11 !h-11 px-0 flex justify-center items-center shrink-0 group rounded-button"
         :class="content.trim() && !isMuted ? 'shadow-glow' : 'opacity-70'"
         :disabled="!content.trim() || isMuted"
-        aria-label="Send message"
+        :aria-label="t('Send message', 'Gửi tin nhắn')"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"

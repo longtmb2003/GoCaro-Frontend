@@ -27,6 +27,28 @@ export interface QueueSearchingPayload {
  * Payload of the `match_found` WebSocket frame (see BACKEND_CONTRACT.md). Field
  * names mirror the wire format exactly; the contract is the source of truth.
  */
+/**
+ * A pairing offered but not yet agreed to. Nothing exists on the server yet —
+ * no match, no board, no rating at stake — until both players accept.
+ */
+export interface MatchProposedPayload {
+  opponent_id: string
+  opponent: string
+  /** Whether accepting puts rating at stake. */
+  ranked: boolean
+  /** How long the offer stands. The server owns the real deadline. */
+  timeout_seconds: number
+}
+
+/** Why a proposal ended without a match. */
+export type ProposalClosedReason = 'you_declined' | 'opponent_declined' | 'expired'
+
+export interface MatchProposalClosedPayload {
+  reason: ProposalClosedReason
+  /** Whether this player was put back in the queue. */
+  requeued: boolean
+}
+
 export interface MatchFoundPayload {
   room_id: string
   /** Added for profile/rank hydration; older servers may omit it. */
@@ -39,6 +61,8 @@ export interface MatchFoundPayload {
    * the client keeps it and resets its turn clock to it on every `board_update`.
    */
   turn_seconds: number
+  your_spirit: string
+  opponent_spirit: string
 }
 
 /** Payload of a `board_update` frame: one accepted move, and whose turn is next. */
@@ -106,6 +130,8 @@ export interface SyncStatePayload {
   moves: SyncMove[]
   turn: string
   your_symbol: PlayerSymbol
+  your_spirit: string
+  opponent_spirit: string
   remaining_turn_seconds: number
   status: string
 }
@@ -113,6 +139,8 @@ export interface SyncStatePayload {
 export interface LobbyUser {
   id: string
   display_name: string
+  title: string
+  profile_frame: string
 }
 
 export interface LobbyStatePayload {

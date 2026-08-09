@@ -1,5 +1,7 @@
 import { readonly, ref } from 'vue'
 
+import { resolveSpirit } from '@/spirits/spiritRegistry'
+
 interface AudioSession {
   gain: GainNode
   sources: Set<OscillatorNode>
@@ -8,7 +10,11 @@ interface AudioSession {
   stopped: boolean
 }
 
-interface ScheduledTone {
+/**
+ * Exported so a spirit definition can carry its own voice without shipping an
+ * audio file: the roster describes tones, this engine schedules them.
+ */
+export interface ScheduledTone {
   type: OscillatorType
   delay: number
   duration: number
@@ -22,11 +28,11 @@ const SEARCH_FADE_IN_SECONDS = 0.32
 const SEARCH_FADE_OUT_SECONDS = 0.2
 const MUSIC_FADE_IN_SECONDS = 1.1
 const MUSIC_FADE_OUT_SECONDS = 0.75
-const DEFAULT_MASTER_VOLUME = 0.75
-const DEFAULT_MUSIC_VOLUME = 0.25
-const DEFAULT_SFX_VOLUME = 0.65
-const AUDIO_SETTINGS_KEY = 'gocaro.match-audio.v1'
-const COMBAT_MUSIC_URL = '/audio/match/ancient-arena-combat-loop.ogg'
+const DEFAULT_MASTER_VOLUME = 1.0
+const DEFAULT_MUSIC_VOLUME = 0.8
+const DEFAULT_SFX_VOLUME = 0.8
+const AUDIO_SETTINGS_KEY = 'gocaro.match-audio.v2'
+const COMBAT_MUSIC_URL = '/audio/match/fantasy-music.mp3'
 const MIN_GAIN = 0.0001
 
 type MusicIntensity = 'waiting' | 'active' | 'tension'
@@ -103,7 +109,7 @@ function persistSettings() {
 }
 
 function musicIntensityMultiplier() {
-  return musicIntensity.value === 'waiting' ? 0.45 : 1
+  return musicIntensity.value === 'waiting' ? 0.75 : 1
 }
 
 function effectiveMusicVolume() {
@@ -514,6 +520,24 @@ function onMoveCue(event: Event) {
   }
 }
 
+/**
+ * A spirit's own voice. The roster is data, so a new spirit becomes audible the
+ * moment its definition exists — nothing here names a spirit or branches on one.
+ * Only the three beats a definition declares tones for make a sound; the rest of
+ * the sequence stays silent so the placement cue still lands on its own.
+ */
+function onSpiritCue(event: Event) {
+  const detail = (event as CustomEvent<{ cue?: string, spiritId?: string }>).detail
+  const cue = detail.cue
+  if (cue !== 'spawn' && cue !== 'attack' && cue !== 'impact') return
+  const spirit = resolveSpirit(detail.spiritId ?? '')
+  const tones = spirit.sfx[cue]
+  if (tones.length === 0) return
+  // Spawn and attack sit under the placement cue rather than competing with it;
+  // impact is the beat the player is actually watching for.
+  playGameplayCue(tones, cue === 'impact' ? 0.6 : 0.42)
+}
+
 function onResultCue(event: Event) {
   const cue = (event as CustomEvent<{ cue?: string }>).detail.cue
   const defeat = event.type === 'gocaro:defeat-cue'
@@ -545,6 +569,7 @@ function bindGameplayCues() {
   window.addEventListener('gocaro:timer-cue', onTimerCue)
   window.addEventListener('gocaro:turn-cue', onTurnCue)
   window.addEventListener('gocaro:move-cue', onMoveCue)
+  window.addEventListener('gocaro:spirit-cue', onSpiritCue)
   window.addEventListener('gocaro:victory-cue', onResultCue)
   window.addEventListener('gocaro:defeat-cue', onResultCue)
   window.addEventListener('pointerdown', onGameUiClick, { capture: true })
@@ -557,6 +582,7 @@ function unbindGameplayCues() {
   window.removeEventListener('gocaro:timer-cue', onTimerCue)
   window.removeEventListener('gocaro:turn-cue', onTurnCue)
   window.removeEventListener('gocaro:move-cue', onMoveCue)
+  window.removeEventListener('gocaro:spirit-cue', onSpiritCue)
   window.removeEventListener('gocaro:victory-cue', onResultCue)
   window.removeEventListener('gocaro:defeat-cue', onResultCue)
   window.removeEventListener('pointerdown', onGameUiClick, { capture: true })
@@ -662,7 +688,12 @@ function playMatchFound() {
 function cancelMatchmakingAudio() {
   stopMatchmakingLoop(SEARCH_FADE_OUT_SECONDS)
   stopMatchFoundConfirmation(0.08)
-  stopMusic()
+  playMusic('waiting')
+}
+
+function enterLobby() {
+  unbindGameplayCues()
+  playMusic('waiting')
 }
 
 function enterMatch() {
@@ -742,6 +773,7 @@ const matchAudioManager = {
   playMatchFound,
   cancelMatchmakingAudio,
   stopMatchmakingLoop,
+  enterLobby,
   enterMatch,
   finishMatch,
   stopAll,

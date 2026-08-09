@@ -26,9 +26,13 @@ export interface SocketCallbacks {
  * production it points at the backend origin, from which the ws(s) scheme is
  * derived.
  */
-export function matchmakeUrl(token: string, mode: MatchmakingMode): string {
+export function matchmakeUrl(token: string, mode: MatchmakingMode, captchaToken?: string): string {
   const path = mode === 'ranked' ? '/ws/matchmake/ranked' : '/ws/matchmake'
-  return `${socketOrigin()}${path}?token=${encodeURIComponent(token)}`
+  let url = `${socketOrigin()}${path}?token=${encodeURIComponent(token)}`
+  if (captchaToken) {
+    url += `&captcha=${encodeURIComponent(captchaToken)}`
+  }
+  return url
 }
 
 /**

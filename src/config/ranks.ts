@@ -11,10 +11,19 @@
  * Bronze is amber-600, not amber-700: on the dark glass surface amber-700
  * measures 3.67:1, below the 4.5:1 WCAG AA floor these 12–13px labels need.
  */
+/*
+ * `achievement` names the backend achievement a tier unlocks, or null when the
+ * tier pays nothing. It is written out rather than derived from `name`, because
+ * a derived id would silently stop matching the day a tier is renamed and the
+ * reward would just quietly disappear from the UI. The payout figure itself is
+ * never stored here — it is env-tunable and comes from /api/achievements.
+ * Thresholds must stay in step with the engine's Rank*Elo constants.
+ */
 export const RANK_TIERS = [
   {
     name: 'Iron',
     minElo: 0,
+    achievement: null,
     color: 'text-gray-400',
     ring: 'ring-gray-500',
     glow: 'shadow-glow shadow-gray-500/50',
@@ -22,27 +31,31 @@ export const RANK_TIERS = [
   {
     name: 'Bronze',
     minElo: 1000,
+    achievement: null,
     color: 'text-amber-600',
     ring: 'ring-amber-600',
     glow: 'shadow-glow shadow-amber-600/50',
   },
   {
     name: 'Silver',
-    minElo: 1500,
+    minElo: 1150,
+    achievement: 'rank_silver',
     color: 'text-gray-300',
     ring: 'ring-gray-300',
     glow: 'shadow-glow shadow-gray-300/50',
   },
   {
     name: 'Gold',
-    minElo: 2000,
+    minElo: 1300,
+    achievement: 'rank_gold',
     color: 'text-yellow-400',
     ring: 'ring-yellow-400',
     glow: 'shadow-glow shadow-yellow-400/50',
   },
   {
     name: 'Diamond',
-    minElo: 2500,
+    minElo: 1450,
+    achievement: 'rank_diamond',
     color: 'text-primary-300',
     ring: 'ring-primary-300',
     glow: 'shadow-glow shadow-primary-300/50',
@@ -66,9 +79,7 @@ export function getRankSubTier(elo: number) {
   const tier = getRankTier(elo)
   if (tier.name === 'Diamond') return '' // Diamond has no sub-tiers (or it can have, up to preference)
   const offset = elo - tier.minElo
-  if (offset >= 400) return 'I'
-  if (offset >= 300) return 'II'
-  if (offset >= 200) return 'III'
-  if (offset >= 100) return 'IV'
-  return 'V' // Base sub-tier
+  if (offset >= 100) return 'I'
+  if (offset >= 50) return 'II'
+  return 'III' // Base sub-tier
 }

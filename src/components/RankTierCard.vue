@@ -1,11 +1,20 @@
 <script setup lang="ts">
 import RankCrest from './RankCrest.vue'
 import type { RankName } from '@/config/ranks'
+import { useAppLanguage } from '@/composables/useAppLanguage'
+import { Coins } from 'lucide-vue-next'
 
-defineProps<{
-  name: RankName
-  minElo: number
-}>()
+withDefaults(
+  defineProps<{
+    name: RankName
+    displayName?: string
+    minElo: number
+    /** One-off payout for reaching this tier; 0 when the tier pays nothing. */
+    rewardCoins?: number
+  }>(),
+  { displayName: undefined, rewardCoins: 0 },
+)
+const { t } = useAppLanguage()
 </script>
 
 <template>
@@ -24,9 +33,13 @@ defineProps<{
     </div>
 
     <div class="rank-tier-card__copy">
-      <h3>{{ name }}</h3>
+      <h3>{{ displayName ?? name }}</h3>
       <span class="rank-tier-card__rule" aria-hidden="true" />
-      <p>{{ minElo }} Elo and above</p>
+      <p>{{ minElo }} {{ t('Elo and above', 'Elo trở lên') }}</p>
+      <p v-if="rewardCoins > 0" class="rank-tier-card__reward">
+        <Coins :size="13" aria-hidden="true" />
+        <span>{{ t('One-time reward', 'Thưởng một lần') }}: +{{ rewardCoins }} {{ t('coins', 'xu') }}</span>
+      </p>
     </div>
 
     <RankCrest class="rank-tier-card__watermark" :tier="name" decorative />
@@ -172,6 +185,21 @@ defineProps<{
   color: var(--color-foreground-secondary);
   font-size: var(--text-small);
   line-height: var(--text-small--line-height);
+}
+
+/* The payout is the reason to keep climbing, so it reads as gold against the
+   muted Elo line rather than as another grey detail. */
+.rank-tier-card__reward {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  margin-top: 0.35rem;
+  color: var(--color-fantasy-gold);
+  font-size: var(--text-caption);
+  font-weight: 700;
+  line-height: var(--text-caption--line-height);
+  text-shadow: 0 1px 0 black;
 }
 
 .rank-tier-card__rule {

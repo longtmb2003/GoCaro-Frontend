@@ -2,22 +2,18 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import {
   ChevronDown,
+  Crown,
   Lock,
   LogOut,
-  ShoppingBag,
   UserCircle2,
   Zap,
-  MessageSquare,
-  Users,
 } from 'lucide-vue-next'
 import { RouterLink, useRouter } from 'vue-router'
 
 import { ApiError } from '@/api/ApiError'
+import { createOpenChallenge, validateOpenChallenge } from '@/api/challenge'
 import BaseAvatar from '@/components/ui/BaseAvatar.vue'
-import BaseBadge from '@/components/ui/BaseBadge.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
-import BaseDivider from '@/components/ui/BaseDivider.vue'
-import BaseProgress from '@/components/ui/BaseProgress.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import ErrorState from '@/components/ui/ErrorState.vue'
 import FantasyIcon from '@/components/ui/FantasyIcon.vue'
@@ -26,7 +22,7 @@ import GlassCard from '@/components/ui/GlassCard.vue'
 import GuestLogoutDialog from '@/components/GuestLogoutDialog.vue'
 import LeaderboardTable from '@/components/LeaderboardTable.vue'
 import LeaderboardModal from '@/components/LeaderboardModal.vue'
-import MatchmakingModal from '@/components/MatchmakingModal.vue'
+import QuestsWidget from '@/components/QuestsWidget.vue'
 import PlayPanel from '@/components/PlayPanel.vue'
 import ProfileCard from '@/components/ProfileCard.vue'
 import OnlineUsersModal from '@/components/OnlineUsersModal.vue'
@@ -35,43 +31,53 @@ import ChatDrawer from '@/components/ChatDrawer.vue'
 import UpgradeAccountModal from '@/components/UpgradeAccountModal.vue'
 import EditProfileModal from '@/components/EditProfileModal.vue'
 import InviteModal from '@/components/InviteModal.vue'
+import TurnstileModal from '@/components/TurnstileModal.vue'
 import ActivityFeed from '@/components/ActivityFeed.vue'
 import AppLayout from '@/layouts/AppLayout.vue'
 import { useAuthStore } from '@/stores/auth'
-import { useSocialStore } from '@/stores/social'
 import { useHistoryStore } from '@/stores/history'
 import { useLeaderboardStore } from '@/stores/leaderboard'
 import { useLobbyStore } from '@/stores/lobby'
 import { useSocketStore } from '@/stores/socket'
+import { useCountdown } from '@/composables/useCountdown'
 import { useChatStore } from '@/stores/chat'
 import { useUserProfile } from '@/composables/useUserProfile'
 import { useToast } from '@/composables/useToast'
-import { useCountUp } from '@/composables/useCountUp'
+import { useMatchFoundNotification } from '@/composables/useMatchFoundNotification'
+import { useShareLink } from '@/composables/useShareLink'
+import { useAppLanguage } from '@/composables/useAppLanguage'
+import { useShopStore } from '@/stores/shop'
+import { resolveSpirit } from '@/spirits/spiritRegistry'
 import type { Credentials, ProfileUpdate } from '@/types/auth'
+import { openChallengeErrorMessage } from '@/utils/openChallengeError'
 
 const auth = useAuthStore()
 const historyStore = useHistoryStore()
 const leaderboard = useLeaderboardStore()
 const socket = useSocketStore()
+const shopStore = useShopStore()
+
+const equippedSpirit = computed(() => {
+  const code = shopStore.getEquipped('spirit_art')
+  if (!code) return null
+  const spirit = resolveSpirit(code, null, { withArt: true })
+  if (!spirit.model.source) return null
+  return {
+    code,
+    name: spirit.name[language.value],
+    source: spirit.model.source,
+  }
+})
+
+// A matchmaking lockout outlives the socket session that earned it, so the play
+// cards read it straight from the store rather than from a dismissed notice.
+const { secondsLeft: queueLockSeconds } = useCountdown(computed(() => socket.retryUntil))
 const lobby = useLobbyStore()
-const socialStore = useSocialStore()
 const { addToast } = useToast()
 const router = useRouter()
-
-const displayCoins = useCountUp(() => auth.user?.stats.coins ?? 0)
-
-/**
- * A preview of the cosmetics being built, not a catalogue. There is no shop, so
- * there are no prices, collections or rarities here: those would be invented
- * economy data for a feature that cannot be transacted with yet.
- */
-const cosmeticPreviews = [
-  { image: '/avatar_pro.webp', alt: 'Pro Avatar artwork' },
-  { image: '/avatar_male.webp', alt: 'Neon Boy avatar artwork' },
-  { image: '/avatar_female.webp', alt: 'Neon Girl avatar artwork' },
-  { image: '/avatar_robot.webp', alt: 'Mecha Bot avatar artwork' },
-  { image: '/vip_border.webp', alt: 'VIP Border artwork' },
-]
+const matchFoundNotification = useMatchFoundNotification()
+const shareLink = useShareLink()
+const { errorText, language, t } = useAppLanguage()
 
 const upgradeOpen = ref(false)
 const upgradeLoading = ref(false)
@@ -86,10 +92,13 @@ const chatDrawerOpen = ref(false)
 const userMenuOpen = ref(false)
 const inviteModalOpen = ref(false)
 const activeInviteCode = ref('')
+const joinRoomPending = ref(false)
 const heroArtworkFailed = ref(false)
 const boardArtworkFailed = ref(false)
 const xArtworkFailed = ref(false)
 const oArtworkFailed = ref(false)
+const turnstileModalOpen = ref(false)
+const pendingMatchmakingMode = ref<'casual' | 'ranked' | null>(null)
 
 const { openProfile } = useUserProfile()
 
@@ -120,18 +129,11 @@ const paginatedLeaderboard = computed(() => {
 })
 
 /** Presentation for the real lobby socket state, using the status tokens. */
-const NETWORK_STATUS = {
-  online: { label: 'ONLINE', dot: 'bg-success', text: 'text-success' },
-  connecting: { label: 'CONNECTING', dot: 'bg-warning', text: 'text-warning' },
-  offline: { label: 'OFFLINE', dot: 'bg-error', text: 'text-error' },
-} as const
-
-const networkStatus = computed(() => NETWORK_STATUS[lobby.connectionState])
-
-const isMatchmaking = computed(
-  () =>
-    socket.status === 'connecting' || socket.status === 'searching' || socket.status === 'error',
-)
+const networkStatus = computed(() => ({
+  online: { label: t('ONLINE', 'TRỰC TUYẾN'), dot: 'bg-success', text: 'text-success' },
+  connecting: { label: t('CONNECTING', 'ĐANG KẾT NỐI'), dot: 'bg-warning', text: 'text-warning' },
+  offline: { label: t('OFFLINE', 'NGOẠI TUYẾN'), dot: 'bg-error', text: 'text-error' },
+})[lobby.connectionState])
 
 watch(
   () => socket.status,
@@ -140,10 +142,6 @@ watch(
       inviteModalOpen.value = false
       activeInviteCode.value = ''
       sessionStorage.removeItem('gocaro_invite_code')
-    }
-
-    if (status === 'matched') {
-      void router.push('/game')
     }
   },
 )
@@ -165,14 +163,6 @@ function handleOpenChat(friendId: string): void {
   chatStore.setActiveChat(friendId)
   chatDrawerOpen.value = true
 }
-
-const totalUnreadMessages = computed(() => {
-  return Object.values(chatStore.unreadCounts).reduce((a, b) => a + b, 0)
-})
-
-const totalPendingFriends = computed(() => {
-  return socialStore.incomingRequests.length
-})
 
 async function handleUpgrade(credentials: Credentials): Promise<void> {
   upgradeLoading.value = true
@@ -249,50 +239,36 @@ function handleOpenOwnProfile(): void {
 }
 
 async function shareGame(): Promise<void> {
-  const onSuccess = () => {
-    if (auth.user) {
-      addToast('Link shared! Thanks for sharing!', 'success')
-    }
-  }
-
-  // `navigator.share` is typed as always present but is absent in many browsers.
-  // Cast to a possibly-undefined function so the feature check is real and the
-  // fallback branch keeps full access to `navigator`.
-  const nativeShare = (navigator.share as ((data: ShareData) => Promise<void>) | undefined)?.bind(
-    navigator,
-  )
-  if (nativeShare) {
-    try {
-      await nativeShare({
-        title: 'GoCaro - Play Gomoku Online',
-        text: 'Join me for a game of Gomoku on GoCaro!',
-        url: window.location.origin,
-      })
-      const granted = await auth.shareAchievement()
-      if (granted) addToast('You earned 50 Coins for sharing!', 'success')
-    } catch {
-      // The user dismissed the share sheet, or sharing failed; nothing to recover.
-    }
-  } else {
-    void navigator.clipboard.writeText(window.location.origin)
-    const granted = await auth.shareAchievement()
-    if (granted) addToast('You earned 50 Coins for sharing!', 'success')
-    onSuccess()
+  try {
+    await shareLink.share({
+      title: t('GoCaro - Play Gomoku Online', 'GoCaro - Chơi cờ Caro trực tuyến'),
+      text: t('Join me for a game of Gomoku on GoCaro!', 'Chơi một ván cờ Caro cùng tôi trên GoCaro!'),
+    })
+  } catch {
+    addToast(t('Unable to create a share link. Please try again.', 'Không thể tạo liên kết chia sẻ. Vui lòng thử lại.'), 'error')
   }
 }
 
-const missionPlay2Status = computed(() => {
-  const daily = auth.user?.stats.daily_matches ?? 0
-  return daily >= 2 ? 'Completed' : `${daily.toString()} / 2`
-})
+function handleStartMatchmaking(mode: 'casual' | 'ranked'): void {
+  // Permission is requested from the Play click so browsers are allowed to
+  // show the persistent alert when the tab is in the background.
+  void matchFoundNotification.prepare()
 
-const missionShareStatus = computed(() => {
-  const shared = auth.user?.stats.last_share_date
-  if (!shared) return 'Incomplete'
-  const today = new Date().toISOString().split('T')[0]
-  if (!today) return 'Incomplete'
-  return shared.startsWith(today) ? 'Completed' : 'Incomplete'
-})
+  if (import.meta.env.VITE_TURNSTILE_SITE_KEY) {
+    pendingMatchmakingMode.value = mode
+    turnstileModalOpen.value = true
+  } else {
+    socket.startMatchmaking(mode)
+  }
+}
+
+function onTurnstileVerified(token: string): void {
+  turnstileModalOpen.value = false
+  if (pendingMatchmakingMode.value) {
+    socket.startMatchmaking(pendingMatchmakingMode.value, token)
+    pendingMatchmakingMode.value = null
+  }
+}
 
 const recentMatch = computed(() => {
   if (!auth.user) return null
@@ -300,8 +276,6 @@ const recentMatch = computed(() => {
     (m) => m.player1_id === auth.user?.id || m.player2_id === auth.user?.id,
   )
 })
-
-import { createOpenChallenge } from '@/api/challenge'
 
 async function handleCreateRoom() {
   try {
@@ -311,9 +285,9 @@ async function handleCreateRoom() {
     inviteModalOpen.value = true
   } catch (err: unknown) {
     if (err instanceof Error) {
-      addToast(err.message || 'Failed to create room', 'error')
+      addToast(err.message || t('Failed to create room', 'Không thể tạo phòng'), 'error')
     } else {
-      addToast('Failed to create room', 'error')
+      addToast(t('Failed to create room', 'Không thể tạo phòng'), 'error')
     }
   }
 }
@@ -324,53 +298,24 @@ function handleCancelInvite() {
   sessionStorage.removeItem('gocaro_invite_code')
 }
 
-function handleJoinCode(code: string) {
-  void router.push(`/join/${code}`)
+async function handleJoinCode(code: string): Promise<void> {
+  if (joinRoomPending.value) return
+  joinRoomPending.value = true
+
+  try {
+    await validateOpenChallenge(code)
+    await router.push(`/join/${code}`)
+  } catch (error: unknown) {
+    addToast(errorText(openChallengeErrorMessage(error)), 'error')
+  } finally {
+    joinRoomPending.value = false
+  }
 }
 </script>
 
 <template>
   <AppLayout title="GoCaro" fantasy @upgrade="openUpgrade">
     <template #actions>
-      <BaseButton
-        variant="secondary"
-        class="lobby-header-icon relative"
-        aria-label="Friends"
-        title="Friends"
-        @click="!auth.isGuest ? (friendsModalOpen = true) : openUpgrade()"
-      >
-        <div class="flex items-center gap-1.5">
-          <FantasySystemIcon v-if="auth.isGuest" compact>
-            <Lock :size="14" class="text-white/50" />
-          </FantasySystemIcon>
-          <FantasySystemIcon compact><Users :size="18" /></FantasySystemIcon>
-          <span class="utility-action-label">Friends</span>
-        </div>
-        <span
-          v-if="totalPendingFriends > 0"
-          class="absolute -top-1 -right-1 flex h-3 w-3 rounded-full bg-error border border-background shadow-sm"
-        />
-      </BaseButton>
-      <BaseButton
-        variant="secondary"
-        class="lobby-header-icon relative"
-        aria-label="Chat"
-        title="Chat"
-        @click="!auth.isGuest ? (chatDrawerOpen = true) : openUpgrade()"
-      >
-        <div class="flex items-center gap-1.5">
-          <FantasySystemIcon v-if="auth.isGuest" compact>
-            <Lock :size="14" class="text-white/50" />
-          </FantasySystemIcon>
-          <FantasySystemIcon compact><MessageSquare :size="18" /></FantasySystemIcon>
-          <span class="utility-action-label">Chat</span>
-        </div>
-        <span
-          v-if="totalUnreadMessages > 0"
-          class="absolute -top-1 -right-1 flex h-3 w-3 rounded-full bg-error border border-background shadow-sm"
-        />
-      </BaseButton>
-
       <div v-if="auth.user" class="relative ml-2">
         <div v-if="userMenuOpen" class="fixed inset-0 z-40" @click="userMenuOpen = false" />
         <button
@@ -382,7 +327,7 @@ function handleJoinCode(code: string) {
         >
           <FantasySystemIcon compact><UserCircle2 :size="18" /></FantasySystemIcon>
           <span class="user-name">{{ auth.displayName }}</span>
-          <FantasySystemIcon compact>
+          <FantasySystemIcon compact class="user-menu-chevron">
             <ChevronDown
               :size="14"
               class="opacity-70 transition-transform duration-200"
@@ -397,7 +342,7 @@ function handleJoinCode(code: string) {
             role="menuitem"
             @click="handleOpenOwnProfile"
           >
-            <span>Account</span>
+            <span>{{ t('Account', 'Tài khoản') }}</span>
             <strong>{{ auth.displayName }}</strong>
           </button>
           <button
@@ -406,7 +351,8 @@ function handleJoinCode(code: string) {
             role="menuitem"
             @click="handleLogout"
           >
-            <FantasySystemIcon compact><LogOut :size="16" /></FantasySystemIcon> Log out
+            <FantasySystemIcon compact><LogOut :size="16" /></FantasySystemIcon>
+            {{ t('Log out', 'Đăng xuất') }}
           </button>
         </div>
       </div>
@@ -414,7 +360,7 @@ function handleJoinCode(code: string) {
 
     <div class="lobby-page">
       <div class="lobby-grid">
-        <aside class="profile-rail" aria-label="Player overview">
+        <aside class="profile-rail" :aria-label="t('Player overview', 'Tổng quan người chơi')">
           <ProfileCard
             v-if="auth.user"
             :display-name="auth.displayName"
@@ -425,92 +371,17 @@ function handleJoinCode(code: string) {
             @upgrade="openUpgrade"
           />
 
-          <GlassCard
-            v-if="auth.isAuthenticated"
-            as="section"
-            title="Daily Missions"
-            class="side-card side-card--missions"
-          >
-            <template #icon><FantasyIcon type="daily-missions" size="small" /></template>
-            <div class="mission-list">
-              <div class="mission-row">
-                <div class="mission-row__heading">
-                  <FantasyIcon type="daily-missions" size="small" />
-                  <span>
-                    <small class="mission-row__rarity">Daily quest · Adventurer</small>
-                    <strong>Play 2 Matches</strong>
-                  </span>
-                </div>
-                <div class="mission-row__progress">
-                  <BaseProgress
-                    class="flex-1"
-                    tone="warning"
-                    label="Play 2 Matches progress"
-                    :value="
-                      missionPlay2Status === 'Completed'
-                        ? 100
-                        : (auth.user?.stats?.daily_matches || 0) % 2 === 1
-                          ? 50
-                          : 0
-                    "
-                  />
-                  <span>{{
-                    missionPlay2Status === 'Completed'
-                      ? '2 / 2'
-                      : ((auth.user?.stats?.daily_matches || 0) % 2) + ' / 2'
-                  }}</span>
-                </div>
-                <div class="mission-row__reward">
-                  <span><i aria-hidden="true">◆</i> 50 gold</span>
-                  <button type="button" disabled>
-                    {{ missionPlay2Status === 'Completed' ? 'Claimed' : 'In progress' }}
-                  </button>
-                </div>
-              </div>
-              <div class="mission-row">
-                <div class="mission-row__heading">
-                  <FantasyIcon type="share-game" size="small" />
-                  <span>
-                    <small class="mission-row__rarity">Daily quest · Guild</small>
-                    <strong>Share with friends</strong>
-                  </span>
-                </div>
-                <div class="mission-row__progress">
-                  <BaseProgress
-                    class="flex-1"
-                    tone="warning"
-                    label="Share with friends progress"
-                    :value="missionShareStatus === 'Completed' ? 100 : 0"
-                  />
-                  <span>{{ missionShareStatus === 'Completed' ? '1 / 1' : '0 / 1' }}</span>
-                </div>
-                <div class="mission-row__reward">
-                  <span><i aria-hidden="true">◆</i> 50 gold</span>
-                  <button type="button" disabled>
-                    {{ missionShareStatus === 'Completed' ? 'Claimed' : 'In progress' }}
-                  </button>
-                </div>
-              </div>
-              <BaseDivider />
-              <p class="mission-total">
-                Treasury <strong>{{ displayCoins }}</strong>
-              </p>
-            </div>
-          </GlassCard>
+          <QuestsWidget />
 
-          <GlassCard as="section" title="Cosmetics Store" class="side-card side-card--store">
-            <template #icon
-              ><FantasySystemIcon compact
-                ><ShoppingBag :size="18" aria-hidden="true" /></FantasySystemIcon
-            ></template>
-            <template #actions><BaseBadge variant="neutral">Soon</BaseBadge></template>
-            <p class="store-copy">New avatars and profile frames are being forged.</p>
-            <ul class="cosmetic-list">
-              <li v-for="preview in cosmeticPreviews" :key="preview.image">
-                <img :src="preview.image" :alt="preview.alt" loading="lazy" decoding="async" />
-              </li>
-            </ul>
-          </GlassCard>
+          <RouterLink to="/shop" class="side-card side-card--store block relative" style="text-decoration: none;">
+            <GlassCard as="section" :title="t('Cosmetics Store', 'Cửa hàng ngoại trang')" variant="interactive">
+              <template #icon><FantasyIcon type="shop" size="small" /></template>
+              <template #actions>
+                <BaseButton variant="ghost" size="sm">{{ t('Enter', 'Vào cửa hàng') }}</BaseButton>
+              </template>
+              <p class="store-copy">{{ t('Discover new spirits and forge your legend.', 'Khám phá linh thú mới và viết nên huyền thoại.') }}</p>
+            </GlassCard>
+          </RouterLink>
         </aside>
 
         <main class="hero-column">
@@ -606,34 +477,65 @@ function handleJoinCode(code: string) {
                 <img src="/gocaro_logo.webp" alt="" width="48" height="48" />
                 <h2 id="lobby-hero-title">GoCaro</h2>
               </div>
-              <p class="fantasy-hero__subtitle">Claim the board. Forge your legend.</p>
+              <p class="fantasy-hero__subtitle">{{ t('Claim the board. Forge your legend.', 'Làm chủ bàn cờ. Viết nên huyền thoại.') }}</p>
               <PlayPanel
                 content="matches"
                 :is-guest="auth.isGuest"
-                @play="socket.startMatchmaking($event)"
+                :lock-seconds-left="queueLockSeconds"
+                @play="handleStartMatchmaking"
                 @upgrade="openUpgrade"
               />
             </div>
 
             <div class="fantasy-hero__realm-status" aria-live="polite">
-              <span :class="networkStatus.dot" aria-hidden="true" />
-              {{ networkStatus.label === 'ONLINE' ? 'The realm is online' : networkStatus.label }}
+              <span class="status-pulse-dot" :class="networkStatus.dot" aria-hidden="true" />
+              <span class="realm-status__count">
+                <strong class="font-mono text-white text-xs font-bold">{{ lobby.onlineUsers.length }}</strong>
+                <span class="ml-1 text-xs text-white/80">{{ t('Players Online', 'Người chơi trực tuyến') }}</span>
+              </span>
+              <template v-if="leaderboard.entries[0]">
+                <span class="realm-status__divider text-white/30" aria-hidden="true">•</span>
+                <span class="realm-status__top flex items-center gap-1 text-xs text-amber-300/90 font-semibold" :title="'@' + leaderboard.entries[0].username">
+                  <Crown :size="13" class="text-amber-400 shrink-0" />
+                  <span>Top #1: @{{ leaderboard.entries[0].username }} ({{ leaderboard.entries[0].elo }} ELO)</span>
+                </span>
+              </template>
+              <template v-if="equippedSpirit">
+                <span class="realm-status__divider text-white/30" aria-hidden="true">•</span>
+                <span class="realm-status__companion flex items-center gap-1.5 text-xs text-amber-200 font-semibold" :title="equippedSpirit.name">
+                  <img :src="equippedSpirit.source" class="w-5 h-5 object-contain filter drop-shadow-md" />
+                  <span>{{ t('Companion: ', 'Đồng hành: ') }}{{ equippedSpirit.name }}</span>
+                </span>
+              </template>
             </div>
           </section>
 
-          <section class="utility-actions" aria-label="Quick actions">
+          <section class="utility-actions" :aria-label="t('Quick actions', 'Thao tác nhanh')">
             <PlayPanel
               content="rooms"
               class="room-actions-host"
               :is-guest="auth.isGuest"
+              :join-pending="joinRoomPending"
               @upgrade="openUpgrade"
               @create-room="handleCreateRoom"
               @join-code="handleJoinCode"
             />
+            <RouterLink v-if="!auth.isGuest" to="/collection" class="launcher-link">
+              <GlassCard as="div" variant="interactive" class="premium-action-card">
+                <FantasyIcon type="collection" size="large" />
+                <span><strong>{{ t('Collection', 'Bộ sưu tập') }}</strong><small>{{ t('Track every spirit you own', 'Theo dõi linh thú đã sở hữu') }}</small></span>
+              </GlassCard>
+            </RouterLink>
+            <RouterLink v-if="!auth.isGuest" to="/achievements" class="launcher-link">
+              <GlassCard as="div" variant="interactive" class="premium-action-card">
+                <FantasyIcon type="achievements" size="large" />
+                <span><strong>{{ t('Achievements', 'Thành tựu') }}</strong><small>{{ t('Claim titles and frames', 'Nhận danh hiệu và khung hồ sơ') }}</small></span>
+              </GlassCard>
+            </RouterLink>
             <RouterLink to="/history" class="launcher-link">
               <GlassCard as="div" variant="interactive" class="premium-action-card">
                 <FantasyIcon type="match-history" size="large" />
-                <span><strong>Match History</strong><small>Review past battles</small></span>
+                <span><strong>{{ t('Match History', 'Lịch sử trận') }}</strong><small>{{ t('Review past battles', 'Xem lại các trận đã đấu') }}</small></span>
               </GlassCard>
             </RouterLink>
             <GlassCard
@@ -644,22 +546,22 @@ function handleJoinCode(code: string) {
               @click="shareGame"
             >
               <FantasyIcon type="share-game" size="large" />
-              <span><strong>Share Game</strong><small>Earn +50 Coins</small></span>
+              <span><strong>{{ t('Share Game', 'Chia sẻ trò chơi') }}</strong><small>{{ t('Invite friends with link', 'Mời bạn bè bằng liên kết') }}</small></span>
             </GlassCard>
           </section>
 
           <div class="center-info-grid">
-            <GlassCard as="section" title="Recent Match" class="center-info-card">
+            <GlassCard as="section" :title="t('Recent Match', 'Trận gần đây')" class="center-info-card">
               <template #icon><FantasyIcon type="match-history" size="small" /></template>
               <template #actions>
                 <RouterLink to="/history"
-                  ><BaseButton variant="ghost" size="sm">View All</BaseButton></RouterLink
+                  ><BaseButton variant="ghost" size="sm">{{ t('View All', 'Xem tất cả') }}</BaseButton></RouterLink
                 >
               </template>
               <EmptyState
                 v-if="!recentMatch"
-                title="No matches yet"
-                description="Play your first game to see it here."
+                :title="t('No matches yet', 'Chưa có trận đấu')"
+                :description="t('Play your first game to see it here.', 'Hãy chơi trận đầu tiên để xem tại đây.')"
               />
               <div v-else class="recent-match">
                 <div>
@@ -674,20 +576,20 @@ function handleJoinCode(code: string) {
                   >
                     {{
                       recentMatch.winner_id === auth.user?.id
-                        ? 'VICTORY'
+                        ? t('VICTORY', 'CHIẾN THẮNG')
                         : recentMatch.winner_id
-                          ? 'DEFEAT'
-                          : 'DRAW'
+                          ? t('DEFEAT', 'THẤT BẠI')
+                          : t('DRAW', 'HÒA')
                     }}
                   </strong>
                   <span
-                    >{{ recentMatch.is_ranked ? 'Ranked' : 'Casual' }} ·
-                    {{ recentMatch.total_moves }} moves</span
+                    >{{ recentMatch.is_ranked ? t('Ranked', 'Xếp hạng') : t('Casual', 'Đấu thường') }} ·
+                    {{ recentMatch.total_moves }} {{ t('moves', 'nước') }}</span
                   >
                 </div>
                 <time :datetime="recentMatch.created_at">
                   {{
-                    new Date(recentMatch.created_at).toLocaleDateString(undefined, {
+                    new Date(recentMatch.created_at).toLocaleDateString(language === 'vi' ? 'vi-VN' : 'en-US', {
                       month: 'short',
                       day: 'numeric',
                       year: 'numeric',
@@ -700,7 +602,7 @@ function handleJoinCode(code: string) {
             <GlassCard
               v-if="auth.isAuthenticated"
               as="section"
-              :title="`Online (${lobby.onlineUsers.length.toString()})`"
+              :title="`${t('Online', 'Trực tuyến')} (${lobby.onlineUsers.length.toString()})`"
               class="center-info-card"
             >
               <template #icon
@@ -708,32 +610,35 @@ function handleJoinCode(code: string) {
               /></template>
               <template #actions>
                 <BaseButton variant="ghost" size="sm" @click="onlineModalOpen = true"
-                  >View All</BaseButton
+                  >{{ t('View All', 'Xem tất cả') }}</BaseButton
                 >
               </template>
               <EmptyState
                 v-if="lobby.onlineUsers.length === 0"
-                title="No one online"
-                description="Start a match and others will show up here."
+                :title="t('No one online', 'Chưa có ai trực tuyến')"
+                :description="t('Start a match and others will show up here.', 'Bắt đầu một trận và người chơi khác sẽ xuất hiện tại đây.')"
               />
               <ul v-else class="online-player-list">
                 <li v-for="user in paginatedOnlineUsers" :key="user.id">
-                  <BaseAvatar :name="user.display_name" size="sm" online />
-                  <span>{{ user.display_name }}</span>
+                  <BaseAvatar :name="user.display_name" size="sm" online :class="user.profile_frame" />
+                  <span class="flex items-center gap-1">
+                    {{ user.display_name }}
+                    <span v-if="user.title" class="text-[0.6rem] leading-tight font-bold px-1.5 py-0.25 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 capitalize whitespace-nowrap">{{ user.title.replace('title_', '').split('_').join(' ') }}</span>
+                  </span>
                 </li>
               </ul>
             </GlassCard>
           </div>
         </main>
 
-        <aside class="info-rail" aria-label="Realm information">
-          <GlassCard as="section" title="Leaderboard" class="side-card leaderboard-card">
+        <aside class="info-rail" :aria-label="t('Realm information', 'Thông tin máy chủ')">
+          <GlassCard as="section" :title="t('Leaderboard', 'Bảng xếp hạng')" class="side-card leaderboard-card">
             <template #icon><FantasyIcon type="leaderboard" size="small" /></template>
-            <p v-if="leaderboard.loading" class="panel-message">Summoning heroes…</p>
+            <p v-if="leaderboard.loading" class="panel-message">{{ t('Summoning heroes…', 'Đang tải người chơi…') }}</p>
             <ErrorState v-else-if="leaderboard.error" :message="leaderboard.error">
               <template #action>
                 <BaseButton variant="secondary" size="sm" @click="leaderboard.load()"
-                  >Retry</BaseButton
+                  >{{ t('Retry', 'Thử lại') }}</BaseButton
                 >
               </template>
             </ErrorState>
@@ -749,10 +654,14 @@ function handleJoinCode(code: string) {
                   size="sm"
                   @click="!auth.isGuest ? (leaderboardModalOpen = true) : openUpgrade()"
                 >
-                  <FantasySystemIcon v-if="auth.isGuest" compact class="mr-1 inline-grid opacity-60">
+                  <FantasySystemIcon
+                    v-if="auth.isGuest"
+                    compact
+                    class="mr-1 inline-grid opacity-60"
+                  >
                     <Lock :size="14" />
                   </FantasySystemIcon>
-                  View all rankings
+                  {{ t('View all rankings', 'Xem toàn bộ xếp hạng') }}
                 </BaseButton>
               </div>
             </div>
@@ -762,11 +671,11 @@ function handleJoinCode(code: string) {
             <ActivityFeed />
           </GlassCard>
 
-          <GlassCard as="section" class="side-card system-card" aria-label="System Status">
+          <GlassCard as="section" class="side-card system-card" :aria-label="t('System Status', 'Trạng thái hệ thống')">
             <div class="system-status-grid">
               <div class="system-status-title">
                 <FantasySystemIcon compact><Zap :size="18" aria-hidden="true" /></FantasySystemIcon>
-                <strong>System</strong>
+                <strong>{{ t('System', 'Hệ thống') }}</strong>
               </div>
               <div class="system-status-item">
                 <div aria-live="polite">
@@ -775,7 +684,7 @@ function handleJoinCode(code: string) {
                 </div>
               </div>
               <div class="system-status-item">
-                <span>Latency</span>
+                <span>{{ t('Latency', 'Độ trễ') }}</span>
                 <strong>—</strong>
               </div>
             </div>
@@ -784,15 +693,6 @@ function handleJoinCode(code: string) {
       </div>
     </div>
 
-    <MatchmakingModal
-      v-if="isMatchmaking"
-      :status="socket.status"
-      :error-message="socket.errorMessage"
-      :mode="socket.mode"
-      :search-progress="socket.searchProgress"
-      @cancel="socket.cancelMatchmaking()"
-      @retry="socket.startMatchmaking(socket.mode)"
-    />
     <UpgradeAccountModal
       v-if="upgradeOpen"
       :loading="upgradeLoading"
@@ -825,6 +725,11 @@ function handleJoinCode(code: string) {
       @close="friendsModalOpen = false"
       @open-chat="handleOpenChat"
     />
+    <TurnstileModal
+      v-if="turnstileModalOpen"
+      @verify="onTurnstileVerified"
+      @close="turnstileModalOpen = false; pendingMatchmakingMode = null"
+    />
     <ChatDrawer :open="chatDrawerOpen" @close="chatDrawerOpen = false" @upgrade="openUpgrade" />
   </AppLayout>
 </template>
@@ -838,22 +743,34 @@ function handleJoinCode(code: string) {
 }
 
 .lobby-page :deep(.glass-card:not([data-variant='nested'])) {
-  border-color: rgb(214 181 106 / 0.36);
+  border-color: var(--color-fantasy-border-subtle);
   background:
-    repeating-linear-gradient(100deg, transparent 0 0.75rem, rgb(229 222 210 / 0.018) 0.8rem 0.85rem),
-    linear-gradient(145deg, rgb(41 54 63 / 0.9), rgb(10 26 44 / 0.94));
+    repeating-linear-gradient(
+      100deg,
+      transparent 0 0.75rem,
+      rgb(229 222 210 / 0.018) 0.8rem 0.85rem
+    ),
+    linear-gradient(145deg, rgb(30 45 60 / 0.9), rgb(10 24 40 / 0.94));
   box-shadow:
     var(--shadow-card),
-    inset 0 1px 0 rgb(229 222 210 / 0.14),
-    inset 0 0 0 2px rgb(3 12 24 / 0.32),
-    0 0 1.25rem rgb(86 183 255 / 0.05);
+    inset 0 1px 0 rgb(229 222 210 / 0.1),
+    inset 0 0 0 1px rgb(86 183 255 / 0.08),
+    0 0 1.25rem rgb(86 183 255 / 0.04);
 }
 
 .lobby-page :deep(.glass-card:not([data-variant='nested']))::before {
   background:
     radial-gradient(circle at 18% 0%, rgb(86 183 255 / 0.12), transparent 38%),
-    repeating-linear-gradient(112deg, transparent 0 1.15rem, rgb(229 222 210 / 0.018) 1.2rem 1.25rem),
-    repeating-radial-gradient(circle at 82% 18%, transparent 0 1.4rem, rgb(107 227 255 / 0.015) 1.45rem 1.5rem);
+    repeating-linear-gradient(
+      112deg,
+      transparent 0 1.15rem,
+      rgb(229 222 210 / 0.018) 1.2rem 1.25rem
+    ),
+    repeating-radial-gradient(
+      circle at 82% 18%,
+      transparent 0 1.4rem,
+      rgb(107 227 255 / 0.015) 1.45rem 1.5rem
+    );
   opacity: 0.58;
 }
 
@@ -864,10 +781,34 @@ function handleJoinCode(code: string) {
   border: 1px solid rgb(229 222 210 / 0.06);
   border-radius: calc(var(--radius-card) - 0.3rem);
   background:
-    linear-gradient(135deg, rgb(214 181 106 / 0.8) 0 0.18rem, rgb(69 47 21 / 0.82) 0.2rem 0.32rem, transparent 0.34rem) top left / 1.35rem 1.35rem no-repeat,
-    linear-gradient(225deg, rgb(214 181 106 / 0.8) 0 0.18rem, rgb(69 47 21 / 0.82) 0.2rem 0.32rem, transparent 0.34rem) top right / 1.35rem 1.35rem no-repeat,
-    linear-gradient(45deg, rgb(214 181 106 / 0.72) 0 0.18rem, rgb(69 47 21 / 0.76) 0.2rem 0.32rem, transparent 0.34rem) bottom left / 1.35rem 1.35rem no-repeat,
-    linear-gradient(315deg, rgb(214 181 106 / 0.72) 0 0.18rem, rgb(69 47 21 / 0.76) 0.2rem 0.32rem, transparent 0.34rem) bottom right / 1.35rem 1.35rem no-repeat;
+    linear-gradient(
+        135deg,
+        rgb(214 181 106 / 0.8) 0 0.18rem,
+        rgb(69 47 21 / 0.82) 0.2rem 0.32rem,
+        transparent 0.34rem
+      )
+      top left / 1.35rem 1.35rem no-repeat,
+    linear-gradient(
+        225deg,
+        rgb(214 181 106 / 0.8) 0 0.18rem,
+        rgb(69 47 21 / 0.82) 0.2rem 0.32rem,
+        transparent 0.34rem
+      )
+      top right / 1.35rem 1.35rem no-repeat,
+    linear-gradient(
+        45deg,
+        rgb(214 181 106 / 0.72) 0 0.18rem,
+        rgb(69 47 21 / 0.76) 0.2rem 0.32rem,
+        transparent 0.34rem
+      )
+      bottom left / 1.35rem 1.35rem no-repeat,
+    linear-gradient(
+        315deg,
+        rgb(214 181 106 / 0.72) 0 0.18rem,
+        rgb(69 47 21 / 0.76) 0.2rem 0.32rem,
+        transparent 0.34rem
+      )
+      bottom right / 1.35rem 1.35rem no-repeat;
   box-shadow:
     inset 0 0 1.25rem rgb(0 5 14 / 0.22),
     inset 0 1px 0 rgb(229 222 210 / 0.04);
@@ -882,19 +823,33 @@ function handleJoinCode(code: string) {
 }
 
 .lobby-page :deep(.glass-card[data-variant='interactive']:hover) {
-  border-color: rgb(214 181 106 / 0.7);
+  border-color: rgb(86 183 255 / 0.45);
   box-shadow:
     var(--shadow-floating),
     0 0 1.25rem rgb(86 183 255 / 0.16),
-    inset 0 1px 0 rgb(229 222 210 / 0.18),
-    inset 0 0 0 2px rgb(3 12 24 / 0.3);
+    inset 0 1px 0 rgb(229 222 210 / 0.18);
+}
+
+/* ── Typography Visual Hierarchy ───────────────────────── */
+.leaderboard-card :deep(h2) {
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: var(--text-card);
+  letter-spacing: 0.04em;
+  color: var(--color-fantasy-stone);
+}
+
+.center-info-card :deep(h2),
+.activity-card :deep(h2) {
+  font-size: var(--text-body);
+  font-weight: 700;
+  letter-spacing: 0.01em;
 }
 
 .lobby-grid {
   display: grid;
   grid-template-areas: 'profile hero info';
-  grid-template-columns: minmax(12.5rem, 0.72fr) minmax(0, 2.9fr) minmax(15rem, 0.85fr);
-  gap: 1.5rem;
+  grid-template-columns: minmax(12.5rem, 0.72fr) minmax(0, 2.9fr) minmax(18.5rem, 1fr);
+  gap: 1rem;
   align-items: start;
 }
 
@@ -914,14 +869,14 @@ function handleJoinCode(code: string) {
   display: flex;
   min-width: 0;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
 .fantasy-hero {
   position: relative;
   isolation: isolate;
-  height: 30rem;
-  min-height: 30rem;
+  height: 24.5rem;
+  min-height: 24.5rem;
   overflow: hidden;
   border: 1px solid rgb(214 181 106 / 0.46);
   border-radius: var(--radius-modal);
@@ -942,10 +897,14 @@ function handleJoinCode(code: string) {
   border: 1px solid rgb(229 222 210 / 0.07);
   border-radius: calc(var(--radius-modal) - 0.35rem);
   background:
-    linear-gradient(135deg, #d6b56a 0 0.22rem, #6c4821 0.24rem 0.4rem, transparent 0.42rem) top left / 1.75rem 1.75rem no-repeat,
-    linear-gradient(225deg, #d6b56a 0 0.22rem, #6c4821 0.24rem 0.4rem, transparent 0.42rem) top right / 1.75rem 1.75rem no-repeat,
-    linear-gradient(45deg, #b9914c 0 0.22rem, #50351d 0.24rem 0.4rem, transparent 0.42rem) bottom left / 1.75rem 1.75rem no-repeat,
-    linear-gradient(315deg, #b9914c 0 0.22rem, #50351d 0.24rem 0.4rem, transparent 0.42rem) bottom right / 1.75rem 1.75rem no-repeat;
+    linear-gradient(135deg, #d6b56a 0 0.22rem, #6c4821 0.24rem 0.4rem, transparent 0.42rem) top
+      left / 1.75rem 1.75rem no-repeat,
+    linear-gradient(225deg, #d6b56a 0 0.22rem, #6c4821 0.24rem 0.4rem, transparent 0.42rem) top
+      right / 1.75rem 1.75rem no-repeat,
+    linear-gradient(45deg, #b9914c 0 0.22rem, #50351d 0.24rem 0.4rem, transparent 0.42rem) bottom
+      left / 1.75rem 1.75rem no-repeat,
+    linear-gradient(315deg, #b9914c 0 0.22rem, #50351d 0.24rem 0.4rem, transparent 0.42rem) bottom
+      right / 1.75rem 1.75rem no-repeat;
   box-shadow: inset 0 0 1.25rem rgb(0 4 14 / 0.18);
   content: '';
   pointer-events: none;
@@ -978,7 +937,14 @@ function handleJoinCode(code: string) {
   width: 26%;
   height: 100%;
   opacity: 0.18;
-  background: linear-gradient(90deg, transparent, rgb(255 238 188 / 0.06) 18%, rgb(255 238 188 / 0.24) 50%, rgb(255 238 188 / 0.06) 82%, transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgb(255 238 188 / 0.06) 18%,
+    rgb(255 238 188 / 0.24) 50%,
+    rgb(255 238 188 / 0.06) 82%,
+    transparent
+  );
   transform: rotate(18deg);
   animation: ray-breathe 7s ease-in-out infinite;
 }
@@ -1041,10 +1007,10 @@ function handleJoinCode(code: string) {
   position: relative;
   z-index: 3;
   display: flex;
-  width: min(48%, 24rem);
+  width: min(54%, 26.5rem);
   height: 100%;
   flex-direction: column;
-  padding: 2rem;
+  padding: 1.25rem 1.5rem 3rem;
 }
 
 .fantasy-hero__content :deep(.play-panel) {
@@ -1093,6 +1059,19 @@ function handleJoinCode(code: string) {
   aspect-ratio: 1;
   pointer-events: none;
   filter: drop-shadow(0 1.1rem 1rem rgb(2 9 20 / 0.54));
+  animation: hero-board-float 7s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+@keyframes hero-board-float {
+  0% { transform: translateY(0px) rotate(0deg); }
+  100% { transform: translateY(-7px) rotate(1.2deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fantasy-hero__board-layer {
+    animation: none !important;
+  }
 }
 
 .fantasy-hero__board {
@@ -1166,29 +1145,43 @@ function handleJoinCode(code: string) {
 
 .fantasy-hero__realm-status {
   position: absolute;
+  left: 1rem;
   right: 1rem;
-  bottom: 1rem;
+  bottom: 0;
   z-index: 4;
   display: flex;
+  justify-content: center;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
+  padding: 0.45rem 0.75rem;
   color: var(--text-secondary);
   font-size: var(--text-caption);
   font-weight: 700;
   letter-spacing: 0.02em;
-  border: 1px solid var(--surface-border);
-  border-radius: var(--radius-pill);
-  background: rgb(7 17 31 / 0.7);
+  border-top: 1px solid var(--surface-border);
+  border-radius: 0 0 calc(var(--radius-modal) - 0.35rem) calc(var(--radius-modal) - 0.35rem);
+  background: rgb(7 17 31 / 0.78);
   -webkit-backdrop-filter: blur(var(--blur-md));
   backdrop-filter: blur(var(--blur-md));
 }
 
-.fantasy-hero__realm-status > span {
+.status-pulse-dot {
   width: 0.5rem;
   height: 0.5rem;
   border-radius: var(--radius-pill);
   box-shadow: 0 0 6px currentColor;
+  animation: dot-pulse 2.5s infinite ease-in-out;
+}
+
+@keyframes dot-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.55; transform: scale(0.85); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .status-pulse-dot {
+    animation: none;
+  }
 }
 
 .utility-actions {
@@ -1262,7 +1255,11 @@ function handleJoinCode(code: string) {
   border-radius: var(--radius-md);
   border: 1px solid rgb(214 181 106 / 0.12);
   background:
-    repeating-linear-gradient(110deg, transparent 0 0.65rem, rgb(229 222 210 / 0.015) 0.7rem 0.74rem),
+    repeating-linear-gradient(
+      110deg,
+      transparent 0 0.65rem,
+      rgb(229 222 210 / 0.015) 0.7rem 0.74rem
+    ),
     linear-gradient(145deg, rgb(255 255 255 / 0.055), rgb(4 15 29 / 0.14));
   box-shadow:
     inset 0 1px 0 rgb(229 222 210 / 0.06),
@@ -1315,7 +1312,9 @@ function handleJoinCode(code: string) {
   font-family: 'Cinzel', 'Marcellus', Georgia, serif;
   font-size: var(--text-body);
   letter-spacing: 0.025em;
-  text-shadow: 0 1px 0 rgb(0 0 0 / 0.7), 0 0 0.6rem rgb(86 183 255 / 0.08);
+  text-shadow:
+    0 1px 0 rgb(0 0 0 / 0.7),
+    0 0 0.6rem rgb(86 183 255 / 0.08);
 }
 
 .lobby-page :deep(p),
@@ -1337,40 +1336,39 @@ function handleJoinCode(code: string) {
   isolation: isolate;
   overflow: hidden;
   padding: 0.75rem;
-  color: #172033;
-  border: 1px solid rgb(214 181 106 / 0.54);
+  color: var(--text-foreground);
+  border: 1px solid color-mix(in srgb, var(--color-warning) 28%, var(--color-border));
   border-radius: var(--radius-md);
   background:
-    repeating-linear-gradient(0deg, transparent 0 0.35rem, rgb(71 51 25 / 0.035) 0.4rem 0.42rem),
-    linear-gradient(100deg, rgb(229 222 210 / 0.96), rgb(205 193 170 / 0.92));
+    radial-gradient(
+      circle at 0 0,
+      color-mix(in srgb, var(--color-warning) 9%, transparent),
+      transparent 46%
+    ),
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--surface-2) 88%, transparent),
+      color-mix(in srgb, var(--surface-sunken) 94%, transparent)
+    );
   box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.54),
-    inset 0 -0.25rem 0.7rem rgb(79 48 20 / 0.12),
-    0 0.4rem 0.75rem rgb(0 0 0 / 0.18);
-}
-
-.mission-row::before,
-.mission-row::after {
-  position: absolute;
-  width: 1.25rem;
-  height: 1.25rem;
-  border-color: rgb(127 91 36 / 0.52);
-  content: '';
-  pointer-events: none;
+    inset 0 1px 0 color-mix(in srgb, var(--text-foreground) 8%, transparent),
+    0 0.4rem 0.75rem color-mix(in srgb, var(--surface-background) 34%, transparent);
 }
 
 .mission-row::before {
-  top: 0.3rem;
-  left: 0.3rem;
-  border-top: 2px solid;
-  border-left: 2px solid;
-}
-
-.mission-row::after {
-  right: 0.3rem;
-  bottom: 0.3rem;
-  border-right: 2px solid;
-  border-bottom: 2px solid;
+  position: absolute;
+  top: 0;
+  right: 12%;
+  left: 12%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--color-warning) 48%, transparent),
+    transparent
+  );
+  content: '';
+  pointer-events: none;
 }
 
 .mission-row__heading,
@@ -1395,12 +1393,13 @@ function handleJoinCode(code: string) {
 }
 
 .mission-row__heading strong {
+  color: var(--text-foreground);
   font-family: 'Cinzel', 'Marcellus', Georgia, serif;
   line-height: 1.25;
 }
 
 .mission-row__rarity {
-  color: #73572e;
+  color: color-mix(in srgb, var(--color-warning) 82%, var(--text-secondary));
   font-size: var(--text-caption);
   font-weight: 800;
   letter-spacing: 0.04em;
@@ -1408,21 +1407,21 @@ function handleJoinCode(code: string) {
 }
 
 .mission-row__progress {
-  color: #57472f;
+  color: var(--text-muted);
 }
 
 .mission-row__progress :deep([role='progressbar']) {
-  border-color: rgb(121 82 31 / 0.32);
-  background: rgb(48 43 38 / 0.22);
+  border-color: color-mix(in srgb, var(--color-warning) 20%, var(--color-border-subtle));
+  background: var(--surface-sunken);
 }
 
 .mission-row__reward {
   padding-top: 0.5rem;
-  border-top: 1px solid rgb(107 74 32 / 0.2);
+  border-top: 1px solid color-mix(in srgb, var(--color-warning) 14%, var(--color-border-subtle));
 }
 
 .mission-row__reward > span {
-  color: #755014;
+  color: var(--color-warning);
   font-size: var(--text-caption);
   font-weight: 900;
   letter-spacing: 0.05em;
@@ -1430,22 +1429,22 @@ function handleJoinCode(code: string) {
 }
 
 .mission-row__reward i {
-  color: #c58a16;
+  color: var(--color-warning);
   font-style: normal;
-  text-shadow: 0 0 0.35rem rgb(255 199 65 / 0.46);
+  text-shadow: 0 0 0.35rem color-mix(in srgb, var(--color-warning) 42%, transparent);
 }
 
 .mission-row__reward button {
   min-height: 2rem;
   padding: 0.25rem 0.6rem;
-  color: #5d4928;
+  color: var(--text-muted);
   font-size: var(--text-caption);
   font-weight: 800;
-  border: 1px solid rgb(117 80 20 / 0.36);
+  border: 1px solid color-mix(in srgb, var(--color-warning) 22%, var(--color-border));
   border-radius: var(--radius-sm);
-  background: linear-gradient(#f3d98c, #cfa64f);
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.5);
-  opacity: 0.76;
+  background: var(--surface-glass-light);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--text-foreground) 7%, transparent);
+  opacity: 0.72;
 }
 .mission-total {
   color: var(--text-muted);
@@ -1566,24 +1565,6 @@ function handleJoinCode(code: string) {
   background: rgb(10 27 46 / 0.78);
 }
 
-.utility-action-label {
-  display: none;
-}
-
-.lobby-header-icon {
-  width: 2.75rem;
-  padding: 0 !important;
-  border-color: rgb(116 201 255 / 0.14) !important;
-  background: rgb(10 27 46 / 0.78) !important;
-  box-shadow: none !important;
-}
-
-.lobby-header-icon:hover {
-  color: var(--color-accent);
-  border-color: rgb(116 201 255 / 0.24) !important;
-  transform: none !important;
-}
-
 .lobby-user-button svg:first-child {
   color: var(--color-warning);
 }
@@ -1702,6 +1683,12 @@ function handleJoinCode(code: string) {
   }
 }
 
+@media (max-width: 72rem) {
+  .user-name {
+    display: none;
+  }
+}
+
 @media (max-width: 48rem) {
   .lobby-grid {
     grid-template-areas:
@@ -1750,10 +1737,6 @@ function handleJoinCode(code: string) {
   .center-info-grid {
     grid-template-columns: 1fr;
   }
-  .user-name {
-    display: none;
-  }
-
   .system-status-grid {
     flex-wrap: wrap;
   }
@@ -1782,7 +1765,12 @@ function handleJoinCode(code: string) {
     display: none;
   }
   .lobby-user-button {
-    padding-inline: 0.625rem;
+    width: 2.75rem;
+    padding: 0;
+    justify-content: center;
+  }
+  .user-menu-chevron {
+    display: none;
   }
 }
 
