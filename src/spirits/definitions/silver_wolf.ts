@@ -9,7 +9,7 @@ export const silverWolfSpirit: SpiritDefinition = {
   },
   anchor: 'right',
   sigil: 'wolf',
-  model: { source: '/spirits/wolf-chibi.webp', frames: 1, aspectRatio: 1 },
+  model: { source: '/spirits/silver_wolf-chibi.webp', frames: 1, aspectRatio: 1 },
   motion: {
     spawn: 'dash',
     attack: 'claw',
@@ -59,4 +59,10 @@ export const silverWolfSpirit: SpiritDefinition = {
     ],
   },
   voice: null,
+  result: {
+    victory: 'radiant-rise',
+    defeat: 'mist-dissolve',
+    victoryLine: { en: 'Moonlight marks the winning trail.', vi: 'Ánh trăng soi dấu con đường chiến thắng.' },
+    defeatLine: { en: 'The moon will find the wolf again.', vi: 'Ánh trăng sẽ lại tìm thấy sói bạc.' },
+  },
 }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { X, RefreshCcw } from 'lucide-vue-next'
 
@@ -16,7 +16,7 @@ const route = useRoute()
 const matchFoundNotification = useMatchFoundNotification()
 const { errorText, t } = useAppLanguage()
 
-const turnstileModalOpen = ref(false)
+const turnstileModalOpen = computed(() => socket.pendingVerificationMode !== null)
 
 // Hide tracker when in game routes
 const isHidden = computed(() => route.path.startsWith('/game') || route.path.startsWith('/replay'))
@@ -64,16 +64,11 @@ function cancel() {
 }
 
 function retry() {
-  if (import.meta.env.VITE_TURNSTILE_SITE_KEY) {
-    turnstileModalOpen.value = true
-  } else {
-    socket.startMatchmaking(socket.mode)
-  }
+  socket.requestMatchmaking(socket.mode)
 }
 
 function onTurnstileVerified(token: string) {
-  turnstileModalOpen.value = false
-  socket.startMatchmaking(socket.mode, token)
+  socket.submitMatchmakingVerification(token)
 }
 </script>
 
@@ -140,7 +135,7 @@ function onTurnstileVerified(token: string) {
   <TurnstileModal
     v-if="turnstileModalOpen"
     @verify="onTurnstileVerified"
-    @close="turnstileModalOpen = false"
+    @close="socket.cancelMatchmakingVerification()"
   />
 </template>
 

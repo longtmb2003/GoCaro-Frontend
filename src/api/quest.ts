@@ -1,5 +1,6 @@
 import type { Envelope } from './envelope'
 import { http } from './http'
+import { arrayOrEmpty } from './normalize'
 
 export interface Quest {
   code: string
@@ -12,11 +13,11 @@ export interface Quest {
 }
 
 export async function fetchQuests(): Promise<Quest[]> {
-  const { data } = await http.get<Quest[] | Envelope<Quest[]>>('/api/quests')
+  const { data } = await http.get<Quest[] | Envelope<Quest[] | null> | null>('/api/quests')
   if (Array.isArray(data)) {
     return data
   }
-  return data.data
+  return arrayOrEmpty(data?.data)
 }
 
 export async function claimQuestReward(code: string, date: string): Promise<{ quest: Quest, new_balance: number }> {

@@ -16,7 +16,7 @@ export const useLeaderboardStore = defineStore('leaderboard', () => {
     error.value = null
     try {
       const res = await fetchLeaderboard(page, limit, search)
-      entries.value = res.entries
+      entries.value = Array.isArray(res.entries) ? res.entries : []
       total.value = res.total
     } catch (err) {
       error.value = err instanceof ApiError ? err.message : 'Unable to load the leaderboard.'

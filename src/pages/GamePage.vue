@@ -25,7 +25,7 @@ import GlassCard from '@/components/ui/GlassCard.vue'
 import BoardRenderer from '@/components/board-renderer/BoardRenderer.vue'
 import type { MoveCueName, VictoryCueName } from '@/components/board-renderer/feedbackTiming'
 import type { SpiritCueName } from '@/components/board-renderer/spiritTiming'
-import { assignMatchSpirits } from '@/spirits/spiritAssignment'
+import { assignMatchSpirits, spiritForSymbol } from '@/spirits/spiritAssignment'
 import GameResultBanner from '@/components/GameResultBanner.vue'
 import MatchResultOverlay from '@/components/MatchResultOverlay.vue'
 import InGameChat from '@/components/InGameChat.vue'
@@ -152,8 +152,8 @@ const finishingOutcome = computed<'win' | 'loss'>(() =>
  * board stays on screen behind the result overlay, and a summon replaying over a
  * finished game would read as a move still being made.
  */
-const matchSpirits = computed(() => {
-  if (game.phase !== 'playing' || game.roomId === null) return null
+const assignedMatchSpirits = computed(() => {
+  if (game.roomId === null) return null
   let xEquipped = ''
   let oEquipped = ''
   if (game.yourSymbol === 1) {
@@ -166,8 +166,18 @@ const matchSpirits = computed(() => {
   return assignMatchSpirits(xEquipped, oEquipped, game.roomId)
 })
 
+const matchSpirits = computed(() =>
+  game.phase === 'playing' ? assignedMatchSpirits.value : null,
+)
+
+const resultSpirit = computed(() => {
+  const spirits = assignedMatchSpirits.value
+  if (spirits === null || game.yourSymbol === null) return null
+  return spiritForSymbol(spirits, game.yourSymbol)
+})
+
 watch(
-  () => matchSpirits.value,
+  () => assignedMatchSpirits.value,
   (spirits) => {
     if (spirits === null) return
     if (spirits.x.model.source !== null) {
@@ -916,6 +926,7 @@ async function shareReplay(): Promise<void> {
         :heading="banner.heading"
         :message="banner.message"
         :tone="banner.tone"
+        :spirit="resultSpirit"
         @play-again="playAgain"
         @exit="leave"
         @share="shareReplay"

@@ -59,4 +59,10 @@ export const foxSpirit: SpiritDefinition = {
     ],
   },
   voice: null,
+  result: {
+    victory: 'rune-bloom',
+    defeat: 'mist-dissolve',
+    victoryLine: { en: 'A clever path becomes victory.', vi: 'Một nước cờ tinh quái hóa thành chiến thắng.' },
+    defeatLine: { en: 'The fox vanishes to plan again.', vi: 'Hồ ly ẩn mình để chuẩn bị lần tới.' },
+  },
 }

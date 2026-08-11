@@ -9,7 +9,7 @@ export const leviathanSpirit: SpiritDefinition = {
   },
   anchor: 'right',
   sigil: 'drake',
-  model: { source: '/spirits/serpent-chibi.webp', frames: 1, aspectRatio: 1 },
+  model: { source: '/spirits/leviathan-chibi.webp', frames: 1, aspectRatio: 1 },
   motion: {
     spawn: 'dash',
     attack: 'claw',
@@ -59,4 +59,10 @@ export const leviathanSpirit: SpiritDefinition = {
     ],
   },
   voice: null,
+  result: {
+    victory: 'tidal-crown',
+    defeat: 'guarded-retreat',
+    victoryLine: { en: 'The deep rises to claim the board.', vi: 'Vực thẳm trỗi dậy chiếm lấy bàn cờ.' },
+    defeatLine: { en: 'The deep remembers and protects.', vi: 'Vực sâu ghi nhớ và che chở.' },
+  },
 }

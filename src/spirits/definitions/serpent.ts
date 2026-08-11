@@ -59,4 +59,10 @@ export const serpentSpirit: SpiritDefinition = {
     ],
   },
   voice: null,
+  result: {
+    victory: 'tidal-crown',
+    defeat: 'mist-dissolve',
+    victoryLine: { en: 'The current closes around the crown.', vi: 'Dòng chảy khép lại quanh vương miện.' },
+    defeatLine: { en: 'The serpent slips beneath the surface.', vi: 'Linh xà lặng mình dưới mặt nước.' },
+  },
 }

@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { Coins, Flame, Lock, Pencil, ShieldCheck, Trophy } from 'lucide-vue-next'
 
-import { getRankSubTier, getRankTier } from '@/config/ranks'
+import { getRankProgress, getRankSubTier, getRankTier } from '@/config/ranks'
 import { useCountUp } from '@/composables/useCountUp'
 import { useAppLanguage } from '@/composables/useAppLanguage'
 import { useUserProfile } from '@/composables/useUserProfile'
@@ -62,8 +62,9 @@ const winRate = computed(() => {
   return Math.round((props.stats.wins / props.stats.matches_played) * 100)
 })
 const streak = computed(() => props.stats?.current_streak || 0)
-const nextLevelMax = computed(() => Math.floor(props.elo / 100) * 100 + 100)
-const progressPercent = computed(() => ((props.elo % 100) / 100) * 100)
+const rankProgress = computed(() => getRankProgress(props.elo))
+const nextLevelMax = computed(() => rankProgress.value.nextThreshold)
+const progressPercent = computed(() => rankProgress.value.percent)
 const displayCoins = useCountUp(() => props.stats?.coins || 0)
 </script>
 
@@ -108,7 +109,8 @@ const displayCoins = useCountUp(() => props.stats?.coins || 0)
     <div class="profile-card__progress">
       <div>
         <span>{{ t('Rank progress', 'Tiến trình xếp hạng') }}</span>
-        <span>{{ elo }} / {{ nextLevelMax }}</span>
+        <span v-if="nextLevelMax !== null">{{ elo }} / {{ nextLevelMax }}</span>
+        <span v-else>{{ elo }} Elo · {{ t('Max rank', 'Bậc cao nhất') }}</span>
       </div>
       <div
         class="profile-card__track"
@@ -116,7 +118,9 @@ const displayCoins = useCountUp(() => props.stats?.coins || 0)
         :aria-valuenow="progressPercent"
         aria-valuemin="0"
         aria-valuemax="100"
-        :aria-label="t(`Progress to ${nextLevelMax.toString()} rating`, `Tiến trình đến ${nextLevelMax.toString()} điểm`)"
+        :aria-label="nextLevelMax !== null
+          ? t(`Progress to ${nextLevelMax.toString()} rating`, `Tiến trình đến ${nextLevelMax.toString()} điểm`)
+          : t('Highest rank achieved', 'Đã đạt bậc cao nhất')"
       >
         <span class="profile-card__track-bed" aria-hidden="true" />
         <span class="profile-card__crystal" aria-hidden="true" />

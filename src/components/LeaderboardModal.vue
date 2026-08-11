@@ -86,7 +86,7 @@ onUnmounted(() => {
       <LeaderboardTable :entries="leaderboard.entries" :current-username="auth.user?.username ?? ''" compact :start-index="startIndex" />
 
       <div
-        v-if="leaderboard.entries.length > 0"
+        v-if="leaderboard.entries?.length > 0"
         class="border-border-subtle mt-4 pt-4 flex items-center justify-between border-t"
       >
         <BaseButton variant="secondary" :disabled="currentPage <= 1" @click="prevPage">

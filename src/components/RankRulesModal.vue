@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseModal from '@/components/ui/BaseModal.vue'
-import { RANK_TIERS } from '@/config/ranks'
+import { RANK_SUB_TIER_ELO, RANK_TIERS } from '@/config/ranks'
 import RankTierCard from './RankTierCard.vue'
 import { useAppLanguage } from '@/composables/useAppLanguage'
 import { useAchievementRewards } from '@/composables/useAchievementRewards'
@@ -39,7 +39,7 @@ onMounted(() => {
       </ul>
 
       <p class="rank-rules__note">
-        {{ t('Each tier is divided into sub-tiers (IV, III, II, I) for every 100 Elo points gained within the tier.', 'Mỗi bậc được chia thành các hạng nhỏ (IV, III, II, I), tương ứng mỗi 100 điểm Elo trong bậc đó.') }}
+        {{ t(`Bronze, Silver, and Gold are divided into sub-tiers III, II, and I. Each sub-tier requires ${RANK_SUB_TIER_ELO.toString()} Elo; Diamond is the highest tier.`, `Đồng, Bạc và Vàng được chia thành các bậc III, II và I. Mỗi bậc nhỏ cần ${RANK_SUB_TIER_ELO.toString()} Elo; Kim Cương là bậc cao nhất.`) }}
       </p>
     </div>
 

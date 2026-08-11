@@ -99,6 +99,13 @@ export const useSocketStore = defineStore('socket', () => {
 
   /** Which queue the current (or last) search ran on. */
   const mode = ref<MatchmakingMode>('casual')
+  /**
+   * Automatic entries (accepted challenges and tournament pairings) cannot
+   * open a Turnstile-protected socket until the player has a fresh token.
+   * Keeping that intent in the socket store lets the global tracker present
+   * verification even when no page-level Play button was clicked.
+   */
+  const pendingVerificationMode = ref<MatchmakingMode | null>(null)
   /** Latest ranked search progress, reset whenever a new search starts. */
   const searchProgress = ref<{ elapsed_seconds: number; search_range?: number } | null>(null)
   let searchTimer: number | null = null
@@ -154,7 +161,32 @@ export const useSocketStore = defineStore('socket', () => {
   let matchmakingUsedCaptcha = false
   let socketOpened = false
 
+  /**
+   * Starts immediately when Turnstile is disabled, otherwise asks the global
+   * tracker to collect a token before opening the WebSocket.
+   */
+  function requestMatchmaking(searchMode: MatchmakingMode = 'casual'): void {
+    mode.value = searchMode
+    if (import.meta.env.VITE_TURNSTILE_SITE_KEY) {
+      pendingVerificationMode.value = searchMode
+      return
+    }
+    startMatchmaking(searchMode)
+  }
+
+  function submitMatchmakingVerification(captchaToken: string): void {
+    const searchMode = pendingVerificationMode.value
+    if (searchMode === null) return
+    pendingVerificationMode.value = null
+    startMatchmaking(searchMode, captchaToken)
+  }
+
+  function cancelMatchmakingVerification(): void {
+    pendingVerificationMode.value = null
+  }
+
   function startMatchmaking(searchMode: MatchmakingMode = 'casual', captchaToken?: string): void {
+    pendingVerificationMode.value = null
     if (auth.token === null) {
       status.value = 'error'
       errorMessage.value = 'You are not signed in.'
@@ -652,6 +684,7 @@ export const useSocketStore = defineStore('socket', () => {
   }
 
   function teardown(audioExit: 'idle' | 'cancelled' = 'idle'): void {
+    pendingVerificationMode.value = null
     status.value = 'idle'
     errorMessage.value = null
     retryAfterSeconds.value = 0
@@ -691,6 +724,7 @@ export const useSocketStore = defineStore('socket', () => {
     errorMessage,
     isMatchmaking,
     mode,
+    pendingVerificationMode,
     searchProgress,
     connection,
     reconnectSecondsLeft,
@@ -710,6 +744,9 @@ export const useSocketStore = defineStore('socket', () => {
     retryUntil,
     acceptMatch,
     declineMatch,
+    requestMatchmaking,
+    submitMatchmakingVerification,
+    cancelMatchmakingVerification,
     startMatchmaking,
     cancelMatchmaking,
     sendMove,

@@ -64,6 +64,14 @@ export const RANK_TIERS = [
 
 export type RankName = (typeof RANK_TIERS)[number]['name']
 
+export const RANK_SUB_TIER_ELO = 50
+
+export interface RankProgress {
+  currentThreshold: number
+  nextThreshold: number | null
+  percent: number
+}
+
 export function getRankTier(elo: number) {
   for (let i = RANK_TIERS.length - 1; i >= 0; i--) {
     const tier = RANK_TIERS[i]
@@ -77,9 +85,51 @@ export function getRankTier(elo: number) {
 
 export function getRankSubTier(elo: number) {
   const tier = getRankTier(elo)
-  if (tier.name === 'Diamond') return '' // Diamond has no sub-tiers (or it can have, up to preference)
+  if (tier.name === 'Iron' || tier.name === 'Diamond') return ''
   const offset = elo - tier.minElo
-  if (offset >= 100) return 'I'
-  if (offset >= 50) return 'II'
-  return 'III' // Base sub-tier
+  if (offset >= RANK_SUB_TIER_ELO * 2) return 'I'
+  if (offset >= RANK_SUB_TIER_ELO) return 'II'
+  return 'III'
+}
+
+/**
+ * Returns progress to the next real rank milestone. Iron progresses directly
+ * to Bronze; Bronze through Gold progress in 50-Elo sub-tiers; Diamond is the
+ * highest tier and therefore has no next threshold.
+ */
+export function getRankProgress(elo: number): RankProgress {
+  const safeElo = Math.max(0, elo)
+  const tier = getRankTier(safeElo)
+
+  if (tier.name === 'Diamond') {
+    return {
+      currentThreshold: tier.minElo,
+      nextThreshold: null,
+      percent: 100,
+    }
+  }
+
+  const tierIndex = RANK_TIERS.findIndex((candidate) => candidate.name === tier.name)
+  const nextTier = RANK_TIERS[tierIndex + 1]
+
+  if (!nextTier) {
+    return {
+      currentThreshold: tier.minElo,
+      nextThreshold: null,
+      percent: 100,
+    }
+  }
+
+  const currentThreshold = tier.name === 'Iron'
+    ? tier.minElo
+    : tier.minElo + Math.floor((safeElo - tier.minElo) / RANK_SUB_TIER_ELO) * RANK_SUB_TIER_ELO
+  const nextThreshold = tier.name === 'Iron'
+    ? nextTier.minElo
+    : Math.min(currentThreshold + RANK_SUB_TIER_ELO, nextTier.minElo)
+  const span = nextThreshold - currentThreshold
+  const percent = span > 0
+    ? Math.min(100, Math.max(0, ((safeElo - currentThreshold) / span) * 100))
+    : 100
+
+  return { currentThreshold, nextThreshold, percent }
 }

@@ -1,5 +1,6 @@
 import { http } from './http'
 import type { TournamentSummary } from '@/types/tournament'
+import { arrayOrEmpty } from './normalize'
 
 export interface UserStats {
   matches_played: number
@@ -75,6 +76,6 @@ export async function fetchUserTournaments(
 }
 
 export async function fetchActivityFeed(): Promise<UserActivity[]> {
-  const { data } = await http.get<{ activities: UserActivity[] }>('/api/users/me/activities')
-  return data.activities
+  const { data } = await http.get<{ activities: UserActivity[] | null }>('/api/users/me/activities')
+  return arrayOrEmpty(data.activities)
 }

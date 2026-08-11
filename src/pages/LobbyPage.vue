@@ -125,7 +125,7 @@ const paginatedOnlineUsers = computed(() => {
 })
 
 const paginatedLeaderboard = computed(() => {
-  return leaderboard.entries.slice(0, 10)
+  return leaderboard.entries.slice(0, 3)
 })
 
 /** Presentation for the real lobby socket state, using the status tokens. */
@@ -632,44 +632,46 @@ async function handleJoinCode(code: string): Promise<void> {
         </main>
 
         <aside class="info-rail" :aria-label="t('Realm information', 'Thông tin máy chủ')">
-          <GlassCard as="section" :title="t('Leaderboard', 'Bảng xếp hạng')" class="side-card leaderboard-card">
-            <template #icon><FantasyIcon type="leaderboard" size="small" /></template>
-            <p v-if="leaderboard.loading" class="panel-message">{{ t('Summoning heroes…', 'Đang tải người chơi…') }}</p>
-            <ErrorState v-else-if="leaderboard.error" :message="leaderboard.error">
-              <template #action>
-                <BaseButton variant="secondary" size="sm" @click="leaderboard.load()"
-                  >{{ t('Retry', 'Thử lại') }}</BaseButton
-                >
-              </template>
-            </ErrorState>
-            <div v-else class="custom-scrollbar leaderboard-scroll">
-              <LeaderboardTable
-                :entries="paginatedLeaderboard"
-                :current-username="auth.user?.username ?? ''"
-                compact
-              />
-              <div class="mt-4 text-center">
-                <BaseButton
-                  variant="ghost"
-                  size="sm"
-                  @click="!auth.isGuest ? (leaderboardModalOpen = true) : openUpgrade()"
-                >
-                  <FantasySystemIcon
-                    v-if="auth.isGuest"
-                    compact
-                    class="mr-1 inline-grid opacity-60"
+          <div class="social-stack">
+            <GlassCard as="section" :title="t('Leaderboard', 'Bảng xếp hạng')" class="side-card leaderboard-card">
+              <template #icon><FantasyIcon type="leaderboard" size="small" /></template>
+              <p v-if="leaderboard.loading" class="panel-message">{{ t('Summoning heroes…', 'Đang tải người chơi…') }}</p>
+              <ErrorState v-else-if="leaderboard.error" :message="leaderboard.error">
+                <template #action>
+                  <BaseButton variant="secondary" size="sm" @click="leaderboard.load()"
+                    >{{ t('Retry', 'Thử lại') }}</BaseButton
                   >
-                    <Lock :size="14" />
-                  </FantasySystemIcon>
-                  {{ t('View all rankings', 'Xem toàn bộ xếp hạng') }}
-                </BaseButton>
+                </template>
+              </ErrorState>
+              <div v-else class="custom-scrollbar leaderboard-scroll">
+                <LeaderboardTable
+                  :entries="paginatedLeaderboard"
+                  :current-username="auth.user?.username ?? ''"
+                  compact
+                />
+                <div class="leaderboard-actions text-center">
+                  <BaseButton
+                    variant="ghost"
+                    size="sm"
+                    @click="!auth.isGuest ? (leaderboardModalOpen = true) : openUpgrade()"
+                  >
+                    <FantasySystemIcon
+                      v-if="auth.isGuest"
+                      compact
+                      class="mr-1 inline-grid opacity-60"
+                    >
+                      <Lock :size="14" />
+                    </FantasySystemIcon>
+                    {{ t('View all rankings', 'Xem toàn bộ xếp hạng') }}
+                  </BaseButton>
+                </div>
               </div>
-            </div>
-          </GlassCard>
+            </GlassCard>
 
-          <GlassCard v-if="auth.isAuthenticated" as="section" class="side-card activity-card">
-            <ActivityFeed />
-          </GlassCard>
+            <GlassCard v-if="auth.isAuthenticated" as="section" class="side-card activity-card">
+              <ActivityFeed />
+            </GlassCard>
+          </div>
 
           <GlassCard as="section" class="side-card system-card" :aria-label="t('System Status', 'Trạng thái hệ thống')">
             <div class="system-status-grid">
@@ -848,7 +850,7 @@ async function handleJoinCode(code: string): Promise<void> {
 .lobby-grid {
   display: grid;
   grid-template-areas: 'profile hero info';
-  grid-template-columns: minmax(12.5rem, 0.72fr) minmax(0, 2.9fr) minmax(18.5rem, 1fr);
+  grid-template-columns: 15.625rem minmax(0, 1fr) 17.5rem;
   gap: 1rem;
   align-items: start;
 }
@@ -870,6 +872,29 @@ async function handleJoinCode(code: string): Promise<void> {
   min-width: 0;
   flex-direction: column;
   gap: 1rem;
+}
+
+.info-rail {
+  gap: 0.75rem;
+}
+
+.social-stack {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.leaderboard-card {
+  padding: 1rem !important;
+}
+
+.leaderboard-card :deep(.base-divider) {
+  margin-bottom: 0.75rem;
+}
+
+.leaderboard-actions {
+  margin-top: 0.5rem;
 }
 
 .fantasy-hero {
@@ -1490,9 +1515,7 @@ async function handleJoinCode(code: string): Promise<void> {
   object-fit: cover;
 }
 .leaderboard-scroll {
-  max-height: 31rem;
-  overflow-y: auto;
-  padding-right: 0.25rem;
+  overflow: visible;
 }
 
 .activity-card :deep(.activity-feed__list) {
@@ -1676,10 +1699,17 @@ async function handleJoinCode(code: string): Promise<void> {
 
 @media (max-width: 80rem) {
   .lobby-grid {
+    gap: 0.75rem;
+  }
+}
+
+@media (max-width: 64rem) {
+  .lobby-grid {
     grid-template-areas:
-      'hero hero'
-      'profile info';
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+      'hero'
+      'profile'
+      'info';
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 

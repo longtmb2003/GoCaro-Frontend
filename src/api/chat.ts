@@ -1,5 +1,6 @@
 import { http } from './http'
 import type { Envelope } from './envelope'
+import { arrayOrEmpty, recordOrEmpty } from './normalize'
 
 export interface DirectMessage {
   id: string
@@ -27,8 +28,8 @@ export async function getDirectMessageHistory(userId: string, limit = 50, cursor
   const params = new URLSearchParams()
   params.set('limit', limit.toString())
   if (cursor) params.set('cursor', cursor)
-  const response = await http.get<Envelope<DirectMessage[]>>(`/api/chat/dm/${userId}?${params.toString()}`)
-  return response.data.data
+  const response = await http.get<Envelope<DirectMessage[] | null>>(`/api/chat/dm/${userId}?${params.toString()}`)
+  return arrayOrEmpty(response.data.data)
 }
 
 export async function markAsRead(userId: string, cutoffTime: string): Promise<void> {
@@ -36,8 +37,8 @@ export async function markAsRead(userId: string, cutoffTime: string): Promise<vo
 }
 
 export async function getUnreadCounts(): Promise<Record<string, number>> {
-  const response = await http.get<Envelope<Record<string, number>>>('/api/chat/unread')
-  return response.data.data
+  const response = await http.get<Envelope<Record<string, number> | null>>('/api/chat/unread')
+  return recordOrEmpty(response.data.data)
 }
 
 export async function sendLobbyMessage(content: string): Promise<LobbyMessage> {
@@ -46,6 +47,6 @@ export async function sendLobbyMessage(content: string): Promise<LobbyMessage> {
 }
 
 export async function getLobbyMessages(): Promise<LobbyMessage[]> {
-  const response = await http.get<Envelope<LobbyMessage[]>>('/api/chat/lobby')
-  return response.data.data
+  const response = await http.get<Envelope<LobbyMessage[] | null>>('/api/chat/lobby')
+  return arrayOrEmpty(response.data.data)
 }

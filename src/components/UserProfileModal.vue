@@ -20,6 +20,12 @@
       <div class="profile-identity" :data-rank-tier="profileTier.name.toLowerCase()">
         <div class="profile-identity__avatar" :class="profileData.profile_frame">
           <BaseAvatar :name="profileData.display_name" size="xl" :online="isUserOnline" />
+          <RankFrame
+            class="profile-identity__rank-logo"
+            :elo="profileData.elo"
+            :initial="profileData.display_name.charAt(0).toUpperCase()"
+            size="game"
+          />
         </div>
         <div class="profile-identity__copy flex-1 min-w-0">
           <p class="profile-identity__eyebrow">{{ profileRankLabel }}</p>
@@ -156,6 +162,7 @@ import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseAvatar from '@/components/ui/BaseAvatar.vue'
 import GlassCard from '@/components/ui/GlassCard.vue'
 import FriendRequestButton from '@/components/FriendRequestButton.vue'
+import RankFrame from '@/components/RankFrame.vue'
 import { computed } from 'vue'
 import { getRankSubTier, getRankTier } from '@/config/ranks'
 import type { UserStats } from '@/api/users'
@@ -300,6 +307,14 @@ const formatTitle = (titleCode: string) => {
   box-shadow:
     inset 0 1px 0 color-mix(in srgb, var(--profile-rank-highlight) 24%, transparent),
     0 0 1rem color-mix(in srgb, var(--profile-rank) 16%, transparent);
+}
+
+.profile-identity__rank-logo {
+  position: absolute;
+  right: calc(var(--space-sm) * -1);
+  bottom: calc(var(--space-sm) * -1);
+  z-index: 2;
+  filter: drop-shadow(0 0 var(--space-sm) color-mix(in srgb, var(--profile-rank) 36%, transparent));
 }
 
 .profile-identity__copy {

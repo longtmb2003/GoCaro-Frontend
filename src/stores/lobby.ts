@@ -19,7 +19,7 @@ export const useLobbyStore = defineStore('lobby', () => {
     onMessage(message) {
       if (message.type === 'lobby_state') {
         const payload = message.payload as LobbyStatePayload
-        onlineUsers.value = payload.online_users
+        onlineUsers.value = Array.isArray(payload.online_users) ? payload.online_users : []
       }
     },
     onOpen() {
