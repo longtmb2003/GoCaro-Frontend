@@ -59,4 +59,10 @@ export const tigerSpirit: SpiritDefinition = {
     ],
   },
   voice: null,
+  result: {
+    victory: 'power-surge',
+    defeat: 'guarded-retreat',
+    victoryLine: { en: 'One roar settles the board.', vi: 'Một tiếng gầm định đoạt bàn cờ.' },
+    defeatLine: { en: 'Strength returns with discipline.', vi: 'Sức mạnh sẽ trở lại cùng sự rèn luyện.' },
+  },
 }

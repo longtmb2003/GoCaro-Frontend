@@ -9,6 +9,7 @@ import { Loader2 } from 'lucide-vue-next'
 import GlassCard from '@/components/ui/GlassCard.vue'
 import BaseBadge from '@/components/ui/BaseBadge.vue'
 import BaseProgress from '@/components/ui/BaseProgress.vue'
+import SpiritEffectBadge from '@/components/shop/SpiritEffectBadge.vue'
 
 import { resolveSpirit } from '@/spirits/spiritRegistry'
 
@@ -215,7 +216,9 @@ function getRarityVariant(rarity: string) {
                   :src="getSpiritSource(form.code)!"
                   :alt="form.name"
                   class="spirit-card__art"
-                  :class="{ 'opacity-20 brightness-0': !form.owned }"
+                  :class="{ 'opacity-60': !form.owned }"
+                  loading="lazy"
+                  decoding="async"
                 />
                 <div v-else class="spirit-card__fallback">?</div>
 
@@ -232,6 +235,10 @@ function getRarityVariant(rarity: string) {
                 <h3 class="spirit-card__name" :class="form.owned ? 'text-fantasy-stone' : 'text-foreground-muted'">
                   {{ form.name }}
                 </h3>
+                <SpiritEffectBadge
+                  :effect-code="form.effect_code"
+                  :effect-value="form.effect_value"
+                />
               </div>
             </GlassCard>
           </div>
@@ -469,6 +476,11 @@ function getRarityVariant(rarity: string) {
   background: var(--surface-sunken);
   border-top: 1px solid var(--color-border);
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
 }
 
 .spirit-card__name {

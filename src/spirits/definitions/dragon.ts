@@ -7,14 +7,14 @@ import type { SpiritDefinition } from '../spiritTypes'
  */
 export const dragonSpirit: SpiritDefinition = {
   id: 'dragon',
-  name: { en: 'Dragon', vi: 'Rồng' },
+  name: { en: 'Celestial Dragon', vi: 'Thiên Long' },
   personality: {
     en: 'Arrives without hurry, and only ever needs one breath.',
     vi: 'Đến thong thả, và chỉ cần một hơi thở duy nhất.',
   },
   anchor: 'left',
   sigil: 'drake',
-  model: { source: '/spirits/dragon-chibi.webp', frames: 1, aspectRatio: 1 },
+  model: { source: '/spirits/dragon-chibi-v2.webp', frames: 1, aspectRatio: 1 },
   motion: {
     spawn: 'fly-in',
     attack: 'fire-breath',
@@ -73,4 +73,10 @@ export const dragonSpirit: SpiritDefinition = {
     ],
   },
   voice: null,
+  result: {
+    victory: 'radiant-rise',
+    defeat: 'mist-dissolve',
+    victoryLine: { en: 'The stars answer your victory.', vi: 'Tinh tú cộng hưởng cùng chiến thắng.' },
+    defeatLine: { en: 'The constellation will rise again.', vi: 'Chòm sao sẽ lại trỗi dậy.' },
+  },
 }

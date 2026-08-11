@@ -73,4 +73,10 @@ export const wolfSpirit: SpiritDefinition = {
     ],
   },
   voice: null,
+  result: {
+    victory: 'swift-pounce',
+    defeat: 'guarded-retreat',
+    victoryLine: { en: 'The pack claims the field.', vi: 'Bầy sói đã làm chủ chiến địa.' },
+    defeatLine: { en: 'The wolf returns to the hunt.', vi: 'Sói sẽ trở lại cuộc săn.' },
+  },
 }

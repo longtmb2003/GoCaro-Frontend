@@ -92,6 +92,27 @@ export interface SpiritVoice {
   defeat: string | null
 }
 
+/** The controlled motion vocabulary used when a match result is revealed. */
+export type SpiritVictoryStyle =
+  | 'radiant-rise'
+  | 'power-surge'
+  | 'swift-pounce'
+  | 'rune-bloom'
+  | 'tidal-crown'
+
+export type SpiritDefeatStyle =
+  | 'ember-fade'
+  | 'guarded-retreat'
+  | 'mist-dissolve'
+  | 'shadow-lower'
+
+export interface SpiritResultPresentation {
+  victory: SpiritVictoryStyle
+  defeat: SpiritDefeatStyle
+  victoryLine: { en: string; vi: string }
+  defeatLine: { en: string; vi: string }
+}
+
 export interface SpiritDefinition {
   id: string
   name: { en: string; vi: string }
@@ -104,6 +125,8 @@ export interface SpiritDefinition {
   vfx: SpiritVfx
   sfx: SpiritSfx
   voice: SpiritVoice | null
+  /** Cosmetic result pose and copy. It never changes match state or timing. */
+  result: SpiritResultPresentation
 }
 
 /**

@@ -4,7 +4,9 @@ import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseBadge from '@/components/ui/BaseBadge.vue'
 import GlassCard from '@/components/ui/GlassCard.vue'
 import FantasySystemIcon from '@/components/ui/FantasySystemIcon.vue'
+import SpiritEffectBadge from '@/components/shop/SpiritEffectBadge.vue'
 import { resolveSpirit } from '@/spirits/spiritRegistry'
+import type { SpiritEffectCode } from '@/api/shop'
 import { useAppLanguage } from '@/composables/useAppLanguage'
 import { ACHIEVEMENTS } from '@/config/achievements'
 import { Loader2, Lock } from 'lucide-vue-next'
@@ -18,6 +20,8 @@ const props = defineProps<{
   isLocked: boolean
   unlockAchievement: string | null
   evolvesFrom?: string | null
+  effectCode: SpiritEffectCode | null
+  effectValue: number
   canAfford: boolean
   loading: boolean
 }>()
@@ -95,7 +99,7 @@ const evolvesFromName = computed(() => {
         :src="spirit.model.source"
         :alt="spiritName"
         class="shop-item-card__art group-hover:scale-110 group-hover:-translate-y-1 transition-transform duration-500"
-        :class="{ 'grayscale opacity-80': isLocked }"
+        :class="{ 'opacity-80': isLocked }"
         loading="lazy"
         decoding="async"
         @error="failed = true"
@@ -112,6 +116,12 @@ const evolvesFromName = computed(() => {
           {{ t('Equipped', 'Đang dùng') }}
         </BaseBadge>
       </div>
+
+      <SpiritEffectBadge
+        :effect-code="effectCode"
+        :effect-value="effectValue"
+        class="self-start"
+      />
 
       <div class="shop-item-card__actions mt-auto">
         <p v-if="evolvesFromName" class="text-xs text-foreground-muted mb-2 text-center">

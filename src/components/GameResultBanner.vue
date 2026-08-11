@@ -4,12 +4,15 @@ import { computed } from 'vue'
 import { Handshake, HeartCrack, Share2, Trophy, RotateCw, Home } from 'lucide-vue-next'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseModal from '@/components/ui/BaseModal.vue'
+import SpiritResultMoment from '@/components/SpiritResultMoment.vue'
 import { useAppLanguage } from '@/composables/useAppLanguage'
+import type { ResolvedSpirit } from '@/spirits/spiritTypes'
 
 const props = defineProps<{
   heading: string
   message: string
   tone: 'win' | 'loss' | 'draw'
+  spirit: ResolvedSpirit | null
 }>()
 
 defineEmits<{ playAgain: []; exit: []; share: [] }>()
@@ -31,6 +34,11 @@ const headingClass = computed(() =>
     ]"
   >
     <span v-if="tone === 'win'" class="victory-radiance" aria-hidden="true"></span>
+    <SpiritResultMoment
+      v-if="spirit && tone !== 'draw'"
+      :spirit="spirit"
+      :outcome="tone"
+    />
     <div class="result-banner-content text-center">
       <span v-if="tone === 'win'" class="victory-emblem" aria-hidden="true">
         <Trophy :size="24" />

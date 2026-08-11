@@ -90,8 +90,8 @@ export const useSocialStore = defineStore('social', () => {
         getFriends(),
         getIncomingRequests()
       ])
-      friends.value = fData
-      incomingRequests.value = rData
+      friends.value = Array.isArray(fData) ? fData : []
+      incomingRequests.value = Array.isArray(rData) ? rData : []
     } catch (e) {
       console.error('Failed to fetch social data', e)
     }
@@ -153,7 +153,7 @@ export const useSocialStore = defineStore('social', () => {
       case 'challenge_accepted': {
         toast.addToast('Challenge accepted! Preparing match...', 'success')
         outgoingChallenge.value = null
-        socketStore.startMatchmaking('casual')
+        socketStore.requestMatchmaking('casual')
         break
       }
       case 'challenge_declined': {
@@ -193,7 +193,7 @@ export const useSocialStore = defineStore('social', () => {
         toast.addToast(`Match Ready!${opponent}`, 'info')
         
         if (socketStore.status !== 'searching' && socketStore.status !== 'matched') {
-          socketStore.startMatchmaking('casual')
+          socketStore.requestMatchmaking('casual')
         }
         break
       }
@@ -205,7 +205,7 @@ export const useSocialStore = defineStore('social', () => {
         toast.addToast(`Match drawn. Replaying${progress}...`, 'info')
         
         if (socketStore.status !== 'searching' && socketStore.status !== 'matched') {
-          socketStore.startMatchmaking('casual')
+          socketStore.requestMatchmaking('casual')
         }
         break
       }
@@ -327,7 +327,7 @@ export const useSocialStore = defineStore('social', () => {
     const socketStore = useSocketStore()
     try {
       await acceptChallenge(senderId)
-      socketStore.startMatchmaking('casual')
+      socketStore.requestMatchmaking('casual')
     } catch (err: unknown) {
       if (err instanceof Error) {
         toast.addToast(err.message || 'Failed to accept challenge', 'error')

@@ -1,4 +1,6 @@
 import { dragonSpirit } from './definitions/dragon'
+import { emberDragonSpirit } from './definitions/ember_dragon'
+import { guardianDragonSpirit } from './definitions/guardian_dragon'
 import { wolfSpirit } from './definitions/wolf'
 import { foxSpirit } from './definitions/fox'
 import { eagleSpirit } from './definitions/eagle'
@@ -17,6 +19,8 @@ import type { ResolvedSpirit, SpiritDefinition, SpiritSkin } from './spiritTypes
  */
 const SPIRIT_DEFINITIONS: readonly SpiritDefinition[] = [
   dragonSpirit,
+  emberDragonSpirit,
+  guardianDragonSpirit,
   wolfSpirit,
   foxSpirit,
   eagleSpirit,

@@ -9,7 +9,7 @@ export const fenrirSpirit: SpiritDefinition = {
   },
   anchor: 'right',
   sigil: 'wolf',
-  model: { source: '/spirits/wolf-chibi.webp', frames: 1, aspectRatio: 1 },
+  model: { source: '/spirits/fenrir-chibi.webp', frames: 1, aspectRatio: 1 },
   motion: {
     spawn: 'dash',
     attack: 'claw',
@@ -59,4 +59,10 @@ export const fenrirSpirit: SpiritDefinition = {
     ],
   },
   voice: null,
+  result: {
+    victory: 'power-surge',
+    defeat: 'shadow-lower',
+    victoryLine: { en: 'Fenrir devours the final line.', vi: 'Fenrir nuốt chửng đường cờ cuối cùng.' },
+    defeatLine: { en: 'Even chains cannot hold the next hunt.', vi: 'Xiềng xích cũng không thể ngăn cuộc săn kế tiếp.' },
+  },
 }

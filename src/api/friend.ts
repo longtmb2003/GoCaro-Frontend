@@ -1,4 +1,5 @@
 import { http } from './http'
+import { arrayOrEmpty } from './normalize'
 
 export interface FriendUser {
   id: string
@@ -29,8 +30,8 @@ export interface Challenge {
 }
 
 export async function getFriends(): Promise<Friend[]> {
-  const { data } = await http.get<Friend[]>('/api/friends')
-  return data
+  const { data } = await http.get<Friend[] | null>('/api/friends')
+  return arrayOrEmpty(data)
 }
 
 export async function removeFriend(id: string): Promise<void> {
@@ -38,8 +39,8 @@ export async function removeFriend(id: string): Promise<void> {
 }
 
 export async function getIncomingRequests(): Promise<FriendRequest[]> {
-  const { data } = await http.get<FriendRequest[]>('/api/friends/requests/incoming')
-  return data
+  const { data } = await http.get<FriendRequest[] | null>('/api/friends/requests/incoming')
+  return arrayOrEmpty(data)
 }
 
 export async function sendFriendRequest(receiverId: string): Promise<void> {

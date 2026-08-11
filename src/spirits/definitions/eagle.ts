@@ -59,4 +59,10 @@ export const eagleSpirit: SpiritDefinition = {
     ],
   },
   voice: null,
+  result: {
+    victory: 'radiant-rise',
+    defeat: 'shadow-lower',
+    victoryLine: { en: 'Victory belongs to the highest sight.', vi: 'Chiến thắng thuộc về tầm nhìn cao nhất.' },
+    defeatLine: { en: 'Fold the wings, then climb again.', vi: 'Khép cánh lại, rồi sẽ bay cao lần nữa.' },
+  },
 }

@@ -9,7 +9,7 @@ export const whiteTigerAscendedSpirit: SpiritDefinition = {
   },
   anchor: 'right',
   sigil: 'tiger',
-  model: { source: '/spirits/tiger-chibi.webp', frames: 1, aspectRatio: 1 },
+  model: { source: '/spirits/white_tiger_ascended-chibi.webp', frames: 1, aspectRatio: 1 },
   motion: {
     spawn: 'dash',
     attack: 'claw',
@@ -59,4 +59,10 @@ export const whiteTigerAscendedSpirit: SpiritDefinition = {
     ],
   },
   voice: null,
+  result: {
+    victory: 'rune-bloom',
+    defeat: 'shadow-lower',
+    victoryLine: { en: 'The heavens answer the ascended roar.', vi: 'Thiên giới đáp lời gầm của Bạch Hổ.' },
+    defeatLine: { en: 'Ascension continues beyond defeat.', vi: 'Con đường thăng hoa vẫn tiếp tục sau thất bại.' },
+  },
 }
