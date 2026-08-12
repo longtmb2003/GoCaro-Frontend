@@ -21,13 +21,13 @@ const router = createRouter({
       path: '/',
       name: 'lobby',
       component: () => import('@/pages/LobbyPage.vue'),
-      meta: { requiresAuth: true, title: 'Lobby' },
+      meta: { requiresAuth: true, title: 'Play Gomoku Online with Friends' },
     },
     {
       path: '/game',
       name: 'game',
       component: () => import('@/pages/GamePage.vue'),
-      meta: { requiresAuth: true, title: 'Match' },
+      meta: { requiresAuth: true, title: 'Online Gomoku Match' },
       beforeEnter: () => {
         const auth = useAuthStore(pinia)
         return useGameStore(pinia).isInMatch || hasMatchRecovery(auth.user?.id)
@@ -39,79 +39,79 @@ const router = createRouter({
       path: '/leaderboard',
       name: 'leaderboard',
       component: () => import('@/pages/LeaderboardPage.vue'),
-      meta: { requiresAuth: true, title: 'Leaderboard' },
+      meta: { requiresAuth: true, title: 'Gomoku Player Leaderboard' },
     },
     {
       path: '/shop',
       name: 'shop',
       component: () => import('@/pages/ShopPage.vue'),
-      meta: { requiresAuth: true, title: 'Shop' },
+      meta: { requiresAuth: true, title: 'Gomoku Rewards and Cosmetic Shop' },
     },
     {
       path: '/history',
       name: 'history',
       component: () => import('@/pages/HistoryPage.vue'),
-      meta: { requiresAuth: true, title: 'Match history' },
+      meta: { requiresAuth: true, title: 'Online Gomoku Match History' },
     },
     {
       path: '/collection',
       name: 'collection',
       component: () => import('@/pages/CollectionPage.vue'),
-      meta: { requiresAuth: true, title: 'Collection' },
+      meta: { requiresAuth: true, title: 'Your GoCaro Cosmetic Collection' },
     },
     {
       path: '/achievements',
       name: 'achievements',
       component: () => import('@/pages/AchievementsPage.vue'),
-      meta: { requiresAuth: true, title: 'Achievements' },
+      meta: { requiresAuth: true, title: 'GoCaro Achievements and Rewards' },
     },
     {
       path: '/tournaments',
       name: 'tournaments',
       component: () => import('@/pages/TournamentsPage.vue'),
-      meta: { requiresAuth: true, title: 'Tournaments' },
+      meta: { requiresAuth: true, title: 'Online Gomoku Tournaments' },
     },
     {
       path: '/tournaments/:id',
       name: 'tournament-detail',
       component: () => import('@/pages/TournamentDetailPage.vue'),
-      meta: { requiresAuth: true, title: 'Tournament' },
+      meta: { requiresAuth: true, title: 'Gomoku Tournament Details' },
     },
     {
       path: '/replay/:id',
       name: 'replay',
       component: () => import('@/pages/ReplayPage.vue'),
-      meta: { title: 'Replay' },
+      meta: { title: 'Watch a Gomoku Match Replay' },
     },
     {
       path: '/share/:token',
       name: 'shared-link',
       component: () => import('@/pages/ShareRedirectPage.vue'),
-      meta: { title: 'Shared link' },
+      meta: { title: 'Open a Shared GoCaro Link' },
     },
     {
       path: '/login',
       name: 'login',
       component: () => import('@/pages/LoginPage.vue'),
-      meta: { guestOnly: true, title: 'Sign in' },
+      meta: { guestOnly: true, title: 'Sign In and Play Gomoku Online' },
     },
     {
       path: '/register',
       name: 'register',
       component: () => import('@/pages/LoginPage.vue'),
-      meta: { guestOnly: true, title: 'Create account' },
+      meta: { guestOnly: true, title: 'Create Your GoCaro Account' },
     },
     {
       path: '/join/:code',
       name: 'join-invite',
       component: () => import('@/pages/JoinPage.vue'),
-      meta: { requiresAuth: true, title: 'Join Match' },
+      meta: { requiresAuth: true, title: 'Join a Private Gomoku Match' },
     },
     {
       path: '/:pathMatch(.*)*',
       name: 'not-found',
       component: () => import('@/pages/NotFoundPage.vue'),
-      meta: { title: 'Page not found' },
+      meta: { title: 'Page Not Found' },
     },
   ],
 })
@@ -140,7 +140,9 @@ router.beforeEach((to) => {
 const matchAudio = useMatchAudio()
 
 router.afterEach((to) => {
-  document.title = to.meta.title ? `${to.meta.title} · GoCaro` : 'GoCaro'
+  document.title = to.meta.title
+    ? `${to.meta.title} | GoCaro`
+    : 'GoCaro: Play Gomoku Online with Friends'
   if (to.name === 'game') matchAudio.enterMatch()
   else matchAudio.enterLobby()
 })
