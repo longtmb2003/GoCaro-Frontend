@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watchEffect } from 'vue'
+import { computed, ref } from 'vue'
 import { ChevronDown, Github, Info, Lock, Mail } from 'lucide-vue-next'
 import { RouterLink } from 'vue-router'
 import FantasyIcon from '@/components/ui/FantasyIcon.vue'
@@ -76,11 +76,6 @@ function handleOpenChatFromFriends(userId: string) {
   chatStore.setActiveChat(userId)
   showChatDrawer.value = true
 }
-
-watchEffect(() => {
-  if (typeof document === 'undefined') return
-  document.title = props.title === 'GoCaro' ? 'GoCaro' : `${props.title} · GoCaro`
-})
 </script>
 
 <template>

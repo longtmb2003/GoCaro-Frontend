@@ -19,6 +19,7 @@ import { useToast } from '@/composables/useToast'
 import { useChatStore } from './chat'
 import { useSocketStore } from './socket'
 import { useTournamentStore } from './tournament'
+import { useAuthStore } from './auth'
 
 export interface IncomingChallenge {
   challenge_id: string
@@ -252,6 +253,10 @@ export const useSocialStore = defineStore('social', () => {
           : payload.achievement_id.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
 
         const coins = Number(payload.coins ?? 0)
+        const authStore = useAuthStore()
+        if (Number.isFinite(coins) && coins > 0 && authStore.user) {
+          authStore.user.stats.coins += coins
+        }
         const reward = Number.isFinite(coins) && coins > 0 ? ` +${String(coins)} ${t('coins', 'xu')}` : ''
         toast.addToast(`${t('Achievement Unlocked', 'Mở khóa thành tựu')}: ${name}!${reward}`, 'success')
         break

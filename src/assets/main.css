@@ -235,18 +235,33 @@
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 @keyframes light-sweep {
-  0% { transform: translateX(-100%) skewX(-15deg); }
-  100% { transform: translateX(200%) skewX(-15deg); }
+  0% {
+    transform: translateX(-100%) skewX(-15deg);
+  }
+  100% {
+    transform: translateX(200%) skewX(-15deg);
+  }
 }
 
 @keyframes fade-in {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Theme-dependent tokens. Declared inline so they follow the .dark variant. */
@@ -361,13 +376,60 @@
     @apply outline-accent outline-2 outline-offset-2;
   }
 
-  button, [role="button"], a, input[type="button"], input[type="submit"] {
+  button,
+  [role='button'],
+  a,
+  input[type='button'],
+  input[type='submit'] {
     cursor: pointer;
   }
-  
-  button:disabled, [role="button"][disabled], input:disabled {
+
+  button:disabled,
+  [role='button'][disabled],
+  input:disabled {
     cursor: not-allowed;
   }
+}
+
+/*
+ * Useful initial content for people and crawlers while the SPA restores its
+ * session. Vue replaces this subtree as soon as the application is ready.
+ */
+.seo-fallback {
+  @apply mx-auto h-full max-w-4xl overflow-y-auto px-4 py-8 text-foreground sm:px-6;
+}
+
+.seo-fallback header,
+.seo-fallback section {
+  @apply mx-auto max-w-3xl;
+}
+
+.seo-fallback header {
+  @apply text-center;
+}
+
+.seo-fallback img {
+  @apply mx-auto mb-6 rounded-xl;
+}
+
+.seo-fallback h1 {
+  @apply text-page font-bold tracking-tight;
+}
+
+.seo-fallback h2 {
+  @apply text-section mt-8 font-semibold;
+}
+
+.seo-fallback p {
+  @apply text-body mt-3 text-foreground-muted;
+}
+
+.seo-fallback nav {
+  @apply mt-6 flex flex-wrap gap-3 pb-8;
+}
+
+.seo-fallback a {
+  @apply rounded-button border border-border bg-surface px-4 py-2 text-sm font-semibold text-accent transition-colors hover:bg-surface-2;
 }
 
 /*
@@ -442,5 +504,7 @@
 
 .frame_beastmaster {
   border-color: #8b5cf6 !important; /* purple-500 */
-  box-shadow: 0 0 15px rgba(139, 92, 246, 0.5), inset 0 0 10px rgba(139, 92, 246, 0.3) !important;
+  box-shadow:
+    0 0 15px rgba(139, 92, 246, 0.5),
+    inset 0 0 10px rgba(139, 92, 246, 0.3) !important;
 }

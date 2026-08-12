@@ -164,6 +164,10 @@ const sendMessage = async () => {
     inputMessage.value = text
   } finally {
     isSending.value = false
+    await nextTick()
+    if (props.open) {
+      chatInputRef.value?.focus()
+    }
   }
 }
 

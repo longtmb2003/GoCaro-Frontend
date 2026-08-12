@@ -3,8 +3,16 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>GoCaro</title>
+    <title>GoCaro: Play Gomoku Online with Friends</title>
+    <meta
+      name="description"
+      content="Play Gomoku online on GoCaro. Challenge friends, join real-time matches, climb the ranked leaderboard, review replays, and earn rewards."
+    />
+    <meta name="robots" content="index, follow" />
+    <meta name="theme-color" content="#070b14" />
+    <link rel="canonical" href="https://gocaro.cyou/" />
     <link rel="icon" type="image/png" href="/favicon-48.png" />
+    <link rel="apple-touch-icon" href="/gocaro_logo.webp" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -12,18 +20,112 @@
       rel="stylesheet"
     />
     <!-- Open Graph / Social Media Thumbnail -->
-    <meta property="og:title" content="GoCaro - Multiplayer Gomoku" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="GoCaro" />
+    <meta property="og:url" content="https://gocaro.cyou/" />
+    <meta property="og:title" content="GoCaro: Play Gomoku Online with Friends" />
     <meta
       property="og:description"
-      content="Play Caro (Gomoku) online with your friends in real-time."
+      content="Challenge friends, find real-time Gomoku matches, climb the ranked leaderboard, review replays, and earn rewards on GoCaro."
     />
-    <meta property="og:image" content="https://go-caro-frontend.vercel.app/thumbnail-og.jpg" />
+    <meta property="og:image" content="https://gocaro.cyou/thumbnail-og.jpg" />
+    <meta property="og:image:width" content="1024" />
+    <meta property="og:image:height" content="538" />
+    <meta property="og:image:alt" content="GoCaro online Gomoku game" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:image" content="https://go-caro-frontend.vercel.app/thumbnail-og.jpg" />
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+    <meta name="twitter:title" content="GoCaro: Play Gomoku Online with Friends" />
+    <meta
+      name="twitter:description"
+      content="Challenge friends, find real-time Gomoku matches, climb the ranked leaderboard, review replays, and earn rewards on GoCaro."
+    />
+    <meta name="twitter:image" content="https://gocaro.cyou/thumbnail-og.jpg" />
+    <meta name="twitter:image:alt" content="GoCaro online Gomoku game" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "GoCaro",
+        "url": "https://gocaro.cyou/",
+        "description": "Play Gomoku online with friends, real-time matchmaking, ranked leaderboards, match replays, tournaments, and rewards.",
+        "applicationCategory": "GameApplication",
+        "operatingSystem": "Any",
+        "image": "https://gocaro.cyou/thumbnail-og.jpg"
+      }
+    </script>
+    <script
+      src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
+      async
+      defer
+    ></script>
   </head>
   <body>
-    <div id="app"></div>
+    <div id="app">
+      <main class="seo-fallback">
+        <header>
+          <img src="/gocaro_logo.webp" alt="GoCaro" width="128" height="128" />
+          <h1>GoCaro – Play Gomoku Online</h1>
+          <p>
+            GoCaro is a real-time online Gomoku platform where you can play the classic
+            five-in-a-row strategy game from any modern browser. Sign in, enter as a guest, invite a
+            friend, or find another player through matchmaking. Every move is synchronized live so
+            both players can focus on reading the board, building threats, and finding the winning
+            line.
+          </p>
+        </header>
+
+        <section aria-labelledby="play-heading">
+          <h2 id="play-heading">Fast matches with friends and online players</h2>
+          <p>
+            Create a private room when you want to challenge someone you know, then share the invite
+            code so they can join directly. If you are ready for a new opponent, choose casual or
+            ranked matchmaking from the lobby. GoCaro also keeps useful match information close at
+            hand, including your recent results, active player status, and the competitive
+            leaderboard.
+          </p>
+        </section>
+
+        <section aria-labelledby="progress-heading">
+          <h2 id="progress-heading">Compete, improve, and track your progress</h2>
+          <p>
+            Ranked games let registered players develop their rating and compare progress with the
+            wider community. Match history and replays make it easier to revisit important
+            decisions, learn from mistakes, and study decisive sequences. Tournaments provide
+            another way to compete, while achievements and daily quests recognize consistent play
+            and give each session a clear goal.
+          </p>
+        </section>
+
+        <section aria-labelledby="customize-heading">
+          <h2 id="customize-heading">Build your GoCaro collection</h2>
+          <p>
+            Earn rewards as you play and browse the in-game shop for cosmetic items. Your collection
+            brings together unlocked content, including visual companions and other ways to
+            personalize the game experience. These features support the competition without changing
+            the board rules: victory still comes from planning ahead, controlling key intersections,
+            and connecting five stones.
+          </p>
+        </section>
+
+        <section aria-labelledby="start-heading">
+          <h2 id="start-heading">Start playing GoCaro</h2>
+          <p>
+            New players can create an account or begin as a guest, while returning players can sign
+            in and continue from the lobby. Explore the main sections below to learn what is
+            available, check the current competition, and prepare for your next online Gomoku match.
+          </p>
+          <nav aria-label="GoCaro pages">
+            <a href="/login">Sign in</a>
+            <a href="/register">Create account</a>
+            <a href="/leaderboard">Leaderboard</a>
+            <a href="/tournaments">Tournaments</a>
+            <a href="/history">Match history</a>
+            <a href="/achievements">Achievements</a>
+            <a href="/collection">Collection</a>
+            <a href="/shop">Shop</a>
+          </nav>
+        </section>
+      </main>
+    </div>
     <div
       id="error-display"
       style="
