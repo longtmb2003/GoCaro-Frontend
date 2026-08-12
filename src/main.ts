@@ -5,6 +5,7 @@ import { checkServerAvailability } from './api/serverAvailability'
 import { pinia } from './pinia'
 import router from './router'
 import { useAuthStore } from './stores/auth'
+import { initializeAnalytics } from './analytics'
 
 import './assets/main.css'
 
@@ -25,3 +26,4 @@ app.use(router)
 await router.isReady()
 
 app.mount('#app')
+initializeAnalytics()

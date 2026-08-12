@@ -5,6 +5,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useGameStore } from '@/stores/game'
 import { pinia } from '@/pinia'
 import { hasMatchRecovery } from '@/utils/matchRecovery'
+import { trackPageView } from '@/analytics'
 
 declare module 'vue-router' {
   interface RouteMeta {
@@ -93,13 +94,13 @@ const router = createRouter({
       path: '/login',
       name: 'login',
       component: () => import('@/pages/LoginPage.vue'),
-      meta: { guestOnly: true, title: 'Sign In and Play Gomoku Online' },
+      meta: { guestOnly: true, title: 'Play Gomoku Online – Sign In' },
     },
     {
       path: '/register',
       name: 'register',
       component: () => import('@/pages/LoginPage.vue'),
-      meta: { guestOnly: true, title: 'Create Your GoCaro Account' },
+      meta: { guestOnly: true, title: 'Play Gomoku Online – Create an Account' },
     },
     {
       path: '/join/:code',
@@ -143,6 +144,7 @@ router.afterEach((to) => {
   document.title = to.meta.title
     ? `${to.meta.title} | GoCaro`
     : 'GoCaro: Play Gomoku Online with Friends'
+  trackPageView(to.fullPath, document.title)
   if (to.name === 'game') matchAudio.enterMatch()
   else matchAudio.enterLobby()
 })

@@ -1,15 +1,22 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
-import { watch } from 'vue'
+import { defineAsyncComponent, watch } from 'vue'
 import { checkServerAvailability, useServerAvailability } from '@/api/serverAvailability'
 import { useAuthStore } from '@/stores/auth'
 import { useSocialStore } from '@/stores/social'
-import ServerMaintenancePage from '@/pages/ServerMaintenancePage.vue'
-import UserProfileModal from '@/components/UserProfileModal.vue'
-import AchievementsModal from '@/components/AchievementsModal.vue'
-import GlobalMatchmakingTracker from '@/components/GlobalMatchmakingTracker.vue'
-import ReadyCheckModal from '@/components/ReadyCheckModal.vue'
 import { useSocketStore } from '@/stores/socket'
+import { useUserProfile } from '@/composables/useUserProfile'
+import { useAchievementsModal } from '@/composables/useAchievementsModal'
+
+const ServerMaintenancePage = defineAsyncComponent(
+  () => import('@/pages/ServerMaintenancePage.vue'),
+)
+const UserProfileModal = defineAsyncComponent(() => import('@/components/UserProfileModal.vue'))
+const AchievementsModal = defineAsyncComponent(() => import('@/components/AchievementsModal.vue'))
+const GlobalMatchmakingTracker = defineAsyncComponent(
+  () => import('@/components/GlobalMatchmakingTracker.vue'),
+)
+const ReadyCheckModal = defineAsyncComponent(() => import('@/components/ReadyCheckModal.vue'))
 
 const auth = useAuthStore()
 const social = useSocialStore()
@@ -17,6 +24,8 @@ const social = useSocialStore()
 // from several pages, and the offer has to reach them wherever they are.
 const socket = useSocketStore()
 const serverAvailability = useServerAvailability()
+const { isProfileModalOpen } = useUserProfile()
+const { isAchievementsModalOpen } = useAchievementsModal()
 
 watch(
   [() => auth.token, () => serverAvailability.isUnavailable.value],
@@ -52,9 +61,9 @@ async function retryConnection(): Promise<void> {
       </Transition>
     </RouterView>
 
-    <UserProfileModal />
-    <AchievementsModal />
-    <GlobalMatchmakingTracker />
+    <UserProfileModal v-if="isProfileModalOpen" />
+    <AchievementsModal v-if="isAchievementsModalOpen" />
+    <GlobalMatchmakingTracker v-if="auth.isAuthenticated" />
     <ReadyCheckModal
       v-if="socket.proposal"
       :proposal="socket.proposal"

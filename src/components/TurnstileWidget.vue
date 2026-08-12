@@ -43,9 +43,23 @@ const widgetId = ref<string | null>(null)
 // box with no way forward, so the wait is bounded and then reported.
 const SCRIPT_WAIT_MS = 10_000
 const POLL_INTERVAL_MS = 100
+const SCRIPT_ID = 'gocaro-turnstile-api'
 
 let pollTimer: number | null = null
 let waitedMs = 0
+
+// Loading Turnstile only when verification is actually shown keeps the
+// third-party script off the critical rendering path for ordinary visits.
+function loadScript(): void {
+  if (turnstileApi() || document.getElementById(SCRIPT_ID)) return
+
+  const script = document.createElement('script')
+  script.id = SCRIPT_ID
+  script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'
+  script.async = true
+  script.defer = true
+  document.head.append(script)
+}
 
 function clearPoll(): void {
   if (pollTimer !== null) {
@@ -115,7 +129,10 @@ function reset(): void {
   }
 }
 
-onMounted(render)
+onMounted(() => {
+  loadScript()
+  render()
+})
 
 // The poll has to be cancelled as well as the widget: a pending timeout would
 // otherwise fire against a component that is already gone.
