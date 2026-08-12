@@ -293,8 +293,12 @@ function selectLanguage(nextLanguage: LanguageCode, event: MouseEvent): void {
     <img
       class="launcher__art"
       src="/gocaro-login-stone-arena-v4.webp"
-      alt=""
-      aria-hidden="true"
+      :alt="
+        appLanguage.t(
+          'Fantasy Gomoku stone arena with a five-in-a-row board',
+          'Đấu trường cờ Caro kỳ ảo với bàn cờ năm quân liên tiếp',
+        )
+      "
       fetchpriority="high"
     />
     <div class="launcher__shade" aria-hidden="true" />
@@ -314,7 +318,9 @@ function selectLanguage(nextLanguage: LanguageCode, event: MouseEvent): void {
       </div>
 
       <div class="launcher-bar__actions">
-        <span class="server-state"><i aria-hidden="true" /> {{ appLanguage.t('North America', 'Bắc Mỹ') }}</span>
+        <span class="server-state"
+          ><i aria-hidden="true" /> {{ appLanguage.t('North America', 'Bắc Mỹ') }}</span
+        >
         <details class="bar-menu">
           <summary :aria-label="ui.languageLabel">
             <Globe2 :size="18" aria-hidden="true" />
@@ -390,7 +396,7 @@ function selectLanguage(nextLanguage: LanguageCode, event: MouseEvent): void {
             </svg>
           </div>
           <p class="brand-kicker">{{ ui.brandKicker }}</p>
-          <h1>GO CARO</h1>
+          <h1>GO CARO <span class="sr-only">— Play Gomoku Online</span></h1>
           <p class="brand-subtitle">{{ ui.brandSubtitle }}</p>
         </div>
 

@@ -3,22 +3,48 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>GoCaro: Play Gomoku Online with Friends</title>
+    <title>Play Gomoku Online with Friends | GoCaro</title>
     <meta
       name="description"
-      content="Play Gomoku online on GoCaro. Challenge friends, join real-time matches, climb the ranked leaderboard, review replays, and earn rewards."
+      content="Play Gomoku online with friends on GoCaro. Join real-time casual and ranked matches, climb the leaderboard, watch replays, enter tournaments, and earn seasonal rewards."
     />
     <meta name="robots" content="index, follow" />
     <meta name="theme-color" content="#070b14" />
     <link rel="canonical" href="https://gocaro.cyou/" />
-    <link rel="icon" type="image/png" href="/favicon-48.png" />
+    <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png" />
+    <link rel="shortcut icon" type="image/png" href="/favicon-48.png" />
     <link rel="apple-touch-icon" href="/gocaro_logo.webp" />
+    <link
+      rel="preload"
+      as="image"
+      href="/gocaro-login-stone-arena-v4.webp"
+      type="image/webp"
+      fetchpriority="high"
+    />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
+      rel="preload"
+      as="style"
       href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Manrope:wght@400;500;600;700;800&display=swap"
-      rel="stylesheet"
+      onload="
+        this.onload = null
+        this.rel = 'stylesheet'
+      "
     />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Manrope:wght@400;500;600;700;800&display=swap"
+      />
+    </noscript>
+    <style>
+      @media (max-width: 40rem) {
+        .seo-fallback nav {
+          display: grid;
+        }
+      }
+    </style>
     <!-- Open Graph / Social Media Thumbnail -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="GoCaro" />
@@ -52,11 +78,6 @@
         "image": "https://gocaro.cyou/thumbnail-og.jpg"
       }
     </script>
-    <script
-      src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
-      async
-      defer
-    ></script>
   </head>
   <body>
     <div id="app">
@@ -126,34 +147,6 @@
         </section>
       </main>
     </div>
-    <div
-      id="error-display"
-      style="
-        position: fixed;
-        top: 0;
-        left: 0;
-        z-index: 9999;
-        background: red;
-        color: white;
-        padding: 20px;
-        display: none;
-        width: 100%;
-        white-space: pre-wrap;
-        font-family: monospace;
-      "
-    ></div>
-    <script>
-      window.addEventListener('error', function (e) {
-        document.getElementById('error-display').style.display = 'block'
-        document.getElementById('error-display').innerText +=
-          e.message + '\n' + (e.error && e.error.stack ? e.error.stack : '') + '\n\n'
-      })
-      window.addEventListener('unhandledrejection', function (e) {
-        document.getElementById('error-display').style.display = 'block'
-        document.getElementById('error-display').innerText +=
-          'Unhandled Promise Rejection: ' + e.reason + '\n\n'
-      })
-    </script>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

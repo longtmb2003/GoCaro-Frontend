@@ -14,7 +14,9 @@
     </div>
 
     <div v-else-if="activities.length === 0" class="activity-feed__empty">
-      <p>{{ t('No recent activity from your friends.', 'Chưa có hoạt động gần đây từ bạn bè.') }}</p>
+      <p>
+        {{ t('No recent activity from your friends.', 'Chưa có hoạt động gần đây từ bạn bè.') }}
+      </p>
     </div>
 
     <ul v-else class="activity-feed__list">
@@ -42,8 +44,6 @@
         </div>
       </li>
     </ul>
-
-    <UserProfileModal />
   </div>
 </template>
 
@@ -52,7 +52,6 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { Trophy, Star, Swords, Activity, Flame, Medal, Award, Crown, Users } from 'lucide-vue-next'
 import { fetchActivityFeed, type UserActivity } from '@/api/users'
 import BaseSpinner from '@/components/ui/BaseSpinner.vue'
-import UserProfileModal from '@/components/UserProfileModal.vue'
 import FantasySystemIcon from '@/components/ui/FantasySystemIcon.vue'
 import { useUserProfile } from '@/composables/useUserProfile'
 import { useAppLanguage } from '@/composables/useAppLanguage'

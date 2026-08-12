@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, follow" />
+    <title>Page Not Found | GoCaro</title>
+    <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png" />
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+      }
+      body {
+        display: grid;
+        min-height: 100vh;
+        margin: 0;
+        place-items: center;
+        background: #070b14;
+        color: #f2f5f9;
+      }
+      main {
+        width: min(32rem, calc(100% - 2rem));
+        text-align: center;
+      }
+      img {
+        width: 5rem;
+        height: 5rem;
+        border-radius: 1rem;
+      }
+      p {
+        color: #a9b4c3;
+        line-height: 1.6;
+      }
+      nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        justify-content: center;
+        margin-top: 1.5rem;
+      }
+      a {
+        padding: 0.75rem 1rem;
+        color: #9cecff;
+        border: 1px solid #38526f;
+        border-radius: 0.75rem;
+        text-decoration: none;
+      }
+      @media (max-width: 30rem) {
+        nav {
+          display: grid;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <img src="/gocaro_logo.webp" alt="GoCaro logo" width="80" height="80" />
+      <p>404</p>
+      <h1>This GoCaro page could not be found</h1>
+      <p>
+        The link may be outdated, but the online Gomoku lobby and current competition are still
+        available.
+      </p>
+      <nav aria-label="Helpful links">
+        <a href="/">Play Gomoku</a>
+        <a href="/leaderboard">Leaderboard</a>
+        <a href="/login">Sign in</a>
+      </nav>
+    </main>
+  </body>
+</html>
